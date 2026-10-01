@@ -27,4 +27,4 @@ This is the agent entry point for building a design system on GPUI primitives. R
 4. Implement the smallest complete component and a representative example. Finish when its state and token choices are exercised through the actual rendering and input paths.
 5. Apply [Verification](gpui-verification.md). Finish when the relevant checks pass and any unverified platform behavior is reported with its scope.
 
-The first slice has pinned Kumo palette, typography and component recipe references. Native font selection, component APIs, theme ownership and supported-platform contracts remain implementation decisions; see the [implementation plan](implementation-plan.md) for progress and acceptance criteria.
+The first slice has pinned Kumo references, an application-owned typed theme and a Base adapter. The gallery uses the macOS system font and switches appearance. Component APIs and supported-platform contracts remain implementation decisions; see [Kumo tokens](kumo-tokens.md#initial-native-implementation) for native policies and the [implementation plan](implementation-plan.md) for progress and acceptance criteria.

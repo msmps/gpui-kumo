@@ -1,12 +1,14 @@
 use std::borrow::Cow;
 
 use gpui_kit::{
-    App, AppContext, AssetSource, Bounds, Context, FocusHandle, InteractiveElement, IntoElement,
-    KeyBinding, Menu, MenuItem, ParentElement, Render, SharedString, Styled, TitlebarOptions,
-    Window, WindowBounds, WindowOptions, div, px, rgb, size, svg,
+    App, AppContext, AssetSource, Bounds, Context, Div, FocusHandle, FontWeight,
+    InteractiveElement, IntoElement, KeyBinding, Menu, MenuItem, ParentElement, Render,
+    SharedString, Styled, Subscription, TitlebarOptions, Window, WindowBounds, WindowOptions,
+    base::Button, div, px, size, svg,
 };
+use gpui_kumo::{Appearance, Theme, set_appearance, theme as current_theme};
 
-gpui_kit::actions!(gallery, [Quit]);
+gpui_kit::actions!(gallery, [Quit, ToggleAppearance]);
 
 struct GalleryAssets;
 
@@ -29,40 +31,269 @@ impl AssetSource for GalleryAssets {
 
 struct Gallery {
     focus_handle: FocusHandle,
+    _theme_subscription: Subscription,
 }
 
 impl Render for Gallery {
-    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let theme = current_theme(cx).clone();
         div()
             .id("gallery")
             .track_focus(&self.focus_handle)
             .on_action(|_: &Quit, _, cx| cx.quit())
+            .on_action(|_: &ToggleAppearance, _, cx| {
+                set_appearance(current_theme(cx).appearance.opposite(), cx);
+            })
             .size_full()
             .flex()
             .flex_col()
-            .items_center()
-            .justify_center()
-            .gap_4()
-            .bg(rgb(0xf8f8f8))
-            .text_color(rgb(0x202020))
-            .font_family(".SystemUIFont")
+            .p(px(32.))
+            .gap(px(24.))
+            .bg(theme.colors.canvas)
+            .text_color(theme.text.default)
+            .font_family(theme.typography.font_family.clone())
+            .text_size(theme.typography.base.size)
+            .line_height(theme.typography.base.line_height)
             .child(
-                svg()
-                    .path("workspace.svg")
-                    .size_8()
-                    .text_color(rgb(0xf6821f)),
+                div()
+                    .flex()
+                    .items_center()
+                    .justify_between()
+                    .child(
+                        div()
+                            .flex()
+                            .items_center()
+                            .gap(theme.spacing.twelve)
+                            .child(
+                                svg()
+                                    .path("workspace.svg")
+                                    .size_8()
+                                    .text_color(theme.text.brand),
+                            )
+                            .child(
+                                div()
+                                    .flex()
+                                    .flex_col()
+                                    .gap(theme.spacing.four)
+                                    .child(
+                                        div()
+                                            .text_size(px(24.))
+                                            .line_height(px(32.))
+                                            .font_weight(FontWeight::MEDIUM)
+                                            .child("Kumo foundations"),
+                                    )
+                                    .child(
+                                        div()
+                                            .text_color(theme.text.subtle)
+                                            .child("Color, typography and effects"),
+                                    ),
+                            ),
+                    )
+                    .child(div().flex().gap(theme.spacing.eight).children(
+                        [Appearance::Light, Appearance::Dark].map(|appearance| {
+                            let selected = theme.appearance == appearance;
+                            Button::new(if appearance == Appearance::Light {
+                                "light"
+                            } else {
+                                "dark"
+                            })
+                            .accessibility_label(if appearance == Appearance::Light {
+                                "Light appearance"
+                            } else {
+                                "Dark appearance"
+                            })
+                            .selected(selected)
+                            .h(px(36.))
+                            .px(theme.spacing.twelve)
+                            .rounded(theme.radii.lg)
+                            .bg(if selected {
+                                theme.colors.contrast
+                            } else {
+                                theme.colors.base
+                            })
+                            .text_color(if selected {
+                                theme.text.inverse
+                            } else {
+                                theme.text.default
+                            })
+                            .focus_visible(|style| {
+                                style.border_2().border_color(theme.colors.brand)
+                            })
+                            .on_click(move |_, _, cx| set_appearance(appearance, cx))
+                            .child(
+                                if appearance == Appearance::Light {
+                                    "Light"
+                                } else {
+                                    "Dark"
+                                },
+                            )
+                        }),
+                    )),
             )
             .child(
                 div()
-                    .text_size(px(24.))
-                    .child(gpui_kit::text!("Kumo component gallery")),
+                    .flex()
+                    .gap(px(24.))
+                    .flex_1()
+                    .child(color_panel(&theme))
+                    .child(
+                        div()
+                            .flex()
+                            .flex_col()
+                            .gap(px(24.))
+                            .flex_1()
+                            .child(typography_panel(&theme))
+                            .child(effects_panel(&theme)),
+                    ),
             )
             .child(
                 div()
-                    .text_size(px(14.))
-                    .child(gpui_kit::text!("Button · Input · Popover")),
+                    .text_color(theme.text.subtle)
+                    .text_size(theme.typography.xs.size)
+                    .child(
+                        "System font · ⌘L switches appearance · Button, Input and Popover are next",
+                    ),
             )
     }
+}
+
+fn panel(theme: &Theme, title: &'static str) -> Div {
+    div()
+        .flex()
+        .flex_col()
+        .gap(theme.spacing.sixteen)
+        .p(px(24.))
+        .bg(theme.colors.base)
+        .rounded(theme.radii.lg)
+        .border_1()
+        .border_color(theme.colors.hairline)
+        .child(div().font_weight(FontWeight::MEDIUM).child(title))
+}
+
+fn color_panel(theme: &Theme) -> Div {
+    panel(theme, "Semantic colors").flex_1().children(
+        [
+            ("Canvas", theme.colors.canvas),
+            ("Base", theme.colors.base),
+            ("Control", theme.colors.control),
+            ("Tint", theme.colors.tint),
+            ("Brand", theme.colors.brand),
+            ("Danger", theme.colors.danger),
+            ("Line", theme.colors.line),
+            ("Focus", theme.colors.focus),
+            ("Text / default", theme.text.default),
+            ("Text / subtle", theme.text.subtle),
+            ("Text / brand", theme.text.brand),
+        ]
+        .map(|(label, color)| {
+            div()
+                .flex()
+                .items_center()
+                .gap(theme.spacing.twelve)
+                .child(
+                    div()
+                        .w(px(48.))
+                        .h(px(24.))
+                        .flex_shrink_0()
+                        .rounded(theme.radii.sm)
+                        .bg(color)
+                        .border_1()
+                        .border_color(theme.colors.hairline),
+                )
+                .child(label)
+        }),
+    )
+}
+
+fn typography_panel(theme: &Theme) -> Div {
+    panel(theme, "Typography").children(
+        [
+            ("Extra small · 12 / 16", theme.typography.xs),
+            ("Small · 13 / 15.29", theme.typography.sm),
+            ("Base · 14 / 21", theme.typography.base),
+            ("Large · 16 / 24", theme.typography.lg),
+        ]
+        .map(|(label, style)| {
+            div()
+                .text_size(style.size)
+                .line_height(style.line_height)
+                .font_weight(style.weight)
+                .child(label)
+        }),
+    )
+}
+
+fn effects_panel(theme: &Theme) -> Div {
+    panel(theme, "Gradients and elevation")
+        .child(
+            div().flex().gap(theme.spacing.sixteen).children(
+                [
+                    ("Primary", &theme.primary),
+                    ("Destructive", &theme.destructive),
+                ]
+                .map(|(label, emphasis)| {
+                    div()
+                        .flex()
+                        .flex_col()
+                        .gap(theme.spacing.eight)
+                        .flex_1()
+                        .child(
+                            div()
+                                .text_color(theme.text.subtle)
+                                .text_size(theme.typography.xs.size)
+                                .child(label),
+                        )
+                        .child(
+                            div()
+                                .h(px(40.))
+                                .rounded(theme.radii.lg)
+                                .bg(emphasis.gradient(false))
+                                .shadow(vec![emphasis.inset_highlight()])
+                                .flex()
+                                .items_center()
+                                .justify_center()
+                                .text_color(gpui_kit::rgb(0xffffff))
+                                .child("Rest"),
+                        )
+                        .child(
+                            div()
+                                .h(px(40.))
+                                .rounded(theme.radii.lg)
+                                .bg(emphasis.gradient(true))
+                                .shadow(vec![emphasis.inset_highlight()])
+                                .flex()
+                                .items_center()
+                                .justify_center()
+                                .text_color(gpui_kit::rgb(0xffffff))
+                                .child("Hover"),
+                        )
+                }),
+            ),
+        )
+        .child(
+            div()
+                .flex()
+                .gap(theme.spacing.sixteen)
+                .pt(theme.spacing.eight)
+                .child(
+                    div()
+                        .flex_1()
+                        .p(theme.spacing.twelve)
+                        .rounded(theme.radii.lg)
+                        .bg(theme.colors.control)
+                        .shadow(theme.effects.shadow_xs.clone())
+                        .child("Shadow / xs"),
+                )
+                .child(
+                    div()
+                        .flex_1()
+                        .p(theme.spacing.twelve)
+                        .rounded(theme.radii.lg)
+                        .bg(theme.colors.control)
+                        .shadow(theme.effects.shadow_md.clone())
+                        .child("Shadow / md"),
+                ),
+        )
 }
 
 fn main() {
@@ -70,7 +301,10 @@ fn main() {
         .with_assets(GalleryAssets)
         .run(|cx: &mut App| {
             gpui_kumo::init(cx);
-            cx.bind_keys([KeyBinding::new("cmd-q", Quit, None)]);
+            cx.bind_keys([
+                KeyBinding::new("cmd-q", Quit, None),
+                KeyBinding::new("cmd-l", ToggleAppearance, None),
+            ]);
             cx.on_action(|_: &Quit, cx| cx.quit());
             cx.set_menus([Menu::new("Kumo Gallery").items([MenuItem::action("Quit", Quit)])]);
             cx.on_window_closed(|cx, _| {
@@ -80,7 +314,7 @@ fn main() {
             })
             .detach();
 
-            let bounds = Bounds::centered(None, size(px(960.), px(640.)), cx);
+            let bounds = Bounds::centered(None, size(px(1040.), px(800.)), cx);
             gpui_kit::open_window(
                 WindowOptions {
                     titlebar: Some(TitlebarOptions {
@@ -95,7 +329,11 @@ fn main() {
                     cx.new(|cx| {
                         let focus_handle = cx.focus_handle();
                         focus_handle.focus(window, cx);
-                        Gallery { focus_handle }
+                        let subscription = cx.observe_global::<Theme>(|_, cx| cx.notify());
+                        Gallery {
+                            focus_handle,
+                            _theme_subscription: subscription,
+                        }
                     })
                 },
             )

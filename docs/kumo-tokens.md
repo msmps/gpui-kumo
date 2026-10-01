@@ -1,6 +1,6 @@
 # Kumo tokens for the first native slice
 
-Extracted 2026-10-01 for Button, Input, Popover and their gallery context. This is reference data for the next theme implementation step. Component-specific geometry and state recipes are in [Component recipes](kumo-component-recipes.md).
+Extracted 2026-10-01 for Button, Input, Popover and their gallery context. The typed native theme uses this reference data; implementation policies and validation are recorded below. Component-specific geometry and state recipes are in [Component recipes](kumo-component-recipes.md).
 
 ## Baseline and resolution
 
@@ -8,7 +8,7 @@ Kumo source is pinned to [`3fd5b648df578cb1ba214dedd30f475009f6a668`](https://gi
 
 Resolve semantic variables from [theme-kumo.css](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/styles/theme-kumo.css), taking referenced primitive variables from [kumo-binding.css](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/styles/kumo-binding.css) and Tailwind's theme before considering each CSS fallback. The [lockfile](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/pnpm-lock.yaml) resolves the Kumo package's `tailwindcss` and Vite integration to **4.3.3**; its CLI remains 4.1.17. Tables below use the 4.3.3 direct/Vite baseline, checked from the official [Tailwind package's theme.css](https://unpkg.com/tailwindcss@4.3.3/theme.css). The standalone CLI build is a separate baseline; it has not been rebuilt here.
 
-Colors are recorded in their source color space, with variables and the dark brand mix resolved. `oklch(L C H / A)` uses L in 0–1, C as chroma, H in degrees, and optional alpha A (default 1). For achromatic colors, hue is immaterial and shown as 0. These are not sRGB hex approximations. Conversion and gamut mapping into GPUI remain part of theme implementation; interpolate emphasis colors in OKLCH before that conversion.
+Colors are recorded in their source color space, with variables and the dark brand mix resolved. `oklch(L C H / A)` uses L in 0–1, C as chroma, H in degrees, and optional alpha A (default 1). For achromatic colors, hue is immaterial and shown as 0. These are not sRGB hex approximations. The native implementation mixes emphasis colors in OKLCH before converting and gamut mapping, as described below.
 
 ## Text colors
 
@@ -25,7 +25,7 @@ Every name below has the full `--text-color-kumo-` prefix. Values come from gene
 | brand | `#f6821f` | `#f6821f` | Orange foreground identity; separate from blue action fill |
 | danger | `oklch(.505 .213 27.518)` | `oklch(.704 .191 22.216)` | Error messages and secondary-destructive Button |
 
-`--text-color-kumo-disabled` is absent from the inspected generated theme and binding definitions, although Input references it. Preserve this as an unresolved upstream recipe issue; selecting `inactive` or `subtle` for the native control is a future explicit decision.
+`--text-color-kumo-disabled` is absent from the inspected generated theme and binding definitions, although Input references it. This is an upstream recipe gap. The native policy below explicitly selects `subtle`; it does not invent an upstream token.
 
 ## General colors
 
@@ -83,7 +83,7 @@ Kumo's generated sizes override Tailwind defaults. Line heights below are evalua
 
 Normal body weight is 400; Button and Field label use 500. `leading-snug` is 1.375: Field descriptions/errors at 13px therefore have a 17.875px line height. Popover Title and Description use 14px with explicit `leading-6` = 24px, overriding the text-base line height. These references are in the [component recipes](kumo-component-recipes.md).
 
-The library inherits font choice from its consumer. Tailwind 4.3.3's sans stack starts `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial`, then generic sans and emoji fallbacks. The [Kumo documentation site](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo-docs-astro/src/styles/global.css) overrides this with Inter followed by system fallbacks, sets letter spacing to -.01em and enables `cv02`, `cv03`, `cv04`, `calt`. Those are site choices, not library tokens. Decide whether the native gallery targets the documentation's Inter appearance or the library's consumer-dependent font before screenshot comparison; no font was selected or downloaded in this extraction.
+The library inherits font choice from its consumer. Tailwind 4.3.3's sans stack starts `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial`, then generic sans and emoji fallbacks. The [Kumo documentation site](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo-docs-astro/src/styles/global.css) overrides this with Inter followed by system fallbacks, sets letter spacing to -.01em and enables `cv02`, `cv03`, `cv04`, `calt`. Those are site choices, not library tokens. Decide whether the native gallery targets the documentation's Inter appearance or the library's consumer-dependent font before screenshot comparison; the extraction selected no font. The initial native policy below uses the macOS system font.
 
 ## Spacing, edges and effects
 
@@ -122,6 +122,22 @@ Each tuple below is `(L, C, H)` in OKLCH, alpha 1. The table is arithmetic deriv
 
 The gradient runs top to bottom, while foreground is fixed white in both modes. Native gradient interpolation should preserve the source's OKLab gradient interpolation separately from the OKLCH token mixes. [Tailwind gradient defaults](https://tailwindcss.com/docs/background-image)
 
-## Ready for implementation
+## Extraction scope
 
-The shared values above plus [component recipes](kumo-component-recipes.md) cover the first three components' authored visual requirements. Remaining decisions are font/reference profile, undefined disabled Input foreground, conversion/gamut mapping, native text-selection/caret styling (not authored by these Kumo recipes), and translation of CSS rings, inset paint and layered shadows. Source reading and arithmetic resolution were performed; no browser CSS computation, native theme implementation or visual comparison was performed in this step.
+The shared values above plus [component recipes](kumo-component-recipes.md) cover the first three components' authored visual requirements. At extraction time, remaining decisions were font/reference profile, undefined disabled Input foreground, conversion/gamut mapping, native text-selection/caret styling (not authored by these Kumo recipes), and translation of CSS rings, inset paint and layered shadows. Source reading and arithmetic resolution were performed; no browser CSS computation, native theme implementation or visual comparison was performed in this step.
+
+## Initial native implementation
+
+[theme.rs](../crates/gpui-kumo/src/theme.rs) owns the Kumo vocabulary and application-wide `Theme` global. `init` installs the light theme after initializing Base. Consumers read `theme(cx)` during rendering and retain an `observe_global::<Theme>` subscription to redraw. `set_theme` publishes a complete snapshot and its Base projection together; `set_appearance` rebuilds the standard palette while retaining the font family. Custom palettes should switch through complete snapshots. Independent previews may pass snapshots directly; Base behaviors still use the application-wide projection.
+
+The initial gallery targets the library's consumer-dependent font profile, using `.SystemUIFont` on macOS. The theme supports a caller-selected family through `with_font_family`; Segoe UI and generic sans are unverified fallback choices on Windows and other platforms. Inter, the documentation site's tracking and font-feature settings are not applied.
+
+Native policies fill two source gaps in a separate `NativeColors` group: disabled Input foreground uses the subtle text role; selection uses the action brand at 25% alpha. These are project choices, not extracted Kumo tokens. Caret styling remains part of Input implementation.
+
+[color.rs](../crates/gpui-kumo/src/color.rs) converts OKLCH through the [Oklab author's inverse linear-sRGB matrix](https://bottosson.github.io/posts/oklab/#converting-from-linear-srgb-to-oklab) and the sRGB transfer function. Out-of-gamut colors reduce chroma at fixed lightness and hue using binary search. This intentionally differs from [CSS local-MINDE gamut mapping](https://www.w3.org/TR/css-color-4/#binsearch); browser color parity remains unverified. Token mixes happen before conversion. Emphasis gradients use GPUI's OKLab interpolation between mapped sRGB stops; mapping stops before interpolation may differ from a browser mapping individual colors along the original gradient.
+
+Spacing, radii, typography, ring/outline dimensions and shadow geometry use logical pixels at the extracted 16px-root baseline. The theme preserves both Popover shadow layers and exposes the emphasis inset highlight as an inset `BoxShadow`. Focus colors remain semantic colors; components must apply the recipe's alpha, ring geometry and state priority. Motion values are stored as durations and cubic-bezier control points; animation, rings and Popover outlines are not yet implemented components.
+
+The adapter projects canvas/default into Base background/foreground, base/default into surface and secondary, brand/white into primary, recessed/subtle into muted, tint/default into accent, danger/white into destructive, line into border and input (an adapter choice treating input as a border role), focus into ring, and native selection into selection. It projects the matching spacing, radius, four typography levels and two shadow slots. Base's unrelated behavior settings and uncovered scale slots remain intact; Kumo components consume Kumo tokens directly rather than relying on those Base defaults.
+
+Validation on 2026-10-01: conversion tests cover a neutral transfer value, a reference red and out-of-gamut brand lightness preservation; an adapter test covers both appearances and retained unrelated settings. Build, formatting and Clippy pass. Native macOS rendering of both palettes, typography, gradients, inset highlights and layered shadows was inspected; Command-L and the appearance controls redraw the existing gallery. This validates the foundation, not browser visual parity, component behavior, full accessibility or other platforms.

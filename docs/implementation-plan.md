@@ -1,6 +1,6 @@
 # First native Kumo slice
 
-Status: workspace bootstrap and first-slice source extraction complete, updated 2026-10-01. Step 1 has a native macOS baseline. Step 2 has documented tokens and component recipes; native theme implementation and steps 3–5 remain pending. The working hypothesis is to own the Kumo design system and selectively reuse GPUI Base behavior; validate that hypothesis before expanding the component catalog. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints.
+Status: workspace and initial native theme foundation complete, updated 2026-10-01. Steps 1–2 have a native macOS baseline, typed Kumo tokens, a Base adapter and a gallery appearance switcher. Steps 3–5 remain pending; browser visual parity and component acceptance work are unverified. The working hypothesis is to own the Kumo design system and selectively reuse GPUI Base behavior; validate that hypothesis before expanding the component catalog. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints.
 
 ## Outcome
 
@@ -14,7 +14,7 @@ A working native window containing Kumo Button, Input and Popover components, wi
 
 2. **Implement the minimum Kumo theme.** Extract the light/dark colors, typography, spacing, radii, gradients, shadows and focus treatment needed by the three components. Keep Kumo's semantic token model separate from Base's internal theme, with an explicit adapter where Base consumes theme values. Use [Kumo grounding](kumo-grounding.md) and [Styling](gpui-styling.md).
 
-   Source extraction is complete in [Kumo tokens](kumo-tokens.md) and [Component recipes](kumo-component-recipes.md), pinned to Kumo commit `3fd5b648df578cb1ba214dedd30f475009f6a668`. Next implement the typed theme and Base adapter, resolving the font profile, undefined disabled Input foreground, color conversion and native paint mapping documented there. Browser cascade and visual comparison remain validation work.
+   Implemented in [theme.rs](../crates/gpui-kumo/src/theme.rs), using [Kumo tokens](kumo-tokens.md) and [Component recipes](kumo-component-recipes.md), pinned to Kumo commit `3fd5b648df578cb1ba214dedd30f475009f6a668`. The token reference records native font, disabled foreground, selection and color-mapping policies. The gallery switches appearance and previews representative colors, typography, gradients, highlights and shadows. Browser cascade, color parity and component paint/interaction remain validation work.
 
    Complete when the example can switch appearance modes and the selected recipes have traceable upstream references and resolved native values.
 
