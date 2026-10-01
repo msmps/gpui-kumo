@@ -11,6 +11,7 @@ use gpui_kumo::{
 };
 
 mod buttons;
+mod inputs;
 
 gpui_kit::actions!(gallery, [Quit, ToggleAppearance]);
 
@@ -36,6 +37,7 @@ impl AssetSource for GalleryAssets {
 struct Gallery {
     focus_handle: FocusHandle,
     _theme_subscription: Subscription,
+    inputs: gpui_kit::Entity<inputs::Inputs>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -93,7 +95,7 @@ impl Render for Gallery {
                                     .child(
                                         div()
                                             .text_color(theme.text.subtle)
-                                            .child("Button · foundations"),
+                                            .child("Button · Input · foundations"),
                                     ),
                             ),
                     )
@@ -126,6 +128,7 @@ impl Render for Gallery {
                         }),
                     )),
             )
+            .child(self.inputs.clone())
             .child(buttons::interaction_panel(self, &theme, cx))
             .child(buttons::variant_panel(&theme))
             .child(buttons::size_panel(&theme))
@@ -144,7 +147,7 @@ impl Render for Gallery {
                 div()
                     .text_color(theme.text.subtle)
                     .text_size(theme.typography.xs.size)
-                    .child("System font · ⌘L switches appearance · Input and Popover are next"),
+                    .child("System font · ⌘L switches appearance · Popover is next"),
             )
     }
 }
@@ -326,6 +329,7 @@ fn main() {
                         Gallery {
                             focus_handle,
                             _theme_subscription: subscription,
+                            inputs: cx.new(|cx| inputs::Inputs::new(window, cx)),
                             activations: 0,
                             disabled: false,
                             loading: false,

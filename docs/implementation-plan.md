@@ -1,6 +1,6 @@
 # First native Kumo slice
 
-Status: workspace, native theme foundation and initial Button implementation complete, updated 2026-10-01. Steps 1–2 have a native macOS baseline. Step 3 has Button with typed props, Base behavior and tested activation/availability; Input and Popover remain pending. Step 4 has Button examples and foundation previews. Step 5 remains open, including browser visual parity, documented paint differences, accessibility gaps and other platforms. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints.
+Status: workspace, native theme foundation and initial Button/Input implementations complete, updated 2026-10-01. Steps 1–2 have a native macOS baseline. Step 3 has Button and Input with typed APIs and tested behavior; Popover remains pending. Step 4 has Button/Input examples and foundation previews. Step 5 remains open, including browser visual parity, documented paint differences, accessibility gaps and other platforms. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints.
 
 ## Outcome
 
@@ -20,7 +20,7 @@ A working native window containing Kumo Button, Input and Popover components, wi
 
 3. **Build the three components behind our own APIs.** Define each contract using [Component construction](design-system-components.md); choose Base reuse per component.
 
-   Button's implementation and native policies are recorded in [Component recipes](kumo-component-recipes.md#native-button-contract). Tests exercise activation, availability, traversal and rendered geometry. Next implement Input's durable editing contract, then Popover composition and focus/positioning behavior.
+   Button's implementation and native policies are recorded in [Component recipes](kumo-component-recipes.md#native-button-contract). Tests exercise activation, availability, traversal and rendered geometry. Input now wraps Base's durable single-line editing engine behind Kumo-owned state and presentation APIs; its contract and limitations are recorded in [Component recipes](kumo-component-recipes.md#native-input-contract). Tests cover Unicode editing, clipboard/selection, read-only and disabled modes, composition, events, state retention and size geometry. Next implement Popover composition and focus/positioning behavior.
 
    | Component | What the slice must establish |
    | --- | --- |
