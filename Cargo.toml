@@ -1,0 +1,17 @@
+[workspace]
+members = ["crates/gpui-kumo", "apps/gallery"]
+default-members = ["apps/gallery"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+
+[workspace.dependencies]
+gpui-kit = { version = "=0.7.0", default-features = false }
+gpui-kumo = { path = "crates/gpui-kumo" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"

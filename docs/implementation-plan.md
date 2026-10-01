@@ -1,6 +1,6 @@
 # First native Kumo slice
 
-Status: proposed implementation plan, saved 2026-10-01. Implementation has not started. The working hypothesis is to own the Kumo design system and selectively reuse GPUI Base behavior; validate that hypothesis before expanding the component catalog. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints.
+Status: workspace bootstrap complete, updated 2026-10-01. Step 1 has a native macOS baseline; steps 2–5 remain pending. The working hypothesis is to own the Kumo design system and selectively reuse GPUI Base behavior; validate that hypothesis before expanding the component catalog. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints.
 
 ## Outcome
 

@@ -1,0 +1,13 @@
+[package]
+name = "kumo-gallery"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+gpui-kit.workspace = true
+gpui-kumo.workspace = true
+
+[lints]
+workspace = true

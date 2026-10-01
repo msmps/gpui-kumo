@@ -6,9 +6,17 @@ Read when selecting a dependency, checking a version-sensitive API, or updating 
 
 These docs were researched on **2026-10-01** against Zed upstream commit [`95cd535a5fad96d649513f96c5784ceefd379e47`](https://github.com/zed-industries/zed/commit/95cd535a5fad96d649513f96c5784ceefd379e47). Source links pin that commit so the described behavior remains inspectable.
 
-This is a research baseline, not a dependency selection. There is no Cargo manifest or lockfile yet. GPUI is pre-1.0; the upstream README explicitly warns of breaking changes. A published crate may differ from this source snapshot. Use the source corresponding to the project's eventual selected version as the authority for executable APIs. [Upstream README](https://github.com/zed-industries/zed/blob/95cd535a5fad96d649513f96c5784ceefd379e47/crates/gpui/README.md)
+This research baseline differs from the selected implementation dependencies below. GPUI is pre-1.0; the upstream README explicitly warns of breaking changes. Use the source corresponding to the selected dependency as the authority for executable APIs. [Upstream README](https://github.com/zed-industries/zed/blob/95cd535a5fad96d649513f96c5784ceefd379e47/crates/gpui/README.md)
 
 Code snippets in these docs illustrate source-checked API shapes. They have not been compiled or launched. Product guidance is labeled separately from upstream facts.
+
+## Implementation baseline
+
+The initial workspace selects GPUI Kit **0.7.0** with default features disabled. The resolved dependency set includes GPUI Base **0.7.0** and the GPUI/platform **0.3.7** snapshot family; the styled Component layer and Kit's bundled assets are excluded. Consult [Cargo.toml](../Cargo.toml) and [Cargo.lock](../Cargo.lock) for exact configuration and resolutions. Startup was checked against the [0.7.0 facade source](https://github.com/longbridge/gpui-kit/blob/v0.7.0/crates/kit/src/lib.rs).
+
+Rust is pinned in [rust-toolchain.toml](../rust-toolchain.toml). The first validation target is `aarch64-apple-darwin` with full Xcode. The gallery supplies its own embedded SVG asset. See the [repository README](../README.md) for run and check commands and the [Base assessment](gpui-base-assessment.md) for the snapshot's upstream Zed revision.
+
+Bootstrap verification on 2026-10-01: workspace build, formatting and Clippy with warnings denied passed. Native window creation, visible text, embedded SVG rendering and the native Quit menu action were verified. Other platforms and component behavior remain unverified. Cargo reports a future-compatibility warning in the upstream `block` 0.1.6 dependency; the current toolchain builds successfully.
 
 ## Dependency selection
 
