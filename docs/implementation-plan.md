@@ -1,6 +1,6 @@
 # First native Kumo slice
 
-Status: workspace bootstrap complete, updated 2026-10-01. Step 1 has a native macOS baseline; steps 2–5 remain pending. The working hypothesis is to own the Kumo design system and selectively reuse GPUI Base behavior; validate that hypothesis before expanding the component catalog. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints.
+Status: workspace bootstrap and first-slice source extraction complete, updated 2026-10-01. Step 1 has a native macOS baseline. Step 2 has documented tokens and component recipes; native theme implementation and steps 3–5 remain pending. The working hypothesis is to own the Kumo design system and selectively reuse GPUI Base behavior; validate that hypothesis before expanding the component catalog. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints.
 
 ## Outcome
 
@@ -13,6 +13,8 @@ A working native window containing Kumo Button, Input and Popover components, wi
    Complete when the native application builds and opens a window, Base initialization and window hosting work, and dependency versions and required platform features are recorded in project configuration.
 
 2. **Implement the minimum Kumo theme.** Extract the light/dark colors, typography, spacing, radii, gradients, shadows and focus treatment needed by the three components. Keep Kumo's semantic token model separate from Base's internal theme, with an explicit adapter where Base consumes theme values. Use [Kumo grounding](kumo-grounding.md) and [Styling](gpui-styling.md).
+
+   Source extraction is complete in [Kumo tokens](kumo-tokens.md) and [Component recipes](kumo-component-recipes.md), pinned to Kumo commit `3fd5b648df578cb1ba214dedd30f475009f6a668`. Next implement the typed theme and Base adapter, resolving the font profile, undefined disabled Input foreground, color conversion and native paint mapping documented there. Browser cascade and visual comparison remain validation work.
 
    Complete when the example can switch appearance modes and the selected recipes have traceable upstream references and resolved native values.
 

@@ -8,6 +8,8 @@ This is the agent entry point for building a design system on GPUI primitives. R
 | --- | --- |
 | Start the native example or review implementation milestones | [Implementation plan](implementation-plan.md) |
 | Map Kumo tokens, component contracts, or native-port differences | [Kumo grounding](kumo-grounding.md) |
+| Implement the first slice's palette, typography, spacing or effects | [Kumo token extraction](kumo-tokens.md) |
+| Translate Button, Input or Popover geometry and visual states | [Kumo component recipes](kumo-component-recipes.md) |
 | Compare raw GPUI with GPUI Base as the behavior foundation | [GPUI Base assessment](gpui-base-assessment.md) |
 | Understand state ownership, rendering, or startup | [GPUI grounding](gpui-grounding.md) |
 | Choose layout, text, assets, lists, overlays, or custom drawing | [Primitives](gpui-primitives.md) |
@@ -25,4 +27,4 @@ This is the agent entry point for building a design system on GPUI primitives. R
 4. Implement the smallest complete component and a representative example. Finish when its state and token choices are exercised through the actual rendering and input paths.
 5. Apply [Verification](gpui-verification.md). Finish when the relevant checks pass and any unverified platform behavior is reported with its scope.
 
-No palette, typography scale, component API, theme ownership policy, or supported-platform contract has been selected yet. Resolve those choices during implementation; the examples here illustrate mechanisms rather than a finished visual language.
+The first slice has pinned Kumo palette, typography and component recipe references. Native font selection, component APIs, theme ownership and supported-platform contracts remain implementation decisions; see the [implementation plan](implementation-plan.md) for progress and acceptance criteria.
