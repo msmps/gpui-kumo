@@ -1,6 +1,6 @@
 # Verifying a GPUI component
 
-Read when completing a component or investigating a rendering/input discrepancy. This is **Design-system guidance**. The workspace has a native gallery and headless Button tests; see the [implementation plan](implementation-plan.md) for current validation scope.
+Read when completing a component or investigating a rendering/input discrepancy. This is **Design-system guidance**. The workspace has a native gallery and headless Button, Input and Popover tests; see the [implementation plan](implementation-plan.md) for current validation scope.
 
 ## Compile and exercise
 
@@ -40,3 +40,7 @@ Test externally observable outcomes: operation counts, focus targets, values, ge
 | An overlay looks correct but leaks input | Focus/input boundary, propagation, occlusion, and dismissal |
 
 A component is verified when all applicable contract branches have passing evidence. Report remaining platform checks precisely; do not equate source review or successful compilation with a verified native experience.
+
+## First-slice evidence
+
+[Popover validation](popover-validation.md) records the pinned browser comparison, actual Linux AT-SPI activation/focus checks, collision and motion tests, and concrete upstream/platform limits. Headless metadata assertions and operating-system accessibility checks are distinct evidence.

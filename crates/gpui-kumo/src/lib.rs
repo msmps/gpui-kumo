@@ -9,15 +9,18 @@ pub mod button;
 mod color;
 mod icon;
 pub mod input;
+pub mod popover;
 pub mod theme;
 
 pub use button::Button;
 pub use icon::Icon;
 pub use input::{Input, InputEvent, InputState};
+pub use popover::{Popover, PopoverEvent, PopoverState};
 pub use theme::{Appearance, Theme, set_appearance, set_theme, theme};
 
 /// Initialize the design system before opening application windows.
 pub fn init(cx: &mut App) {
     gpui_kit::init(cx);
+    popover::init(cx);
     set_theme(Theme::new(Appearance::Light), cx);
 }

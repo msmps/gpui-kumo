@@ -60,6 +60,7 @@ pub struct Button {
     disabled: bool,
     loading: bool,
     open: bool,
+    popover_expanded: Option<bool>,
     focus_handle: Option<FocusHandle>,
     on_click: Option<ActivationHandler>,
 }
@@ -79,6 +80,7 @@ impl Button {
             disabled: false,
             loading: false,
             open: false,
+            popover_expanded: None,
             focus_handle: None,
             on_click: None,
         }
@@ -124,6 +126,11 @@ impl Button {
     /// Controlled open presentation for a future overlay trigger; not toggle state.
     pub fn open(mut self, open: bool) -> Self {
         self.open = open;
+        self
+    }
+
+    pub(crate) fn popover_expanded(mut self, expanded: bool) -> Self {
+        self.popover_expanded = Some(expanded);
         self
     }
 
@@ -351,6 +358,13 @@ impl RenderOnce for Button {
             .accessibility_label(self.name)
             .track_focus(&focus_handle)
             .disabled(unavailable)
+            .when_some(self.popover_expanded, |this, expanded| {
+                this.aria_expanded(expanded).aria_description(if expanded {
+                    "Expanded nonmodal dialog"
+                } else {
+                    "Collapsed nonmodal dialog"
+                })
+            })
             .flex_shrink_0()
             .h(geometry.height)
             .px(geometry.padding)

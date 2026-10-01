@@ -5,3 +5,5 @@ Before designing or implementing components, tokens, themes, or interaction beha
 ## Engineering preferences
 
 Use idiomatic Rust and follow Rust and GPUI best practices: retain durable UI state in entities, use typed semantic APIs, keep Base implementation details within component boundaries, and verify behavior through real rendering and input paths. Run formatting, relevant tests, and Clippy with warnings denied before completing changes.
+
+Complete checks that can run in the current environment and resolve failures before treating implementation work as finished. Record measured results separately from concrete dependency or platform limits; do not leave runnable validation as a generic follow-up.

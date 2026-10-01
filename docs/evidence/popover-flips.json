@@ -1,0 +1,79 @@
+{
+  "captured_at_utc": "2026-10-01T22:25:43.757397+00:00",
+  "platform": "Debian 13, native GPUI X11, Xvfb 1440x1000, software Vulkan, 640x480 window",
+  "measurement": "Live AT-SPI component bounds; accessible click opens each trigger",
+  "cases": [
+    {
+      "requested": "bottom",
+      "observed": "top",
+      "gap_px": 8,
+      "trigger_screen_bounds": {
+        "x": 255,
+        "y": 428,
+        "width": 130,
+        "height": 36
+      },
+      "popup_screen_bounds": {
+        "x": 200,
+        "y": 316,
+        "width": 240,
+        "height": 104
+      },
+      "screenshot": "popover-flip-bottom-to-top.png"
+    },
+    {
+      "requested": "top",
+      "observed": "bottom",
+      "gap_px": 8,
+      "trigger_screen_bounds": {
+        "x": 255,
+        "y": 8,
+        "width": 104,
+        "height": 36
+      },
+      "popup_screen_bounds": {
+        "x": 187,
+        "y": 52,
+        "width": 240,
+        "height": 104
+      },
+      "screenshot": "popover-flip-top-to-bottom.png"
+    },
+    {
+      "requested": "left",
+      "observed": "right",
+      "gap_px": 8,
+      "trigger_screen_bounds": {
+        "x": 8,
+        "y": 240,
+        "width": 103,
+        "height": 36
+      },
+      "popup_screen_bounds": {
+        "x": 119,
+        "y": 206,
+        "width": 240,
+        "height": 104
+      },
+      "screenshot": "popover-flip-left-to-right.png"
+    },
+    {
+      "requested": "right",
+      "observed": "left",
+      "gap_px": 8,
+      "trigger_screen_bounds": {
+        "x": 490,
+        "y": 240,
+        "width": 113,
+        "height": 36
+      },
+      "popup_screen_bounds": {
+        "x": 242,
+        "y": 206,
+        "width": 240,
+        "height": 104
+      },
+      "screenshot": "popover-flip-right-to-left.png"
+    }
+  ]
+}

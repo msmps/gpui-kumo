@@ -12,6 +12,7 @@ use gpui_kumo::{
 
 mod buttons;
 mod inputs;
+mod popovers;
 
 gpui_kit::actions!(gallery, [Quit, ToggleAppearance]);
 
@@ -38,6 +39,7 @@ struct Gallery {
     focus_handle: FocusHandle,
     _theme_subscription: Subscription,
     inputs: gpui_kit::Entity<inputs::Inputs>,
+    popovers: gpui_kit::Entity<popovers::Popovers>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -95,7 +97,7 @@ impl Render for Gallery {
                                     .child(
                                         div()
                                             .text_color(theme.text.subtle)
-                                            .child("Button · Input · foundations"),
+                                            .child("Button · Input · Popover · foundations"),
                                     ),
                             ),
                     )
@@ -128,6 +130,7 @@ impl Render for Gallery {
                         }),
                     )),
             )
+            .child(self.popovers.clone())
             .child(self.inputs.clone())
             .child(buttons::interaction_panel(self, &theme, cx))
             .child(buttons::variant_panel(&theme))
@@ -147,7 +150,7 @@ impl Render for Gallery {
                 div()
                     .text_color(theme.text.subtle)
                     .text_size(theme.typography.xs.size)
-                    .child("System font · ⌘L switches appearance · Popover is next"),
+                    .child("System font · ⌘L switches appearance · Button · Input · Popover"),
             )
     }
 }
@@ -330,6 +333,7 @@ fn main() {
                             focus_handle,
                             _theme_subscription: subscription,
                             inputs: cx.new(|cx| inputs::Inputs::new(window, cx)),
+                            popovers: cx.new(|cx| popovers::Popovers::new(window, cx)),
                             activations: 0,
                             disabled: false,
                             loading: false,
