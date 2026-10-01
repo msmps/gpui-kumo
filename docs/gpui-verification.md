@@ -1,6 +1,6 @@
 # Verifying a GPUI component
 
-Read when completing a component or investigating a rendering/input discrepancy. This is **Design-system guidance**. The workspace currently contains documentation; executable examples and tests will be added with implementation.
+Read when completing a component or investigating a rendering/input discrepancy. This is **Design-system guidance**. The workspace has a native gallery and headless Button tests; see the [implementation plan](implementation-plan.md) for current validation scope.
 
 ## Compile and exercise
 

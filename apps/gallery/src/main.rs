@@ -3,10 +3,14 @@ use std::borrow::Cow;
 use gpui_kit::{
     App, AppContext, AssetSource, Bounds, Context, Div, FocusHandle, FontWeight,
     InteractiveElement, IntoElement, KeyBinding, Menu, MenuItem, ParentElement, Render,
-    SharedString, Styled, Subscription, TitlebarOptions, Window, WindowBounds, WindowOptions,
-    base::Button, div, px, size, svg,
+    SharedString, StatefulInteractiveElement, Styled, Subscription, TitlebarOptions, Window,
+    WindowBounds, WindowOptions, div, px, size, svg,
 };
-use gpui_kumo::{Appearance, Theme, set_appearance, theme as current_theme};
+use gpui_kumo::{
+    Appearance, Button, Theme, button::Variant, set_appearance, theme as current_theme,
+};
+
+mod buttons;
 
 gpui_kit::actions!(gallery, [Quit, ToggleAppearance]);
 
@@ -32,6 +36,9 @@ impl AssetSource for GalleryAssets {
 struct Gallery {
     focus_handle: FocusHandle,
     _theme_subscription: Subscription,
+    activations: usize,
+    disabled: bool,
+    loading: bool,
 }
 
 impl Render for Gallery {
@@ -45,6 +52,7 @@ impl Render for Gallery {
                 set_appearance(current_theme(cx).appearance.opposite(), cx);
             })
             .size_full()
+            .overflow_y_scroll()
             .flex()
             .flex_col()
             .p(px(32.))
@@ -80,79 +88,63 @@ impl Render for Gallery {
                                             .text_size(px(24.))
                                             .line_height(px(32.))
                                             .font_weight(FontWeight::MEDIUM)
-                                            .child("Kumo foundations"),
+                                            .child("Kumo component gallery"),
                                     )
                                     .child(
                                         div()
                                             .text_color(theme.text.subtle)
-                                            .child("Color, typography and effects"),
+                                            .child("Button · foundations"),
                                     ),
                             ),
                     )
                     .child(div().flex().gap(theme.spacing.eight).children(
                         [Appearance::Light, Appearance::Dark].map(|appearance| {
                             let selected = theme.appearance == appearance;
-                            Button::new(if appearance == Appearance::Light {
-                                "light"
-                            } else {
-                                "dark"
-                            })
-                            .accessibility_label(if appearance == Appearance::Light {
-                                "Light appearance"
-                            } else {
-                                "Dark appearance"
-                            })
-                            .selected(selected)
-                            .h(px(36.))
-                            .px(theme.spacing.twelve)
-                            .rounded(theme.radii.lg)
-                            .bg(if selected {
-                                theme.colors.contrast
-                            } else {
-                                theme.colors.base
-                            })
-                            .text_color(if selected {
-                                theme.text.inverse
-                            } else {
-                                theme.text.default
-                            })
-                            .focus_visible(|style| {
-                                style.border_2().border_color(theme.colors.brand)
-                            })
-                            .on_click(move |_, _, cx| set_appearance(appearance, cx))
-                            .child(
+                            Button::new(
+                                if appearance == Appearance::Light {
+                                    "light"
+                                } else {
+                                    "dark"
+                                },
                                 if appearance == Appearance::Light {
                                     "Light"
                                 } else {
                                     "Dark"
                                 },
                             )
+                            .accessibility_label(if appearance == Appearance::Light {
+                                "Light appearance"
+                            } else {
+                                "Dark appearance"
+                            })
+                            .variant(if selected {
+                                Variant::Primary
+                            } else {
+                                Variant::Secondary
+                            })
+                            .on_click(move |_, _, cx| set_appearance(appearance, cx))
                         }),
                     )),
             )
+            .child(buttons::interaction_panel(self, &theme, cx))
+            .child(buttons::variant_panel(&theme))
+            .child(buttons::size_panel(&theme))
             .child(
-                div()
-                    .flex()
-                    .gap(px(24.))
-                    .flex_1()
-                    .child(color_panel(&theme))
-                    .child(
-                        div()
-                            .flex()
-                            .flex_col()
-                            .gap(px(24.))
-                            .flex_1()
-                            .child(typography_panel(&theme))
-                            .child(effects_panel(&theme)),
-                    ),
+                div().flex().gap(px(24.)).child(color_panel(&theme)).child(
+                    div()
+                        .flex()
+                        .flex_col()
+                        .gap(px(24.))
+                        .flex_1()
+                        .child(typography_panel(&theme))
+                        .child(effects_panel(&theme)),
+                ),
             )
             .child(
                 div()
                     .text_color(theme.text.subtle)
                     .text_size(theme.typography.xs.size)
-                    .child(
-                        "System font · ⌘L switches appearance · Button, Input and Popover are next",
-                    ),
+                    .child("System font · ⌘L switches appearance · Input and Popover are next"),
             )
     }
 }
@@ -161,6 +153,7 @@ fn panel(theme: &Theme, title: &'static str) -> Div {
     div()
         .flex()
         .flex_col()
+        .flex_shrink_0()
         .gap(theme.spacing.sixteen)
         .p(px(24.))
         .bg(theme.colors.base)
@@ -333,6 +326,9 @@ fn main() {
                         Gallery {
                             focus_handle,
                             _theme_subscription: subscription,
+                            activations: 0,
+                            disabled: false,
+                            loading: false,
                         }
                     })
                 },

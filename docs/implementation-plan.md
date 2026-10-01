@@ -1,6 +1,6 @@
 # First native Kumo slice
 
-Status: workspace and initial native theme foundation complete, updated 2026-10-01. Steps 1–2 have a native macOS baseline, typed Kumo tokens, a Base adapter and a gallery appearance switcher. Steps 3–5 remain pending; browser visual parity and component acceptance work are unverified. The working hypothesis is to own the Kumo design system and selectively reuse GPUI Base behavior; validate that hypothesis before expanding the component catalog. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints.
+Status: workspace, native theme foundation and initial Button implementation complete, updated 2026-10-01. Steps 1–2 have a native macOS baseline. Step 3 has Button with typed props, Base behavior and tested activation/availability; Input and Popover remain pending. Step 4 has Button examples and foundation previews. Step 5 remains open, including browser visual parity, documented paint differences, accessibility gaps and other platforms. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints.
 
 ## Outcome
 
@@ -19,6 +19,8 @@ A working native window containing Kumo Button, Input and Popover components, wi
    Complete when the example can switch appearance modes and the selected recipes have traceable upstream references and resolved native values.
 
 3. **Build the three components behind our own APIs.** Define each contract using [Component construction](design-system-components.md); choose Base reuse per component.
+
+   Button's implementation and native policies are recorded in [Component recipes](kumo-component-recipes.md#native-button-contract). Tests exercise activation, availability, traversal and rendered geometry. Next implement Input's durable editing contract, then Popover composition and focus/positioning behavior.
 
    | Component | What the slice must establish |
    | --- | --- |
