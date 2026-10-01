@@ -1,0 +1,39 @@
+# GPUI Base assessment
+
+Reviewed 2026-10-01. This is an assessment and proposed approach, not an accepted dependency decision. Source inspected: GPUI Kit `main` at [`3a142844d3661159964dce9e5512ca9a40286160`](https://github.com/longbridge/gpui-kit/tree/3a142844d3661159964dce9e5512ca9a40286160). GitHub reports [v0.7.0](https://github.com/longbridge/gpui-kit/releases/tag/v0.7.0) published on 2026-09-28. Published release and inspected `main` are distinct baselines.
+
+## Recommendation
+
+**Use Base selectively for behavior; own the Kumo design system.** Build our semantic tokens, theme model, typography, recipes, component contracts, and composed layouts. Wrap Base where its behavior fits. Use ordinary GPUI composition for presentation-only units. This follows the same broad separation as Kumo's styled components and unstyled Base UI, but neither library establishes native Kumo fidelity automatically. See [Kumo grounding](kumo-grounding.md).
+
+Base explicitly targets applications building their own visual language and separates itself from the styled Component layer. This makes it a better candidate than restyling ready-made Component widgets. [Base overview](https://gpui-kit.com/base/)
+
+## Findings that affect the decision
+
+| Finding | Consequence |
+| --- | --- |
+| Base Button exposes GPUI styling, children, selected/disabled recipes, accessible naming, and caller-owned focus handles. It defaults to centered flex layout and line height 1, then applies caller refinement. | Kumo geometry and state recipes can live in our wrapper, but verify defaults and style precedence per control. “Unstyled” still includes control geometry. [Button source](https://github.com/longbridge/gpui-kit/blob/3a142844d3661159964dce9e5512ca9a40286160/crates/base/src/button.rs) |
+| Button tests cover one pointer activation, one Enter/Space activation each, unavailable controls blocking activation, role/label, and style precedence. An accessibility test explicitly records that an unavailable Button has no Click action but its AccessKit disabled property remains false because the GPUI interface lacks the setter. | Reuse provides substantial tested behavior; accessibility still needs our acceptance checks and potentially upstream fixes. Do not claim full native accessibility from library adoption. [Button tests, including the recorded disabled-metadata gap](https://github.com/longbridge/gpui-kit/blob/3a142844d3661159964dce9e5512ca9a40286160/crates/base/src/button.rs#L499-L555) |
+| Input is a presentation wrapper around an `Entity<InputState>`; `InputState` aliases the single-line shared editing engine. | Its editing state has a durable owner; do not assume every Base control has a stateless, externally controlled value API. Adapt ownership to our contract. [Input source](https://github.com/longbridge/gpui-kit/blob/3a142844d3661159964dce9e5512ca9a40286160/crates/base/src/input/input/mod.rs) |
+| Base installs its own semantic theme tokens, including selection. Some components derive appearance from these roles; Component initialization projects its theme into them. | Keep a deliberate adapter from Kumo tokens to Base internals. Base's role names are insufficient as our complete Kumo token model. [Theme initialization guide](https://gpui-kit.com/base/getting-started/) |
+| The workspace pins `gpui-pre`, platform, macros, and related snapshot crates exactly to 0.3.7. Comments document a previous incompatible automatic snapshot upgrade. | Adopt a compatible pinned set; our existing Zed source notes are research context, not automatically the implementation dependency. [Workspace manifest](https://github.com/longbridge/gpui-kit/blob/3a142844d3661159964dce9e5512ca9a40286160/Cargo.toml) |
+| Base directly depends on text/editor infrastructure, including Ropey, LSP types, Markdown and HTML parsing; these are not all optional features. | It is a substantial foundation, not a tiny button helper. Measure compile/dependency cost in the first native slice. [Base manifest](https://github.com/longbridge/gpui-kit/blob/3a142844d3661159964dce9e5512ca9a40286160/crates/base/Cargo.toml) |
+| v0.7.0 changes window startup, introduces Base-owned Root and design-system Root plugins, and removes manual overlay layer APIs. Recent releases include accessibility and focus fixes. | There is active maintenance and useful infrastructure, alongside API churn. Plan bounded upgrades rather than floating revisions. [Release notes](https://github.com/longbridge/gpui-kit/releases/tag/v0.7.0) |
+
+## Snapshot lag checked 2026-10-01
+
+The published [gpui-pre 0.3.7 crate](https://crates.io/crates/gpui-pre/0.3.7) records `package.metadata.gpui-pre.zed-rev = 1a28cff4b409169bac058bca40dfbfeb7621d19b` in `Cargo.toml.orig` (verified from the downloaded crate archive). That [Zed commit](https://github.com/zed-industries/zed/commit/1a28cff4b409169bac058bca40dfbfeb7621d19b) is dated September 27, 19:37:50 UTC. The inspected `main` head, [`95cd535`](https://github.com/zed-industries/zed/commit/95cd535a5fad96d649513f96c5784ceefd379e47), is dated October 1, 16:33:50 UTC: a gap of 3 days, 20 hours, 56 minutes. GitHub's [comparison](https://github.com/zed-industries/zed/compare/1a28cff4b409169bac058bca40dfbfeb7621d19b...95cd535a5fad96d649513f96c5784ceefd379e47) reports 69 intervening repository commits. A path-filtered commit query found 11 touching `crates/gpui` during this interval; that excludes changes confined to platform and companion crates. This is a recent snapshot, although the interval includes input/keybinding, platform, test-support, benchmarking and hang-monitor changes. Calendar proximity does not prove compatibility with head.
+
+## Boundary and acceptance slice
+
+Proposed boundary: our public components express Kumo variants, sizes, slots, availability and value contracts; internal adapters call Base. Avoid exposing Base-specific theme or state types throughout application code unless that becomes an explicit contract. Presentation-only Text, LayerCard and layout units can use GPUI directly. Input, composite selection, and overlays are stronger reuse candidates because their behavioral requirements are extensive. This is design guidance inferred from the inspected architecture, not a completed component audit.
+
+Before selecting the dependency, build one native slice covering Button, Input and Popover or Dialog. Acceptance means Kumo geometry and state visuals in both modes; activation exactly once; unavailable controls; forward/reverse traversal; overlay dismissal and focus restoration; text selection, clipboard and IME; meaningful accessibility metadata. Check Base Root/theme integration without importing Component defaults. Record the pinned dependency and any behavior we must replace. See [Verification](gpui-verification.md).
+
+Raw GPUI remains reasonable where a control needs little behavior or Base's structure conflicts with the contract. Building the entire interaction foundation ourselves would increase the text-editing, overlay and focus work we own; selective reuse is the cleaner starting hypothesis.
+
+## Limits
+
+Source and release records were read; no dependency was installed, tests executed, native application rendered, or assistive-technology workflow exercised. Button and Input were inspected directly. Root and overlay changes were assessed through release notes, not an exhaustive source audit. Documentation pages exposed different cached versions during this review; check the selected release's source and manifest rather than copying an unpinned installation snippet.
+
+The Base overview is summarized and adapted with attribution to [GPUI Kit](https://gpui-kit.com/base/) under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Upstream software source is Apache-2.0; this note adds project-specific assessment and recommendations.
