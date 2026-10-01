@@ -6,6 +6,7 @@ This is the agent entry point for building a design system on GPUI primitives. R
 
 | Task | Read |
 | --- | --- |
+| Start the native example or review implementation milestones | [Implementation plan](implementation-plan.md) |
 | Map Kumo tokens, component contracts, or native-port differences | [Kumo grounding](kumo-grounding.md) |
 | Compare raw GPUI with GPUI Base as the behavior foundation | [GPUI Base assessment](gpui-base-assessment.md) |
 | Understand state ownership, rendering, or startup | [GPUI grounding](gpui-grounding.md) |
