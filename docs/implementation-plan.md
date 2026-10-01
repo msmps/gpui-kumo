@@ -1,6 +1,6 @@
 # First native Kumo slice
 
-Status: workspace, native theme foundation and initial Button/Input/Popover implementations complete, updated 2026-10-01. Steps 1–2 have a native macOS baseline. Step 3 has Button, Input and Popover with typed APIs and tested behavior. Step 4 has examples for all three components and foundation previews. Step 5 now includes a pinned Popover browser comparison and native Linux AT-SPI validation. Whole-catalog pixel comparisons, spoken screen-reader workflows and other-platform checks remain open; [Popover validation](popover-validation.md) records measured results and concrete dependency limits. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints.
+Status: workspace, native theme foundation and initial Button/Input/Popover implementations complete, updated 2026-10-01. Steps 1–2 have a native macOS baseline. Step 3 has Button, Input and Popover with typed APIs and tested behavior. Step 4 has examples for all three components and foundation previews. Step 5 now includes a pinned Popover browser comparison and native Linux AT-SPI validation. Whole-catalog pixel comparisons, spoken screen-reader workflows and other-platform checks remain open; [Popover validation](popover-validation.md) records measured results and concrete dependency limits. Read the [Base assessment](gpui-base-assessment.md) for the evidence and constraints. Remaining component work is tracked individually in the [local issue tracker](issues/README.md).
 
 ## Outcome
 
