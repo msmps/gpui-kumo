@@ -6,6 +6,7 @@ This is the agent entry point for building a design system on GPUI primitives. R
 
 | Task | Read |
 | --- | --- |
+| Map Kumo tokens, component contracts, or native-port differences | [Kumo grounding](kumo-grounding.md) |
 | Understand state ownership, rendering, or startup | [GPUI grounding](gpui-grounding.md) |
 | Choose layout, text, assets, lists, overlays, or custom drawing | [Primitives](gpui-primitives.md) |
 | Implement tokens, themes, typography, or state styling | [Styling](gpui-styling.md) |
