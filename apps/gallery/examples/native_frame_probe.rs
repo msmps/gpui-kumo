@@ -1,6 +1,6 @@
 //! Diagnostic fixture for KUMO-020: the gallery's retained Banner panel without
 //! its other panels. Compare visible and accessible activation counts.
-//! This reproduces the discrepancy but is not yet a minimal regression.
+//! Platform visibility is shown to distinguish occlusion from stale rendering.
 //! Gallery SVG assets are deliberately omitted; icons remain empty.
 
 use gpui_kit::{
@@ -18,7 +18,7 @@ struct Root {
 }
 
 impl Render for Root {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = gpui_kumo::theme(cx);
         div()
             .id("root")
@@ -29,6 +29,7 @@ impl Render for Root {
             .p(px(32.))
             .bg(theme.colors.canvas)
             .text_color(theme.text.default)
+            .child(format!("Platform visibility: {:?}", window.visibility()))
             .child(self.banners.clone())
     }
 }
