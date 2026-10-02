@@ -57,3 +57,6 @@ pub use switch::{Switch, SwitchGroup};
 
 pub mod button_group;
 pub use button_group::ButtonGroup;
+
+pub mod input_group;
+pub use input_group::{InputGroup, InputGroupAddon};

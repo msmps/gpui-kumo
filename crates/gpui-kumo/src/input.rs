@@ -8,6 +8,7 @@ use gpui_kit::{
 };
 
 use crate::{Theme, theme};
+use gpui_kit::base::TestSupportExt;
 
 mod accessibility;
 
@@ -155,6 +156,7 @@ struct Presentation {
     label: bool,
     description: Option<SharedString>,
     error: Option<SharedString>,
+    group: Option<crate::input_group::Container>,
 }
 
 /// Consumed presentation over an application-retained `Entity<InputState>`.
@@ -175,6 +177,10 @@ impl Input {
             state: state.clone(),
             presentation: Presentation::default(),
         }
+    }
+    pub(crate) fn group(mut self, group: crate::input_group::Container) -> Self {
+        self.presentation.group = Some(group);
+        self
     }
     pub fn size(mut self, size: Size) -> Self {
         self.presentation.size = size;
@@ -208,7 +214,7 @@ impl RenderOnce for Input {
 impl Render for InputState {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = theme(cx).clone();
-        let (height, padding, radius, text) = match self.presentation.size {
+        let (mut height, padding, radius, text) = match self.presentation.size {
             Size::Xs => (20., theme.spacing.six, theme.radii.sm, theme.typography.xs),
             Size::Sm => (
                 26.,
@@ -229,6 +235,49 @@ impl Render for InputState {
                 theme.typography.base,
             ),
         };
+        let group = self.presentation.group.as_ref();
+        if group.is_some() {
+            height = match self.presentation.size {
+                Size::Xs => 24.,
+                Size::Sm => 28.,
+                Size::Base => 36.,
+                Size::Lg => 44.,
+            };
+        }
+        let seam = match self.presentation.size {
+            Size::Xs => 4.,
+            Size::Sm => 6.,
+            Size::Base => 8.,
+            Size::Lg => 10.,
+        };
+        let outer = match self.presentation.size {
+            Size::Xs | Size::Sm => 6.,
+            Size::Base => 8.,
+            Size::Lg => 10.,
+        };
+        let icon_size = match self.presentation.size {
+            Size::Xs => 10.,
+            Size::Sm => 13.,
+            Size::Base => 18.,
+            Size::Lg => 20.,
+        };
+        let start = group
+            .and_then(|g| g.start.as_ref())
+            .map(|a| a.render("addon-start", outer, icon_size, true, &theme));
+        let end = group
+            .and_then(|g| g.end.as_ref())
+            .map(|a| a.render("addon-end", outer, icon_size, false, &theme));
+        let editor_element = div()
+            .id("editor-zone")
+            .test_support()
+            .flex()
+            .items_center()
+            .flex_1()
+            .min_w_0()
+            .h_full()
+            .pl(if start.is_some() { px(seam) } else { padding })
+            .pr(if end.is_some() { px(seam) } else { padding })
+            .child(base::input::Input::new(&self.editor));
         let focus = self.focus_handle(cx);
         let focused = !self.disabled && focus.is_focused(window);
         let invalid = self.presentation.error.is_some();
@@ -351,7 +400,9 @@ impl Render for InputState {
                     .w_full()
                     .min_w_0()
                     .h(px(height))
-                    .px(padding)
+                    .px(px(0.))
+                    .flex()
+                    .items_center()
                     .rounded(radius)
                     .relative()
                     .bg(theme.colors.control)
@@ -360,7 +411,31 @@ impl Render for InputState {
                     .text_size(text.size)
                     .line_height(text.line_height)
                     .font_weight(FontWeight::NORMAL)
-                    .child(base::input::Input::new(&self.editor))
+                    .when(group.is_some(), |this| {
+                        let target = focus.clone();
+                        this.opacity(if disabled { 0.5 } else { 1. }).on_mouse_down(
+                            gpui_kit::MouseButton::Left,
+                            move |_, window, cx| {
+                                if !disabled {
+                                    target.focus(window, cx);
+                                }
+                            },
+                        )
+                    })
+                    .child(
+                        div()
+                            .id("content-row")
+                            .test_support()
+                            .flex()
+                            .items_center()
+                            .w_full()
+                            .min_w_0()
+                            .h_full()
+                            .when(group.is_some(), |this| this.overflow_hidden())
+                            .when_some(start, |this, addon| this.child(addon))
+                            .child(editor_element)
+                            .when_some(end, |this, addon| this.child(addon)),
+                    )
                     .child(
                         canvas(
                             |_, _, _| (),

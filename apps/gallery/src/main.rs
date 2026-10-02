@@ -18,6 +18,7 @@ mod cards;
 mod checkboxes;
 mod empties;
 mod fields;
+mod input_groups;
 mod inputs;
 mod links;
 mod loaders;
@@ -66,6 +67,7 @@ struct Gallery {
     radios: gpui_kit::Entity<radios::Radios>,
     switches: gpui_kit::Entity<switches::Switches>,
     button_groups: gpui_kit::Entity<button_groups::ButtonGroups>,
+    input_groups: gpui_kit::Entity<input_groups::InputGroups>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -171,6 +173,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.input_groups.clone())
         .child(self.button_groups.clone())
         .child(self.switches.clone())
         .child(self.radios.clone())
@@ -401,6 +404,7 @@ fn main() {
                             radios: cx.new(radios::Radios::new),
                             switches: cx.new(switches::Switches::new),
                             button_groups: cx.new(button_groups::ButtonGroups::new),
+                            input_groups: cx.new(|cx| input_groups::InputGroups::new(window, cx)),
                             activations: 0,
                             disabled: false,
                             loading: false,
