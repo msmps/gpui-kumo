@@ -5,6 +5,7 @@
 
 use gpui_kit::App;
 
+pub mod badge;
 pub mod button;
 mod color;
 mod icon;
@@ -15,6 +16,7 @@ pub mod popover;
 pub mod text;
 pub mod theme;
 
+pub use badge::Badge;
 pub use button::Button;
 pub use icon::Icon;
 pub use input::{Input, InputEvent, InputState};

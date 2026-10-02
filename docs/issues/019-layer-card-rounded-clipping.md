@@ -12,7 +12,7 @@ This is a dependency rendering limit for arbitrary descendant content. Painting 
 
 Secondary solid backgrounds now paint a quad rounded to the actual root bounds, intersected with the section’s rectangular bounds and the current ancestor mask. This preserves the −8px margins without rounding the header above the visible card. Ephemeral frame geometry stays private; descendants retain their original layout, hit testing and accessibility. Canvas bounds explicitly use zero insets, so section padding does not shift the paint mask.
 
-The original top-corner regression passes, as does a header/footer regression in both themes with a 16px root radius and contrasting caller background. Native light and dark gallery inspection shows smooth top corners. General descendant clipping, section-specific custom radii and gradient backgrounds still use GPUI’s rectangular overflow path; this issue remains open for those branches.
+The original top-corner regression passes, as does a header/footer regression in both themes with a 16px and oversized root radii and contrasting caller background. Custom painting now clamps radii to the actual root size, matching normal GPUI style paint. Native light and dark gallery inspection shows smooth top corners. General descendant clipping, section-specific custom radii and gradient backgrounds still use GPUI’s rectangular overflow path; this issue remains open for those branches.
 
 ## Remaining acceptance
 

@@ -35,11 +35,13 @@ On macOS 26.6.2 / aarch64-apple-darwin, MacBookPro18,1, 10 CPUs, 16 GiB RAM, Rus
 
 ## Current checkpoint
 
-LayerCard implementation and retained gallery composition are ready for the validation/commit gate. Six rendered regressions cover source geometry and overrides, base line-height versus simple inheritance, nested Button/Input activation/focus/Unicode editing/disabled behavior, empty/oversized content, default top-corner paint and header/footer fills under caller radius/background overrides. The user’s screenshot finding reproduced square secondary fills over the rounded root. Solid secondary fills now intersect the actual rounded root shape with section bounds; the native rebuilt light capture shows smooth corners. Arbitrary descendant rounded clipping remains [KUMO-019](issues/019-layer-card-rounded-clipping.md).
+Latest pushed checkpoint: `ea86f71` (LayerCard and default rounded secondary fill repair). Badge is implemented in the working tree with typed filled/dot composition, supported variants, semantic/status token expansion and a complete gallery matrix. Three rendered tests and positive/compile-fail API doctests pass. Native light/dark output and ancestor-hover ring were inspected; labels were exposed without decorative nodes. [Badge validation](badge-validation.md) records source gaps, native adaptations and remaining comparison work.
 
-Selected source inspection excludes deprecated Surface, Badge destructive and its legacy type alias. LayerCard supplies the supported simple surface. Apply the repository’s deprecated-feature policy to each new component before accepting its API.
+Skeptical review caught a filled shadow masquerading as a transparent dot ring. The correction uses a border-only quad; a regression fails against the prior implementation and passes after correction. Custom paint requires explicit pill-radius clamping; Badge and LayerCard now clamp against actual quad sizes. Caller oversized radii and hovered bordered badge bounds are covered.
 
-Latest pushed checkpoint before this gate: `91436da`; implementation remains uncommitted until required checks finish. Native testing apps are closed and gallery process absence verified. No CI configuration/workflow runs were found at the prior pushed checkpoint.
+Source inspection excludes deprecated Surface, Badge destructive and its legacy type alias. LayerCard supplies the supported simple surface. Apply the repository’s deprecated-feature policy before accepting each new API. KUMO-019 remains open for general arbitrary-descendant rounded clipping; the reported default card top-corner defect is fixed and inspected in both themes.
+
+No CI configuration/workflow runs were found at `ea86f71`. Close testing apps and verify process termination before checkpointing.
 
 ## Validation and review evidence
 
@@ -49,12 +51,12 @@ Latest pushed checkpoint before this gate: `91436da`; implementation remains unc
 - [Loader](loader-validation.md) is shared with Button and has size/name, light/dark foreground, animated endpoint and reduced-motion regressions. Native light/dark captures show advancing arcs. Deterministic pinned SVG comparison is prepared; browser surfaces were unavailable. Exact browser motion/path and spoken status checks remain pending.
 - [LayerCard](layer-card-validation.md) records the complete acceptance matrix and measured results. Skeptical review repaired inherited layered line-height and the default secondary fill defect. Follow-up geometry coverage caught padded absolute canvases shifting the mask; explicit zero insets fixed it. Nested controls retain their tested input paths.
 
-Current automated gate: 49 workspace tests and two doctests pass. Formatting, all-target/all-feature locked Clippy with warnings denied and gallery/example builds pass. The Loader timing regression failed during the gate because its executor clock did not drive GPUI’s unsynced animation; its test now advances the actual wall time, and both workspace and isolated checks pass. The upstream block 0.1.6 future-compatibility notice remains separate from current check results.
+Current automated gate: 52 workspace tests and four doctests pass. Formatting, all-target/all-feature locked Clippy with warnings denied and gallery/example builds pass. The Loader timing regression failed during the gate because its executor clock did not drive GPUI’s unsynced animation; its test now advances the actual wall time, and both workspace and isolated checks pass. The upstream block 0.1.6 future-compatibility notice remains separate from current check results.
 
 Final rebuilt captures show smooth corners in light/dark after cmd-l theme switching. The Save counter updated once; Unicode value changes reached the native tree, but Input pixels lagged the exposed value. Native input/frame consistency remains pending. The gallery was quit and its process absence verified.
 
 ## Next exact action
 
-Finish the LayerCard gate, recheck the final native build, update measured check results, commit and push `work`. Then inspect supported Badge source/styles/examples and define its acceptance matrix before coding. Badge depends on Theme/Text and unlocks Banner/Empty compositions; preserve the open comparison and clipping branches above. Source variant maps control the API when prose names keys that do not exist.
+Finish Badge documentation/cleanup, commit and push the validated checkpoint on `work`. Then inspect supported Banner source/styles/examples and define its acceptance matrix. Banner can reuse the semantic status tints and Button/Loader foundations; inspect its closable/actions/slot contracts before choosing retained state or callbacks. Preserve existing clipping, native input/frame, browser comparison and spoken accessibility gaps as open branches.
 
-Close every testing application after inspection and verify process termination. Apply Apollo Rust best practices and preserve explicit state ownership/private Base boundaries at each milestone.
+Close every testing application and verify process termination. Apply Apollo Rust best practices and preserve explicit state ownership/private Base boundaries at each milestone.

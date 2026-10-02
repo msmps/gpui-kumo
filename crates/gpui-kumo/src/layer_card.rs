@@ -246,7 +246,9 @@ impl RenderOnce for Section {
                             window.with_content_mask(Some(ContentMask { bounds }), |window| {
                                 window.paint_quad(quad(
                                     root,
-                                    clip.radii.to_pixels(window.rem_size()),
+                                    clip.radii
+                                        .to_pixels(window.rem_size())
+                                        .clamp_radii_for_quad_size(root.size),
                                     color,
                                     px(0.),
                                     Hsla::transparent_black(),

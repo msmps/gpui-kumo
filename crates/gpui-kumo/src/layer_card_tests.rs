@@ -32,12 +32,14 @@ fn secondary_background_does_not_cover_the_roots_rounded_top_corners(cx: &mut Te
 }
 #[gpui_kit::test]
 fn secondary_fills_follow_root_radius_and_section_bounds_in_both_themes(cx: &mut TestAppContext) {
-    struct Edges;
+    struct Edges {
+        radius: Pixels,
+    }
     impl Render for Edges {
         fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
             LayerCard::new("card")
                 .w(px(200.))
-                .rounded(px(16.))
+                .rounded(self.radius)
                 .bg(gpui_kit::red())
                 .section(Section::secondary("header").child(Text::new("title", "Header")))
                 .section(Section::primary("body").child(Text::new("copy", "Body")))
@@ -45,9 +47,18 @@ fn secondary_fills_follow_root_radius_and_section_bounds_in_both_themes(cx: &mut
         }
     }
     cx.update(crate::init);
-    let (_, cx) = cx.add_window_view(|_, _| Edges);
-    for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+    let (view, cx) = cx.add_window_view(|_, _| Edges { radius: px(16.) });
+    for (appearance, radius) in [
+        (crate::Appearance::Light, px(16.)),
+        (crate::Appearance::Dark, px(16.)),
+        (crate::Appearance::Light, px(1000.)),
+        (crate::Appearance::Dark, px(1000.)),
+    ] {
         cx.update(|window, cx| {
+            view.update(cx, |view, cx| {
+                view.radius = radius;
+                cx.notify();
+            });
             crate::set_appearance(appearance, cx);
             window.refresh();
             window.render_frame(cx);
@@ -65,7 +76,14 @@ fn secondary_fills_follow_root_radius_and_section_bounds_in_both_themes(cx: &mut
                     fill.bounds, root,
                     "Round relative to the actual root, not the negative section margin"
                 );
-                assert_eq!(fill.corner_radii, Corners::all(px(16.).scale(scale)));
+                assert_eq!(
+                    fill.corner_radii,
+                    Corners::all(
+                        radius
+                            .scale(scale)
+                            .min(root.size.width.min(root.size.height) / 2.)
+                    )
+                );
                 assert_eq!(
                     fill.content_mask.bounds,
                     window.find(id).bounds().scale(scale).intersect(&root)

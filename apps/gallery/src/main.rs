@@ -10,6 +10,7 @@ use gpui_kumo::{
     Appearance, Button, Theme, button::Variant, set_appearance, theme as current_theme,
 };
 
+mod badges;
 mod buttons;
 mod cards;
 mod inputs;
@@ -134,6 +135,7 @@ impl Render for Gallery {
                         }),
                     )),
             )
+            .child(badges::panel(&theme))
             .child(self.cards.clone())
             .child(loaders::panel(&theme))
             .child(texts::panel(&theme))

@@ -38,6 +38,9 @@ pub struct TextColors {
     /// Kumo's link tone, also used by its success Text variant.
     pub link: Hsla,
     pub danger: Hsla,
+    pub success: Hsla,
+    pub warning: Hsla,
+    pub info: Hsla,
 }
 
 #[derive(Clone, Debug)]
@@ -56,6 +59,12 @@ pub struct Colors {
     pub brand: Hsla,
     pub brand_hover: Hsla,
     pub danger: Hsla,
+    pub danger_tint: Hsla,
+    pub success: Hsla,
+    pub success_tint: Hsla,
+    pub warning: Hsla,
+    pub warning_tint: Hsla,
+    pub info_tint: Hsla,
     pub line: Hsla,
     pub hairline: Hsla,
     pub focus: Hsla,
@@ -63,6 +72,24 @@ pub struct Colors {
     pub shadow_drop: Hsla,
     pub arrow_edge: Hsla,
     pub arrow_stroke: Hsla,
+}
+
+/// Semantic badge color roles from the pinned Kumo theme.
+#[derive(Clone, Debug)]
+pub struct BadgeColors {
+    pub inverted: Hsla,
+    pub inverted_foreground: Hsla,
+    pub neutral_subtle_foreground: Hsla,
+    pub teal_subtle_foreground: Hsla,
+    pub red: Hsla,
+    pub green: Hsla,
+    pub neutral: Hsla,
+    pub orange: Hsla,
+    pub purple: Hsla,
+    pub teal: Hsla,
+    pub blue: Hsla,
+    pub solid_foreground: Hsla,
+    pub orange_foreground: Hsla,
 }
 
 /// Native policies filling gaps in the web recipes, kept distinct from upstream.
@@ -190,6 +217,7 @@ pub struct Theme {
     pub text: TextColors,
     pub colors: Colors,
     pub native: NativeColors,
+    pub badge: BadgeColors,
     pub typography: Typography,
     pub spacing: Spacing,
     pub radii: Radii,
@@ -221,6 +249,7 @@ impl Theme {
         } else {
             neutral(0.145, 0.).alpha(0.1)
         };
+        let choose = |light, dark_value| if dark { dark_value } else { light };
         let text = TextColors {
             default: neutral(0.205, 0.97),
             strong: neutral(0.145, 0.985),
@@ -234,6 +263,21 @@ impl Theme {
             } else {
                 Oklch::new(0.424, 0.199, 265.638)
             }
+            .paint(),
+            success: choose(
+                Oklch::new(0.432, 0.095, 166.913),
+                Oklch::new(0.905, 0.093, 164.15),
+            )
+            .paint(),
+            warning: choose(
+                Oklch::new(0.597, 0.144, 57.5),
+                Oklch::new(0.75, 0.183, 55.934),
+            )
+            .paint(),
+            info: choose(
+                Oklch::new(0.424, 0.199, 265.638),
+                Oklch::new(0.707, 0.165, 254.624),
+            )
             .paint(),
             danger: if dark {
                 Oklch::new(0.704, 0.191, 22.216)
@@ -257,6 +301,40 @@ impl Theme {
             brand: action.paint(),
             brand_hover: Oklch::new(0.488, 0.243, 264.376).paint(),
             danger: danger.paint(),
+            danger_tint: choose(
+                Oklch::new(0.936, 0.032, 17.7),
+                Oklch::new(0.429, 0.176, 28.7),
+            )
+            .paint()
+            .alpha(if dark { 0.17 } else { 0.42 }),
+            success: choose(
+                Oklch::new(0.596, 0.145, 163.225),
+                Oklch::new(0.765, 0.177, 163.223),
+            )
+            .paint(),
+            success_tint: choose(
+                Oklch::new(0.962, 0.043, 156.7),
+                Oklch::new(0.393, 0.096, 152.3),
+            )
+            .paint()
+            .alpha(if dark { 0.2 } else { 0.57 }),
+            warning: choose(
+                Oklch::new(0.739, 0.177, 58.2),
+                Oklch::new(0.645, 0.168, 50.),
+            )
+            .paint(),
+            warning_tint: choose(
+                Oklch::new(0.931, 0.107, 94.6),
+                Oklch::new(0.353, 0.079, 65.),
+            )
+            .paint()
+            .alpha(if dark { 0.37 } else { 0.2 }),
+            info_tint: choose(
+                Oklch::new(0.932, 0.032, 255.6),
+                Oklch::new(0.38, 0.145, 265.5),
+            )
+            .paint()
+            .alpha(if dark { 0.22 } else { 0.45 }),
             line,
             hairline: neutral(0.935, 0.269),
             focus: neutral(0.15, 0.935),
@@ -271,6 +349,49 @@ impl Theme {
         };
         Self {
             appearance,
+            badge: BadgeColors {
+                inverted: if dark {
+                    white
+                } else {
+                    Oklch::gray(0.145).paint()
+                },
+                inverted_foreground: if dark { black } else { white },
+                neutral_subtle_foreground: neutral(0.269, 0.922),
+                teal_subtle_foreground: choose(
+                    Oklch::new(0.437, 0.078, 188.216),
+                    Oklch::new(0.91, 0.096, 180.426),
+                )
+                .paint(),
+                red: choose(
+                    Oklch::new(0.577, 0.245, 27.325),
+                    Oklch::new(0.505, 0.213, 27.518),
+                )
+                .paint(),
+                green: choose(
+                    Oklch::new(0.596, 0.145, 163.225),
+                    Oklch::new(0.508, 0.118, 165.612),
+                )
+                .paint(),
+                neutral: neutral(0.556, 0.439),
+                orange: Oklch::new(0.815, 0.197, 76.).paint(),
+                purple: choose(
+                    Oklch::new(0.558, 0.288, 302.321),
+                    Oklch::new(0.496, 0.265, 301.924),
+                )
+                .paint(),
+                teal: choose(
+                    Oklch::new(0.549, 0.096, 184.565),
+                    Oklch::new(0.511, 0.096, 186.391),
+                )
+                .paint(),
+                blue: choose(
+                    Oklch::new(0.546, 0.245, 262.881),
+                    Oklch::new(0.488, 0.243, 264.376),
+                )
+                .paint(),
+                solid_foreground: white,
+                orange_foreground: black,
+            },
             native: NativeColors {
                 disabled_input_foreground: text.subtle,
                 selection: colors.brand.alpha(0.25),
