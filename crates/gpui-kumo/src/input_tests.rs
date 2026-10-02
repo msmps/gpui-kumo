@@ -214,3 +214,276 @@ fn sizes_fill_the_parent_without_changing_recipe_heights(cx: &mut TestAppContext
         }
     });
 }
+
+#[gpui_kit::test]
+fn accessible_text_uses_base_geometry_selection_and_composition(cx: &mut TestAppContext) {
+    use gpui_kit::accesskit::{NodeId, Role};
+    let (input, cx) = harness(cx);
+    let id = NodeId(42);
+    cx.update(|window, cx| {
+        input.update(cx, |state, cx| state.set_value("café 🦀", window, cx));
+        window.render_frame(cx);
+        let editor = input.read(cx).editor.clone();
+        editor.update(cx, |editor, cx| editor.set_selected_range(3..10, cx));
+        window.render_frame(cx);
+        let (run, selection) = accessibility::Snapshot::new(editor.read(cx))
+            .unwrap()
+            .nodes(id);
+        assert_eq!(run.role(), Role::TextRun);
+        assert_eq!(run.value(), Some("café 🦀"));
+        assert_eq!(run.character_lengths(), &[1, 1, 1, 2, 1, 4]);
+        assert_eq!(selection.anchor.character_index, 3);
+        assert_eq!(selection.focus.character_index, 6);
+        assert_eq!(run.character_positions().unwrap().len(), 6);
+        assert_eq!(run.character_widths().unwrap().len(), 6);
+        let bounds = run.bounds().unwrap();
+        assert!(bounds.width() > 0. && bounds.height() > 0.);
+        assert_eq!(input.read(cx).selected_value(cx).as_ref(), "é 🦀");
+        // Keyboard direction remains owned by Base and is reflected in the tree.
+        window.press("left", cx);
+        window.press("shift-left", cx);
+        window.render_frame(cx);
+        let (_, selection) = accessibility::Snapshot::new(editor.read(cx))
+            .unwrap()
+            .nodes(id);
+        assert_eq!(selection.anchor.character_index, 3);
+        assert_eq!(selection.focus.character_index, 2);
+        editor.update(cx, |editor, cx| {
+            editor.replace_and_mark_text_in_range(None, "日本", Some(2..2), window, cx);
+        });
+        window.render_frame(cx);
+        let (run, selection) = accessibility::Snapshot::new(editor.read(cx))
+            .unwrap()
+            .nodes(id);
+        assert_eq!(run.value(), Some("ca日本é 🦀"));
+        assert_eq!(selection.focus.character_index, 4);
+        editor.update(cx, |editor, cx| {
+            editor.replace_text_in_range(None, "日本", window, cx);
+            editor.unmark_text(window, cx);
+        });
+        window.render_frame(cx);
+        let (run, _) = accessibility::Snapshot::new(editor.read(cx))
+            .unwrap()
+            .nodes(id);
+        assert_eq!(run.value(), Some("ca日本é 🦀"));
+        input.update(cx, |state, cx| state.set_value("", window, cx));
+        window.render_frame(cx);
+        let (run, selection) = accessibility::Snapshot::new(editor.read(cx))
+            .unwrap()
+            .nodes(id);
+        assert_eq!(run.value(), Some(""));
+        assert!(run.character_lengths().is_empty());
+        assert_eq!(selection.focus.character_index, 0);
+        assert!(run.bounds().unwrap().height() > 0.);
+    });
+}
+
+#[gpui_kit::test]
+fn accessible_actions_reuse_base_edits_and_emit_once(cx: &mut TestAppContext) {
+    use gpui_kit::accesskit::{ActionData, NodeId, TextPosition, TextSelection};
+    use std::{cell::Cell, rc::Rc};
+    let (input, cx) = harness(cx);
+    let changes = Rc::new(Cell::new(0));
+    let _subscription = cx.update(|_, cx| {
+        let changes = changes.clone();
+        cx.subscribe(&input, move |_, event, _| {
+            if matches!(event, InputEvent::Change) {
+                changes.set(changes.get() + 1);
+            }
+        })
+    });
+    let id = NodeId(42);
+    let selection = |anchor, focus| {
+        ActionData::SetTextSelection(TextSelection {
+            anchor: TextPosition {
+                node: id,
+                character_index: anchor,
+            },
+            focus: TextPosition {
+                node: id,
+                character_index: focus,
+            },
+        })
+    };
+    cx.update(|window, cx| {
+        input.update(cx, |state, cx| {
+            state.accessibility_action(
+                None,
+                Some(&ActionData::Value("café 🦀".into())),
+                window,
+                cx,
+            );
+        });
+        window.render_frame(cx);
+    });
+    assert_eq!(changes.get(), 1);
+    cx.update(|window, cx| {
+        input.update(cx, |state, cx| {
+            state.accessibility_action(Some(id), Some(&selection(3, 6)), window, cx);
+        });
+        assert_eq!(input.read(cx).selected_value(cx).as_ref(), "é 🦀");
+        input.update(cx, |state, cx| {
+            state.accessibility_action(Some(id), Some(&selection(0, 99)), window, cx);
+            state.accessibility_action(Some(NodeId(999)), Some(&selection(0, 1)), window, cx);
+        });
+        assert_eq!(input.read(cx).selected_value(cx).as_ref(), "é 🦀");
+        input.update(cx, |state, cx| {
+            state.accessibility_action(Some(id), Some(&selection(6, 3)), window, cx);
+        });
+        assert_eq!(input.read(cx).selected_value(cx).as_ref(), "é 🦀");
+        assert_eq!(input.read(cx).editor.read(cx).cursor(), 10);
+    });
+    assert_eq!(changes.get(), 1);
+    cx.update(|window, cx| {
+        input.update(cx, |state, cx| {
+            state.accessibility_replace_selection(
+                Some(&ActionData::Value("日本".into())),
+                window,
+                cx,
+            )
+        });
+        assert_eq!(input.read(cx).value(cx).as_ref(), "caf日本");
+        window.render_frame(cx);
+    });
+    assert_eq!(changes.get(), 2);
+    cx.update(|window, cx| {
+        #[cfg(target_os = "macos")]
+        window.press("cmd-z", cx);
+        #[cfg(not(target_os = "macos"))]
+        window.press("ctrl-z", cx);
+        assert_eq!(input.read(cx).value(cx).as_ref(), "café 🦀");
+        input.update(cx, |state, cx| state.set_value("reset", window, cx));
+    });
+    assert_eq!(changes.get(), 3);
+}
+
+#[gpui_kit::test]
+fn accessible_actions_enforce_current_availability(cx: &mut TestAppContext) {
+    use gpui_kit::accesskit::{ActionData, NodeId, TextPosition, TextSelection};
+    let (input, cx) = harness(cx);
+    let id = NodeId(42);
+    let selection = ActionData::SetTextSelection(TextSelection {
+        anchor: TextPosition {
+            node: id,
+            character_index: 0,
+        },
+        focus: TextPosition {
+            node: id,
+            character_index: 1,
+        },
+    });
+    cx.update(|window, cx| {
+        input.update(cx, |state, cx| {
+            state.set_value("🦀日本", window, cx);
+            state.set_read_only(true, cx);
+            state.accessibility_action(Some(id), Some(&selection), window, cx);
+            state.accessibility_action(
+                None,
+                Some(&ActionData::Value("blocked".into())),
+                window,
+                cx,
+            );
+            state.accessibility_replace_selection(
+                Some(&ActionData::Value("blocked".into())),
+                window,
+                cx,
+            );
+        });
+        assert_eq!(input.read(cx).selected_value(cx).as_ref(), "🦀");
+        assert_eq!(input.read(cx).value(cx).as_ref(), "🦀日本");
+        input.update(cx, |state, cx| {
+            state.set_disabled(true, cx);
+            state.accessibility_action(
+                Some(id),
+                Some(&ActionData::SetTextSelection(TextSelection {
+                    anchor: TextPosition {
+                        node: id,
+                        character_index: 1,
+                    },
+                    focus: TextPosition {
+                        node: id,
+                        character_index: 3,
+                    },
+                })),
+                window,
+                cx,
+            );
+            state.accessibility_action(
+                None,
+                Some(&ActionData::Value("blocked".into())),
+                window,
+                cx,
+            );
+            state.accessibility_replace_selection(
+                Some(&ActionData::Value("blocked".into())),
+                window,
+                cx,
+            );
+        });
+        assert_eq!(input.read(cx).selected_value(cx).as_ref(), "🦀");
+        assert_eq!(input.read(cx).value(cx).as_ref(), "🦀日本");
+    });
+}
+
+#[gpui_kit::test]
+fn accessible_composition_forwards_each_base_change_once(cx: &mut TestAppContext) {
+    use std::{cell::Cell, rc::Rc};
+    let (input, cx) = harness(cx);
+    let changes = Rc::new(Cell::new(0));
+    let _subscription = cx.update(|_, cx| {
+        let changes = changes.clone();
+        cx.subscribe(&input, move |_, event, _| {
+            if matches!(event, InputEvent::Change) {
+                changes.set(changes.get() + 1);
+            }
+        })
+    });
+    for (index, text) in ["🦀", "に", "日本", "日本"].into_iter().enumerate() {
+        cx.update(|window, cx| {
+            let editor = input.read(cx).editor.clone();
+            editor.update(cx, |editor, cx| {
+                if index == 1 || index == 2 {
+                    editor.replace_and_mark_text_in_range(None, text, None, window, cx);
+                } else {
+                    editor.replace_text_in_range(None, text, window, cx);
+                }
+            });
+            window.render_frame(cx);
+            window.render_frame(cx);
+        });
+        // Base emits Change for committed edits; preedit stays silent.
+        assert_eq!(changes.get(), if index == 3 { 2 } else { 1 });
+    }
+    cx.read(|cx| assert_eq!(input.read(cx).value(cx).as_ref(), "🦀日本"));
+}
+
+#[gpui_kit::test]
+fn unmounting_accessible_input_releases_its_entities(cx: &mut TestAppContext) {
+    struct OptionalInput(Option<Entity<InputState>>);
+    impl Render for OptionalInput {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            div().w(px(300.)).when_some(self.0.clone(), |this, input| {
+                this.child(Input::new("input", &input))
+            })
+        }
+    }
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| {
+        OptionalInput(Some(cx.new(|cx| InputState::new("Temporary", window, cx))))
+    });
+    let (state, editor) = cx.read(|cx| {
+        let state = view.read(cx).0.as_ref().unwrap();
+        (state.downgrade(), state.read(cx).editor.downgrade())
+    });
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        view.update(cx, |view, cx| {
+            view.0.take();
+            cx.notify();
+        });
+        window.render_frame(cx);
+        window.render_frame(cx);
+    });
+    assert!(state.upgrade().is_none());
+    assert!(editor.upgrade().is_none());
+}

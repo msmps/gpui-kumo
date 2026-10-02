@@ -1,6 +1,6 @@
 # Component issues
 
-This is the local issue tracker for Button, Input, Popover and their shared foundation. It contains 18 open follow-ups identified at commit `38c2ea8`. GitHub issue publication is pending API access; none of these local IDs is a GitHub issue number.
+This is the local issue tracker for Button, Input, Popover and their shared foundation. It contains 18 follow-ups identified at commit `38c2ea8`. GitHub issue publication is pending API access; none of these local IDs is a GitHub issue number.
 
 Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and acceptance criteria. Known implementation gaps, native policy tradeoffs and unverified acceptance work are distinguished in the issue descriptions. The individual file is the source of truth for its status.
 
@@ -11,7 +11,7 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 | KUMO-003 | Button | [evaluate faithful shadow rendering on transparent outlines](003-button-outline-shadow.md) | Open |
 | KUMO-004 | Button | [complete pinned browser visual and narrow-layout comparisons](004-button-browser-parity.md) | Open |
 | KUMO-005 | Input | [expose disabled, read-only and invalid accessibility metadata](005-input-state-semantics.md) | Open |
-| KUMO-006 | Input | [provide accessible text ranges, selection and editing actions](006-input-accessible-text.md) | Open |
+| KUMO-006 | Input | [provide accessible text ranges, selection and editing actions](006-input-accessible-text.md) | Blocked |
 | KUMO-007 | Input | [validate composition through operating-system IMEs](007-input-os-ime.md) | Open |
 | KUMO-008 | Input | [complete pinned browser and Field visual comparisons](008-input-browser-parity.md) | Open |
 | KUMO-009 | Popover | [export expanded/collapsed state through Linux AT-SPI](009-popover-expanded-state.md) | Open |

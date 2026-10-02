@@ -9,6 +9,8 @@ use gpui_kit::{
 
 use crate::{Theme, theme};
 
+mod accessibility;
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Size {
     Xs,
@@ -36,6 +38,7 @@ pub struct InputState {
     disabled: bool,
     read_only: bool,
     presentation: Presentation,
+    accessibility: accessibility::Bridge,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -61,13 +64,17 @@ impl InputState {
             cx.notify();
         });
         let theme = cx.observe_global::<Theme>(|_, cx| cx.notify());
+        // Selection-only notifications do not emit InputEvent::Change. Refresh
+        // the containing accessibility node when Base moves its caret as well.
+        let editor_observer = cx.observe(&editor, |_, _, cx| cx.notify());
         Self {
             editor,
             name,
             disabled: false,
             read_only: false,
             presentation: Presentation::default(),
-            _subscriptions: vec![events, theme],
+            accessibility: accessibility::Bridge::default(),
+            _subscriptions: vec![events, theme, editor_observer],
         }
     }
 
@@ -271,6 +278,13 @@ impl Render for InputState {
         .join(". ");
         let label_focus = focus.clone();
         let disabled = self.disabled;
+        let accessibility = self.accessibility.clone();
+        let text_prepaint = accessibility.clone();
+        let text_editor = self.editor.downgrade();
+        let selection_state = cx.entity().downgrade();
+        let value_state = selection_state.clone();
+        let replace_state = selection_state.clone();
+        let paint_state = selection_state.clone();
         div()
             .flex()
             .flex_col()
@@ -299,6 +313,36 @@ impl Render for InputState {
                     .aria_value(value)
                     .aria_placeholder(placeholder)
                     .aria_description(semantic_description)
+                    .a11y_synthetic_children(move |builder| accessibility.build(builder))
+                    .when(!disabled, |this| {
+                        let run_id = text_prepaint.run_id.clone();
+                        this.on_a11y_action(
+                            gpui_kit::AccessibleAction::SetTextSelection,
+                            move |data, window, cx| {
+                                let _ = selection_state.update(cx, |state, cx| {
+                                    state.accessibility_action(run_id.get(), data, window, cx);
+                                });
+                            },
+                        )
+                    })
+                    .when(!disabled && !self.read_only, |this| {
+                        this.on_a11y_action(
+                            gpui_kit::AccessibleAction::SetValue,
+                            move |data, window, cx| {
+                                let _ = value_state.update(cx, |state, cx| {
+                                    state.accessibility_action(None, data, window, cx);
+                                });
+                            },
+                        )
+                        .on_a11y_action(
+                            gpui_kit::AccessibleAction::ReplaceSelectedText,
+                            move |data, window, cx| {
+                                let _ = replace_state.update(cx, |state, cx| {
+                                    state.accessibility_replace_selection(data, window, cx);
+                                });
+                            },
+                        )
+                    })
                     .track_focus(&focus)
                     .w_full()
                     .min_w_0()
@@ -316,7 +360,15 @@ impl Render for InputState {
                     .child(
                         canvas(
                             |_, _, _| (),
-                            move |bounds, _, window, _| {
+                            move |bounds, _, window, cx| {
+                                // Base publishes range geometry during paint. Retain
+                                // that complete snapshot and refresh the tree next frame.
+                                if window.is_a11y_active()
+                                    && let Some(editor) = text_editor.upgrade()
+                                    && text_prepaint.capture(editor.read(cx))
+                                {
+                                    let _ = paint_state.update(cx, |_, cx| cx.notify());
+                                }
                                 window.paint_quad(quad(
                                     bounds.dilate(ring_width),
                                     radius + ring_width,
