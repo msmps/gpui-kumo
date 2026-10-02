@@ -12,6 +12,7 @@ use gpui_kumo::{
 
 mod badges;
 mod banners;
+mod button_groups;
 mod buttons;
 mod cards;
 mod checkboxes;
@@ -35,6 +36,9 @@ struct GalleryAssets;
 impl AssetSource for GalleryAssets {
     fn load(&self, path: &str) -> gpui_kit::Result<Option<Cow<'static, [u8]>>> {
         Ok(match path {
+            "caret-down.svg" => Some(Cow::Borrowed(include_bytes!(
+                "../../../crates/gpui-kumo/assets/caret-down.svg"
+            ))),
             "workspace.svg" => Some(Cow::Borrowed(include_bytes!("../assets/workspace.svg"))),
             _ => None,
         })
@@ -42,7 +46,7 @@ impl AssetSource for GalleryAssets {
 
     fn list(&self, path: &str) -> gpui_kit::Result<Vec<SharedString>> {
         Ok(if path.is_empty() {
-            vec!["workspace.svg".into()]
+            vec!["workspace.svg".into(), "caret-down.svg".into()]
         } else {
             vec![]
         })
@@ -61,6 +65,7 @@ struct Gallery {
     popovers: gpui_kit::Entity<popovers::Popovers>,
     radios: gpui_kit::Entity<radios::Radios>,
     switches: gpui_kit::Entity<switches::Switches>,
+    button_groups: gpui_kit::Entity<button_groups::ButtonGroups>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -166,6 +171,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.button_groups.clone())
         .child(self.switches.clone())
         .child(self.radios.clone())
         .child(self.checkboxes.clone())
@@ -394,6 +400,7 @@ fn main() {
                             popovers: cx.new(|cx| popovers::Popovers::new(window, cx)),
                             radios: cx.new(radios::Radios::new),
                             switches: cx.new(switches::Switches::new),
+                            button_groups: cx.new(button_groups::ButtonGroups::new),
                             activations: 0,
                             disabled: false,
                             loading: false,

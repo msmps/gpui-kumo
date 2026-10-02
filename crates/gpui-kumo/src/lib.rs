@@ -54,3 +54,6 @@ pub use radio::{RadioGroup, RadioItem};
 
 pub mod switch;
 pub use switch::{Switch, SwitchGroup};
+
+pub mod button_group;
+pub use button_group::ButtonGroup;

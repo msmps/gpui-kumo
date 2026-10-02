@@ -10,6 +10,9 @@ use gpui_kit::{
 };
 
 use crate::{Theme, theme};
+use std::{cell::RefCell, rc::Rc};
+pub(crate) type JoinedRingQueue =
+    Rc<RefCell<Vec<(bool, gpui_kit::PaintQuad, gpui_kit::ContentMask<Pixels>)>>>;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Variant {
@@ -62,8 +65,9 @@ pub struct Button {
     popover_expanded: Option<bool>,
     focus_handle: Option<FocusHandle>,
     on_click: Option<ActivationHandler>,
-    accent: Option<AccentRecipe>,
+    accent: Option<Box<AccentRecipe>>,
     style: StyleRefinement,
+    join: Option<Box<(bool, bool, bool, JoinedRingQueue)>>,
 }
 
 impl Button {
@@ -86,6 +90,7 @@ impl Button {
             on_click: None,
             accent: None,
             style: Default::default(),
+            join: None,
         }
     }
 
@@ -103,13 +108,38 @@ impl Button {
         }
     }
 
+    pub(crate) fn group_join(
+        mut self,
+        first: bool,
+        last: bool,
+        next_has_ring: bool,
+        rings: JoinedRingQueue,
+    ) -> Self {
+        self.join = Some(Box::new((first, last, next_has_ring, rings)));
+        self
+    }
+    pub(crate) fn has_group_ring(&self, theme: &Theme) -> bool {
+        self.accent.as_ref().map_or_else(
+            || {
+                self.variant
+                    .paint(theme, self.disabled || self.loading, self.open, false)
+                    .ring
+                    .is_some()
+            },
+            |accent| accent.ring.is_some() || accent.emphasis.is_some(),
+        )
+    }
+    pub(crate) fn id(&self) -> &ElementId {
+        &self.id
+    }
+
     pub fn variant(mut self, variant: Variant) -> Self {
         self.variant = variant;
         self
     }
 
     pub(crate) fn accent(mut self, recipe: AccentRecipe) -> Self {
-        self.accent = Some(recipe);
+        self.accent = Some(Box::new(recipe));
         self
     }
     pub fn size(mut self, size: Size) -> Self {
@@ -386,10 +416,13 @@ impl RenderOnce for Button {
         let theme = theme(cx);
         let geometry = self.size.geometry(self.shape, theme);
         let unavailable = self.disabled || self.loading;
-        let rest = self.accent.as_ref().map_or_else(
+        let mut rest = self.accent.as_ref().map_or_else(
             || self.variant.paint(theme, unavailable, self.open, false),
             |recipe| recipe.paint(false, unavailable),
         );
+        if self.join.is_some() {
+            rest.drop_shadow = false;
+        }
         let hovered = self.accent.as_ref().map_or_else(
             || self.variant.paint(theme, unavailable, self.open, true),
             |recipe| recipe.paint(true, unavailable),
@@ -466,6 +499,21 @@ impl RenderOnce for Button {
             button = button.on_click(handler);
         }
         button.style().refine(&self.style);
+        let joined_rings = self
+            .join
+            .as_ref()
+            .map(|join| (join.0, join.1, join.2, join.3.clone()));
+        if let Some(join) = self.join {
+            let (first, last, _, _) = *join;
+            if !first {
+                button.style().corner_radii.top_left = Some(px(0.).into());
+                button.style().corner_radii.bottom_left = Some(px(0.).into());
+            }
+            if !last {
+                button.style().corner_radii.top_right = Some(px(0.).into());
+                button.style().corner_radii.bottom_right = Some(px(0.).into());
+            }
+        }
         let radii =
             Corners::<AbsoluteLength>::default().refined(button.style().corner_radii.clone());
         let borders =
@@ -496,6 +544,7 @@ impl RenderOnce for Button {
             leading.map(tint_icon)
         };
         let trailing = self.trailing.map(tint_icon);
+        let ring_opacity = button.style().opacity.unwrap_or(1.);
         let ring_focus = focus_handle.clone();
         let ring_width = theme.effects.control_ring_width;
         let keyboard_width = theme.effects.keyboard_focus_ring_width;
@@ -522,7 +571,21 @@ impl RenderOnce for Button {
                         ),
                     );
                     let outer = root.dilate(width);
-                    window.paint_quad(quad(
+                    let keyboard_focus = focused && window.last_input_was_keyboard();
+                    let widths = joined_rings.as_ref().filter(|_| !keyboard_focus).map_or(
+                        Edges::all(width),
+                        |(first, last, next_has_ring, _)| Edges {
+                            top: width,
+                            bottom: width,
+                            left: if *first { width } else { px(0.) },
+                            right: if *last || !*next_has_ring {
+                                width
+                            } else {
+                                px(0.)
+                            },
+                        },
+                    );
+                    let mut ring_quad = quad(
                         outer,
                         radii
                             .to_pixels(window.rem_size())
@@ -531,33 +594,56 @@ impl RenderOnce for Button {
                         // GPUI interpolates straight RGB at the inner edge before
                         // premultiplication; transparent black creates a dark fringe.
                         color.alpha(0.),
-                        width,
+                        widths,
                         color,
                         Default::default(),
-                    ));
+                    );
+                    if let Some((first, _, _, rings)) = &joined_rings
+                        && !first
+                    {
+                        let divider = quad(
+                            Bounds::new(root.origin, size(px(1.), root.size.height)),
+                            px(0.),
+                            color.opacity(ring_opacity),
+                            px(0.),
+                            color.alpha(0.),
+                            Default::default(),
+                        );
+                        rings
+                            .borrow_mut()
+                            .push((false, divider, window.content_mask()));
+                    }
+                    if keyboard_focus && let Some((_, _, _, rings)) = &joined_rings {
+                        ring_quad.background = ring_quad.background.opacity(ring_opacity);
+                        ring_quad.border_color = ring_quad.border_color.opacity(ring_opacity);
+                        rings
+                            .borrow_mut()
+                            .push((true, ring_quad, window.content_mask()));
+                    } else {
+                        window.paint_quad(ring_quad);
+                    }
                 }
             },
         )
         .absolute()
         .inset_0()
         .size_full();
-        div().flex().flex_shrink_0().child(
-            button
-                .child(
-                    div()
-                        .flex()
-                        .items_center()
-                        .gap(if is_emphasis {
-                            theme.spacing.six
-                        } else {
-                            geometry.gap
-                        })
-                        .children(leading)
-                        .children(self.label)
-                        .children(trailing),
-                )
-                .child(ring),
-        )
+        let surface = button
+            .child(
+                div()
+                    .flex()
+                    .items_center()
+                    .gap(if is_emphasis {
+                        theme.spacing.six
+                    } else {
+                        geometry.gap
+                    })
+                    .children(leading)
+                    .children(self.label)
+                    .children(trailing),
+            )
+            .child(ring);
+        div().flex().flex_shrink_0().child(surface)
     }
 }
 
