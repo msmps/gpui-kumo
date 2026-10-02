@@ -539,7 +539,7 @@ impl RenderOnce for Button {
         .absolute()
         .inset_0()
         .size_full();
-        div().flex().flex_shrink_0().self_start().child(
+        div().flex().flex_shrink_0().child(
             button
                 .child(
                     div()

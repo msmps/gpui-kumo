@@ -9,3 +9,5 @@ Port supported, recommended Kumo components, APIs and variants. Check the select
 Use idiomatic Rust and follow Rust and GPUI best practices: retain durable UI state in entities, use typed semantic APIs, keep Base implementation details within component boundaries, and verify behavior through real rendering and input paths. Run formatting, relevant tests, and Clippy with warnings denied before completing changes.
 
 Complete checks that can run in the current environment and resolve failures before treating implementation work as finished. Record measured results separately from concrete dependency or platform limits; do not leave runnable validation as a generic follow-up.
+
+During every visual review, explicitly inspect alignments: icon/control centres, text baselines, label/control offsets, sibling spacing and edge padding in both themes and narrow layouts. Follow the alignment branch in [verification](docs/gpui-verification.md); default-state screenshots alone do not establish composition alignment.

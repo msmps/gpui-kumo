@@ -191,3 +191,56 @@ fn narrow_commands_keep_copy_reachable_and_unmount_resets_pending_feedback(
         );
     });
 }
+
+#[gpui_kit::test]
+fn command_copy_control_stays_centered_before_and_after_feedback(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|_, _| Harness {
+        command: "npm install @cloudflare/kumo".into(),
+        visible: true,
+        width: 600.,
+    });
+    cx.update(|window, cx| {
+        for width in [600., 220.] {
+            view.update(cx, |view, cx| {
+                view.width = width;
+                cx.notify();
+            });
+            for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+                crate::set_appearance(appearance, cx);
+                window.render_frame(cx);
+                for copied in [false, true] {
+                    if copied {
+                        window.within("first").click("copy-command", cx);
+                        window.render_frame(cx);
+                    }
+                    let empty = window.within("first");
+                    let command = empty.find("command").bounds();
+                    let text = empty.find("command-text").bounds();
+                    let copy = empty.find("copy-command").bounds();
+                    assert!(
+                        f32::from(copy.center().y - command.center().y).abs() <= 0.5,
+                        "copy {:?} must align with command {:?}",
+                        copy,
+                        command
+                    );
+                    assert!(f32::from(copy.center().y - text.center().y).abs() <= 0.5);
+                    assert!(copy.right() <= command.right() - px(8.));
+                    assert_eq!(
+                        empty.find("copy-command").label(),
+                        Some(if copied {
+                            "Command copied"
+                        } else {
+                            "Copy command"
+                        })
+                    );
+                }
+                // Changing the command clears feedback without creating a new entity.
+                view.update(cx, |view, cx| {
+                    view.command = format!("{} ", view.command).into();
+                    cx.notify();
+                });
+            }
+        }
+    });
+}

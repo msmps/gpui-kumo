@@ -190,3 +190,73 @@ fn rendered_size_and_shape_geometry_matches_the_recipe(cx: &mut TestAppContext) 
         }
     });
 }
+
+#[gpui_kit::test]
+fn wrapper_respects_parent_cross_axis_centering_for_every_size(cx: &mut TestAppContext) {
+    struct Centered;
+    impl Render for Centered {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            div().flex().flex_col().children(
+                [Size::Xs, Size::Sm, Size::Base, Size::Lg]
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, size)| {
+                        use gpui_kit::base::TestSupportExt;
+                        div()
+                            .id(("row", i))
+                            .test_support()
+                            .flex()
+                            .items_center()
+                            .h(px(60.))
+                            .child(
+                                Button::icon(
+                                    ("button", i),
+                                    "Copy",
+                                    div().id("glyph").test_support().size(px(16.)),
+                                )
+                                .size(size)
+                                .variant(super::Variant::Ghost),
+                            )
+                    }),
+            )
+        }
+    }
+    cx.update(crate::init);
+    let (_, cx) = cx.add_window_view(|_, _| Centered);
+    cx.update(|window, cx| {
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            window.render_frame(cx);
+            for i in 0usize..4 {
+                let row = window.find(("row", i)).bounds();
+                let scope = window.within(("row", i));
+                let button = scope.find(("button", i)).bounds();
+                let glyph = scope.find("glyph").bounds();
+                assert_eq!(button.center().y, row.center().y);
+                assert_eq!(glyph.center(), button.center());
+            }
+        }
+    });
+}
+
+#[gpui_kit::test]
+fn stretching_column_does_not_stretch_button_control_or_hitbox(cx: &mut TestAppContext) {
+    struct Column;
+    impl Render for Column {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            div()
+                .w(px(400.))
+                .flex()
+                .flex_col()
+                .child(Button::icon("column-action", "Copy", div().size(px(16.))).size(Size::Sm))
+        }
+    }
+    cx.update(crate::init);
+    let (_, cx) = cx.add_window_view(|_, _| Column);
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        let action = window.find("column-action").bounds();
+        assert_eq!(action.size, gpui_kit::size(px(26.), px(26.)));
+        assert_eq!(action.left(), px(0.));
+    });
+}
