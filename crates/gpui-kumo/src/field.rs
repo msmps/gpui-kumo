@@ -2,7 +2,7 @@
 use crate::{Label, Theme, theme};
 use gpui_kit::{
     AnyElement, App, Div, ElementId, FocusHandle, InteractiveElement, IntoElement, ParentElement,
-    RenderOnce, SharedString, Styled, Window, div, prelude::FluentBuilder,
+    Pixels, RenderOnce, SharedString, Styled, Window, div, prelude::FluentBuilder,
 };
 
 /// Native layout choice, replacing web descendant type selectors.
@@ -137,16 +137,33 @@ impl RenderOnce for Field {
 }
 
 pub(crate) fn message_element(theme: &Theme, message: SharedString, invalid: bool) -> Div {
+    text_message(
+        "message",
+        message,
+        invalid,
+        theme.typography.field_description.line_height,
+    )
+}
+
+pub(crate) fn group_message_element(
+    theme: &Theme,
+    id: impl Into<ElementId>,
+    message: SharedString,
+    invalid: bool,
+) -> Div {
+    text_message(id, message, invalid, theme.typography.sm.line_height)
+}
+
+fn text_message(
+    id: impl Into<ElementId>,
+    message: SharedString,
+    invalid: bool,
+    line_height: Pixels,
+) -> Div {
     div()
-        .text_size(theme.typography.field_description.size)
-        .line_height(theme.typography.field_description.line_height)
-        .text_color(if invalid {
-            theme.text.danger
-        } else {
-            theme.text.subtle
-        })
+        .line_height(line_height)
         .child(
-            crate::Text::new("message", message).style(crate::text::Style::Copy {
+            crate::Text::new(id, message).style(crate::text::Style::Copy {
                 tone: if invalid {
                     crate::text::Tone::Error
                 } else {

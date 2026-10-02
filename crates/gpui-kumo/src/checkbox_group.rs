@@ -246,21 +246,16 @@ impl RenderOnce for CheckboxGroup {
             })
             .child(items)
             .when_some(self.error, |this, error| {
-                this.child(div().line_height(theme.typography.sm.line_height).child(
-                    crate::Text::new("error", error).style(crate::text::Style::Copy {
-                        tone: crate::text::Tone::Error,
-                        size: crate::text::Size::Sm,
-                        bold: false,
-                    }),
+                this.child(crate::field::group_message_element(
+                    theme, "error", error, true,
                 ))
             })
             .when_some(self.description, |this, description| {
-                this.child(div().line_height(theme.typography.sm.line_height).child(
-                    crate::Text::new("description", description).style(crate::text::Style::Copy {
-                        tone: crate::text::Tone::Secondary,
-                        size: crate::text::Size::Sm,
-                        bold: false,
-                    }),
+                this.child(crate::field::group_message_element(
+                    theme,
+                    "description",
+                    description,
+                    false,
                 ))
             })
     }

@@ -11,3 +11,5 @@ Use idiomatic Rust and follow Rust and GPUI best practices: retain durable UI st
 Complete checks that can run in the current environment and resolve failures before treating implementation work as finished. Record measured results separately from concrete dependency or platform limits; do not leave runnable validation as a generic follow-up.
 
 During every visual review, explicitly inspect alignments: icon/control centres, text baselines, label/control offsets, sibling spacing and edge padding in both themes and narrow layouts. Follow the alignment branch in [verification](docs/gpui-verification.md); default-state screenshots alone do not establish composition alignment.
+
+Inspect rounded corners and layered surfaces during every visual review: child backgrounds must respect the supported clipping contract; borders, fills, focus rings and shadows must agree across nested layers, both themes, resized and narrow layouts. Record unsupported arbitrary-descendant clipping explicitly instead of masking it with a default-case screenshot.

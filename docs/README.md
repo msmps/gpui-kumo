@@ -23,6 +23,7 @@ This is the agent entry point for building a design system on GPUI primitives. R
 | Use or verify supported Text styles and composition | [Text contract and results](text-validation.md) |
 | Use or verify Loader sizing, motion and status semantics | [Loader contract and results](loader-validation.md) |
 | Implement navigation links or compact Banner inline actions | [Link acceptance](link-validation.md) |
+| Use typed Radio choices and keyboard navigation | [Radio acceptance](radio-validation.md) |
 | Compose native form labels, helpers and errors | [Label/Field acceptance](field-validation.md) |
 | Use empty-state composition and command copy | [Empty acceptance](empty-validation.md) |
 | Implement contextual messages and accent-aware actions | [Banner acceptance](banner-validation.md) |
