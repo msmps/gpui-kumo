@@ -15,6 +15,7 @@ mod banners;
 mod buttons;
 mod cards;
 mod empties;
+mod fields;
 mod inputs;
 mod links;
 mod loaders;
@@ -49,6 +50,7 @@ struct Gallery {
     focus_handle: FocusHandle,
     _theme_subscription: Subscription,
     inputs: gpui_kit::Entity<inputs::Inputs>,
+    fields: gpui_kit::Entity<fields::Fields>,
     cards: gpui_kit::Entity<cards::Cards>,
     links: gpui_kit::Entity<links::Links>,
     banners: gpui_kit::Entity<banners::Banners>,
@@ -156,6 +158,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.fields.clone())
         .child(empties::panel(&theme))
         .child(self.banners.clone())
         .child(badges::panel(&theme))
@@ -372,6 +375,7 @@ fn main() {
                             focus_handle,
                             _theme_subscription: subscription,
                             inputs: cx.new(|cx| inputs::Inputs::new(window, cx)),
+                            fields: cx.new(|cx| fields::Fields::new(window, cx)),
                             cards: cx.new(|cx| cards::Cards::new(window, cx)),
                             links: cx.new(links::Links::new),
                             banners: cx.new(banners::Banners::new),

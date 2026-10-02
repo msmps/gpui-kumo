@@ -294,18 +294,9 @@ impl Render for InputState {
             .gap(theme.spacing.eight)
             .when(self.presentation.label, |this| {
                 this.child(
-                    div()
-                        .id("label")
-                        .text_size(theme.typography.base.size)
-                        .line_height(theme.typography.base.line_height)
-                        .font_weight(FontWeight::MEDIUM)
-                        .text_color(theme.text.default)
-                        .on_click(move |_, window, cx| {
-                            if !disabled {
-                                label_focus.focus(window, cx);
-                            }
-                        })
-                        .child(self.name.clone()),
+                    crate::Label::new("label", self.name.clone())
+                        .focus_target(&label_focus)
+                        .disabled(disabled),
                 )
             })
             .child(
@@ -399,17 +390,7 @@ impl Render for InputState {
                     ),
             )
             .when_some(description, |this, description| {
-                this.child(
-                    div()
-                        .text_size(theme.typography.field_description.size)
-                        .line_height(theme.typography.field_description.line_height)
-                        .text_color(if invalid {
-                            theme.text.danger
-                        } else {
-                            theme.text.subtle
-                        })
-                        .child(gpui_kit::text!(description)),
-                )
+                this.child(crate::field::message_element(&theme, description, invalid))
             })
     }
 }
