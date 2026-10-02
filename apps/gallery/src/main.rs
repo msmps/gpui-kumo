@@ -14,6 +14,7 @@ mod badges;
 mod banners;
 mod buttons;
 mod cards;
+mod checkboxes;
 mod empties;
 mod fields;
 mod inputs;
@@ -51,6 +52,7 @@ struct Gallery {
     _theme_subscription: Subscription,
     inputs: gpui_kit::Entity<inputs::Inputs>,
     fields: gpui_kit::Entity<fields::Fields>,
+    checkboxes: gpui_kit::Entity<checkboxes::Checkboxes>,
     cards: gpui_kit::Entity<cards::Cards>,
     links: gpui_kit::Entity<links::Links>,
     banners: gpui_kit::Entity<banners::Banners>,
@@ -158,6 +160,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.checkboxes.clone())
         .child(self.fields.clone())
         .child(empties::panel(&theme))
         .child(self.banners.clone())
@@ -376,6 +379,7 @@ fn main() {
                             _theme_subscription: subscription,
                             inputs: cx.new(|cx| inputs::Inputs::new(window, cx)),
                             fields: cx.new(|cx| fields::Fields::new(window, cx)),
+                            checkboxes: cx.new(checkboxes::Checkboxes::new),
                             cards: cx.new(|cx| cards::Cards::new(window, cx)),
                             links: cx.new(links::Links::new),
                             banners: cx.new(banners::Banners::new),

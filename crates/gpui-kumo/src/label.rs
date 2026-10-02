@@ -18,6 +18,7 @@ pub struct Label {
     disabled: bool,
     focus: Option<FocusHandle>,
     content: Option<AnyElement>,
+    as_content: bool,
 }
 impl Label {
     /// Create a label from its complete readable name.
@@ -29,6 +30,7 @@ impl Label {
             disabled: false,
             focus: None,
             content: None,
+            as_content: false,
         }
     }
     /// Show Kumo's normal-weight supporting “(optional)” indicator.
@@ -44,6 +46,11 @@ impl Label {
     /// Prevent label activation without changing readable label presentation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
+        self
+    }
+    /// Inherit surrounding typography when composed inside a styled label/control.
+    pub fn as_content(mut self) -> Self {
+        self.as_content = true;
         self
     }
     /// Rich decorative content; `new` remains the complete accessible name.
@@ -64,22 +71,29 @@ impl RenderOnce for Label {
         div()
             .id(self.id)
             .test_support()
-            .role(Role::Label)
-            .aria_label(name)
+            .when(!self.as_content, |this| {
+                this.role(Role::Label).aria_label(name)
+            })
             .flex()
             .items_center()
             .gap(theme.spacing.four)
             .min_w_0()
-            .text_size(theme.typography.base.size)
-            .line_height(theme.typography.base.line_height)
-            .font_weight(FontWeight::MEDIUM)
-            .text_color(theme.text.default)
+            .when(!self.as_content, |this| {
+                this.text_size(theme.typography.base.size)
+                    .line_height(theme.typography.base.line_height)
+                    .font_weight(FontWeight::MEDIUM)
+                    .text_color(theme.text.default)
+            })
             .when(!self.disabled, |this| {
                 this.when_some(self.focus, |this, focus| {
                     this.on_click(move |_, window, cx| focus.focus(window, cx))
                 })
             })
-            .child(self.content.unwrap_or_else(|| self.text.into_any_element()))
+            .child(
+                div()
+                    .min_w_0()
+                    .child(self.content.unwrap_or_else(|| self.text.into_any_element())),
+            )
             .when(self.optional, |this| {
                 this.child(
                     div()

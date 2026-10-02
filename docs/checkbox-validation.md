@@ -1,0 +1,19 @@
+# Checkbox acceptance
+
+Pinned Kumo revision and Base versions follow port-progress. Source, docs, tests and all Checkbox demos inspected. This milestone implements the single Checkbox; Group/Item/Legend and select-all aggregation follow separately.
+
+| Area | Acceptance |
+| --- | --- |
+| API/state | Explicit controlled Unchecked/Checked/Indeterminate, default/error variant, disabled, required optional label, label-first/bare forms, named callbacks with native event modifiers. Caller commits state; no mirrored value entity |
+| Behavior | Base Checkbox and Indicator; pointer over label/control and Space/Return each propose once; mixed activates checked; disabled blocks both input paths and traversal; stable supplied or keyed focus |
+| Paint | 16px square, 4px radius, base/contrast fill and hairline/contrast ring; inverse 12px Phosphor bold marks; 8px label gap, 2px top alignment; normal/error/focus ring precedence; disabled square opacity .5, readable label unchanged |
+| Themes/edges | Light/dark semantic roles, long wrapping label/narrow layout, repeated instances, external state updates |
+| Semantics | Base actual CheckBox role, readable name, false/true/mixed state, disabled metadata; OS speech separately unverified. Required is label presentation, native form submission N/A |
+| N/A | Loading/open/focus trap/dismissal/clipboard/IME |
+| Deferred | Tooltip, Group/Item/Legend aggregation, browser pixels, CSS pseudo-element expanded bare hit target, spoken platform semantics |
+
+Native adaptation: the Base semantic root encloses the decorative square and visible label. Label activation therefore uses the same Base callback and focus path, avoiding a second listener and duplicate activation. Single Checkbox requires a complete accessible string at construction, even when rendered bare.
+
+Review repairs: constructor rejects blank names; Label content mode inherits normal Checkbox typography; hover changes the unselected ring to hairline while selected contrast takes precedence. Combined error/hover/focus browser precedence remains awaiting generated-CSS comparison. Disabled parent metadata is authored through GPUI’s synthetic-subtree hook, which Base test snapshots do not capture; input gating is tested separately, and native spoken exposure is not claimed. Bold marks are extracted from Phosphor React v2.1.10 defs/Check.tsx and defs/Minus.tsx; existing MIT notice applies.
+
+Gate: 71 workspace tests/six doctests, formatting, warning-denied all-target/all-feature Clippy and builds pass. Geometry regression reproduced nonwrapping narrow labels; constrained control width and a label text container repaired it, with both-theme coverage. [Light](evidence/checkbox-light.png) shows mixed/default/error/disabled and label-first optional forms; [dark](evidence/checkbox-dark.png) shows three changes and checked state after separate pointer/Space/Return inputs. These captures establish Linux native behavior and theme retention, not browser pixel identity or spoken semantics. Testing application terminated; no live gallery process remained.

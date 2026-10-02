@@ -42,3 +42,6 @@ pub fn init(cx: &mut App) {
     popover::init(cx);
     set_theme(Theme::new(Appearance::Light), cx);
 }
+
+pub mod checkbox;
+pub use checkbox::Checkbox;
