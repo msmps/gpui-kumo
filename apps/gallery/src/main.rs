@@ -14,6 +14,7 @@ mod badges;
 mod banners;
 mod buttons;
 mod cards;
+mod empties;
 mod inputs;
 mod links;
 mod loaders;
@@ -155,6 +156,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(empties::panel(&theme))
         .child(self.banners.clone())
         .child(badges::panel(&theme))
         .child(self.links.clone())

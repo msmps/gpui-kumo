@@ -4,8 +4,8 @@ A native Kumo design system built on GPUI, with GPUI Base as the initial behavio
 
 ## Workspace
 
-- `crates/gpui-kumo`: typed Kumo theme, Button, Input and Popover components, and initialization entry point.
-- `apps/gallery`: native Button/Input/Popover examples and foundation previews with light/dark switching. Foundation evaluation is the next step.
+- `crates/gpui-kumo`: typed Kumo theme, Text, Button, Input, Popover, Loader, LayerCard, Badge, Link, Banner and Empty components.
+- `apps/gallery`: native component examples and foundation previews with light/dark switching. See the [port backlog](docs/port-progress.md) for current coverage and validation gaps.
 
 Rust 1.99.0 is pinned in `rust-toolchain.toml`. GPUI Kit 0.7.0 is selected with its default features disabled, excluding the styled Component layer and bundled icons. Commit `Cargo.lock` when changing dependencies.
 
