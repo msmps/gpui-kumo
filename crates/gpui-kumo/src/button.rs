@@ -61,6 +61,7 @@ pub struct Button {
     shape: Shape,
     disabled: bool,
     loading: bool,
+    input_group_action: bool,
     open: bool,
     popover_expanded: Option<bool>,
     focus_handle: Option<FocusHandle>,
@@ -84,6 +85,7 @@ impl Button {
             shape: Shape::default(),
             disabled: false,
             loading: false,
+            input_group_action: false,
             open: false,
             popover_expanded: None,
             focus_handle: None,
@@ -108,6 +110,11 @@ impl Button {
         }
     }
 
+    pub(crate) fn input_group_action(mut self, disabled: bool) -> Self {
+        self.disabled |= disabled;
+        self.input_group_action = true;
+        self
+    }
     pub(crate) fn group_join(
         mut self,
         first: bool,
@@ -420,7 +427,7 @@ impl RenderOnce for Button {
             || self.variant.paint(theme, unavailable, self.open, false),
             |recipe| recipe.paint(false, unavailable),
         );
-        if self.join.is_some() {
+        if self.join.is_some() || self.input_group_action {
             rest.drop_shadow = false;
         }
         let hovered = self.accent.as_ref().map_or_else(
@@ -433,7 +440,11 @@ impl RenderOnce for Button {
         );
         let is_emphasis = emphasis.is_some();
         let focus_color = emphasis.map_or(theme.colors.focus.opacity(0.5), |e| e.ring);
-        let keyboard_color = emphasis.map_or(theme.colors.brand, |e| e.ring);
+        let keyboard_color = if self.input_group_action {
+            theme.colors.focus.opacity(0.5)
+        } else {
+            emphasis.map_or(theme.colors.brand, |e| e.ring)
+        };
         // Supply Base with the same keyed focus handle used to resolve hover/focus
         // precedence. No component-owned copy of the application's state is needed.
         let theme = theme.clone();
@@ -547,13 +558,20 @@ impl RenderOnce for Button {
         let ring_opacity = button.style().opacity.unwrap_or(1.);
         let ring_focus = focus_handle.clone();
         let ring_width = theme.effects.control_ring_width;
-        let keyboard_width = theme.effects.keyboard_focus_ring_width;
+        let keyboard_width = if self.input_group_action {
+            theme.effects.input_focus_ring_width
+        } else {
+            theme.effects.keyboard_focus_ring_width
+        };
+        let input_group_action = self.input_group_action;
         let ring = canvas(
             |bounds, window, _| window.insert_hitbox(bounds, HitboxBehavior::Normal),
             move |bounds, hitbox, window, cx| {
                 let focused = !unavailable && ring_focus.is_focused(window);
                 let (color, width) = if focused && window.last_input_was_keyboard() {
                     (Some(keyboard_color), keyboard_width)
+                } else if focused && input_group_action {
+                    (None, px(0.))
                 } else if focused {
                     (Some(focus_color), ring_width)
                 } else if !unavailable && !cx.has_active_drag() && hitbox.is_hovered(window) {

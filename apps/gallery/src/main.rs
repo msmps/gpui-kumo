@@ -37,6 +37,9 @@ struct GalleryAssets;
 impl AssetSource for GalleryAssets {
     fn load(&self, path: &str) -> gpui_kit::Result<Option<Cow<'static, [u8]>>> {
         Ok(match path {
+            "empty-copy.svg" => Some(Cow::Borrowed(include_bytes!(
+                "../../../crates/gpui-kumo/assets/empty-copy.svg"
+            ))),
             "caret-down.svg" => Some(Cow::Borrowed(include_bytes!(
                 "../../../crates/gpui-kumo/assets/caret-down.svg"
             ))),
@@ -47,7 +50,11 @@ impl AssetSource for GalleryAssets {
 
     fn list(&self, path: &str) -> gpui_kit::Result<Vec<SharedString>> {
         Ok(if path.is_empty() {
-            vec!["workspace.svg".into(), "caret-down.svg".into()]
+            vec![
+                "workspace.svg".into(),
+                "caret-down.svg".into(),
+                "empty-copy.svg".into(),
+            ]
         } else {
             vec![]
         })

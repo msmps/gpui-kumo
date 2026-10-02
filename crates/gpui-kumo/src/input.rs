@@ -40,6 +40,7 @@ pub struct InputState {
     read_only: bool,
     presentation: Presentation,
     accessibility: accessibility::Bridge,
+    group_focus: Option<FocusHandle>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -75,6 +76,7 @@ impl InputState {
             read_only: false,
             presentation: Presentation::default(),
             accessibility: accessibility::Bridge::default(),
+            group_focus: None,
             _subscriptions: vec![events, theme, editor_observer],
         }
     }
@@ -235,7 +237,16 @@ impl Render for InputState {
                 theme.typography.base,
             ),
         };
+        if self.presentation.group.is_some() && self.group_focus.is_none() {
+            let handle = cx.focus_handle().tab_stop(false);
+            self._subscriptions
+                .push(cx.on_focus_in(&handle, window, |_, _, cx| cx.notify()));
+            self._subscriptions
+                .push(cx.on_focus_out(&handle, window, |_, _, _, cx| cx.notify()));
+            self.group_focus = Some(handle);
+        }
         let group = self.presentation.group.as_ref();
+        let group_focus = group.and(self.group_focus.clone());
         if group.is_some() {
             height = match self.presentation.size {
                 Size::Xs => 24.,
@@ -250,23 +261,32 @@ impl Render for InputState {
             Size::Base => 8.,
             Size::Lg => 10.,
         };
-        let outer = match self.presentation.size {
-            Size::Xs | Size::Sm => 6.,
-            Size::Base => 8.,
-            Size::Lg => 10.,
-        };
-        let icon_size = match self.presentation.size {
-            Size::Xs => 10.,
-            Size::Sm => 13.,
-            Size::Base => 18.,
-            Size::Lg => 20.,
-        };
-        let start = group
-            .and_then(|g| g.start.as_ref())
-            .map(|a| a.render("addon-start", outer, icon_size, true, &theme));
-        let end = group
-            .and_then(|g| g.end.as_ref())
-            .map(|a| a.render("addon-end", outer, icon_size, false, &theme));
+        let start = group.and_then(|g| g.start.as_ref()).map(|a| {
+            a.render(
+                "addon-start",
+                crate::input_group::AddonContext {
+                    theme: &theme,
+                    size: self.presentation.size,
+                    disabled: self.disabled,
+                    start: true,
+                },
+                window,
+                cx,
+            )
+        });
+        let end = group.and_then(|g| g.end.as_ref()).map(|a| {
+            a.render(
+                "addon-end",
+                crate::input_group::AddonContext {
+                    theme: &theme,
+                    size: self.presentation.size,
+                    disabled: self.disabled,
+                    start: false,
+                },
+                window,
+                cx,
+            )
+        });
         let suffix = group.and_then(|g| g.suffix.clone());
         let editor_content_width = suffix.as_ref().map(|_| {
             let editor = self.editor.read(cx);
@@ -321,7 +341,11 @@ impl Render for InputState {
             base::input::Input::new(&self.editor).into_any_element()
         };
         let focus = self.focus_handle(cx);
-        let focused = !self.disabled && focus.is_focused(window);
+        let focused = !self.disabled
+            && group_focus.as_ref().map_or_else(
+                || focus.is_focused(window),
+                |scope| scope.contains_focused(window, cx),
+            );
         let invalid = self.presentation.error.is_some();
         let ring_color = if invalid {
             theme.colors.danger
@@ -454,6 +478,18 @@ impl Render for InputState {
             })
             .child(editor_semantics);
         div()
+            .id("field-root")
+            .test_support()
+            .when_some(group_focus, |this, handle| {
+                this.track_focus(&handle)
+                    .role(gpui_kit::Role::Group)
+                    .aria_label(self.name.clone())
+                    .a11y_synthetic_children(move |builder| {
+                        if disabled {
+                            builder.parent_node().set_disabled();
+                        }
+                    })
+            })
             .flex()
             .flex_col()
             .w_full()
@@ -491,6 +527,7 @@ impl Render for InputState {
                         if !disabled {
                             target.focus(window, cx);
                         }
+                        window.prevent_default();
                     })
                     .child(
                         div()

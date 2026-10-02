@@ -193,3 +193,202 @@ fn assert_visible_caret(window: &Window, cx: &gpui_kit::App) {
         "whole caret stays visible before suffix"
     );
 }
+
+struct Actions {
+    state: Entity<InputState>,
+    focus: gpui_kit::FocusHandle,
+    calls: usize,
+    size: Size,
+    editor_focus_events: usize,
+    _events: gpui_kit::Subscription,
+}
+impl Render for Actions {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let owner = cx.entity().downgrade();
+        let focus = self.focus.clone();
+        div()
+            .tab_group()
+            .flex()
+            .flex_col()
+            .w(px(240.))
+            .child(crate::Button::new("before", "Before"))
+            .child(InputGroup::new("actions", &self.state).size(self.size).end(
+                InputGroupAddon::button("clear", "Clear", move |button, _, _| {
+                    let owner = owner.clone();
+                    button
+                        .track_focus(&focus)
+                        .disabled(false)
+                        .on_click(move |_, window, cx| {
+                            let _ = owner.update(cx, |this, cx| {
+                                this.calls += 1;
+                                this.state
+                                    .update(cx, |state, cx| state.set_value("", window, cx));
+                                cx.notify();
+                            });
+                        })
+                }),
+            ))
+            .child(crate::Button::new("after", "After"))
+    }
+}
+#[gpui_kit::test]
+fn addon_actions_keep_base_focus_callbacks_and_root_disabled_gating(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| {
+        let state = cx.new(|cx| InputState::new("Search", window, cx));
+        let events = cx.subscribe(&state, |this: &mut Actions, _, event, cx| {
+            if matches!(event, crate::InputEvent::Focus) {
+                this.editor_focus_events += 1;
+                cx.notify();
+            }
+        });
+        Actions {
+            state,
+            focus: cx.focus_handle(),
+            calls: 0,
+            size: Size::Base,
+            editor_focus_events: 0,
+            _events: events,
+        }
+    });
+    cx.update(|window, cx| {
+        window.activate_window();
+        window.render_frame(cx);
+        window.render_frame(cx);
+        let state = view.read(cx).state.clone();
+        state.update(cx, |state, cx| state.set_value("café 🦀", window, cx));
+        window.render_frame(cx);
+        assert_eq!(
+            window.find("field-root").role(),
+            Some(gpui_kit::Role::Group)
+        );
+        assert_eq!(
+            window.find("control").role(),
+            Some(gpui_kit::Role::TextInput)
+        );
+        assert_eq!(window.find("clear").role(), Some(gpui_kit::Role::Button));
+        window.click("clear", cx);
+        window.render_frame(cx);
+        assert_eq!(view.read(cx).calls, 1);
+        assert_eq!(state.read(cx).value(cx).as_ref(), "");
+        assert!(
+            view.read(cx).focus.is_focused(window),
+            "pointer must retain action focus"
+        );
+        assert!(!state.read(cx).focus_handle(cx).is_focused(window));
+        assert_eq!(
+            view.read(cx).editor_focus_events,
+            0,
+            "action mouse down must not briefly focus editor"
+        );
+        window.press("space", cx);
+        assert_eq!(view.read(cx).calls, 2, "Space activates exactly once");
+        window.press("enter", cx);
+        assert_eq!(view.read(cx).calls, 3, "Enter activates exactly once");
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            window.render_frame(cx);
+            let bounds = window.find("surface").bounds();
+            let width = crate::theme(cx).effects.input_focus_ring_width;
+            assert!(
+                window.painted_quads().iter().any(|q| q.bounds
+                    == bounds.dilate(width).scale(window.scale_factor())
+                    && q.border_color == crate::theme(cx).colors.focus.opacity(0.5)),
+                "action focus must light shared ring"
+            );
+        }
+        for (size, group_height, button_height) in [
+            (Size::Xs, 24., 20.),
+            (Size::Sm, 28., 20.),
+            (Size::Base, 36., 26.),
+            (Size::Lg, 44., 36.),
+        ] {
+            view.update(cx, |view, cx| {
+                view.size = size;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            assert_eq!(
+                window.find("surface").bounds().size.height,
+                px(group_height)
+            );
+            assert_eq!(window.find("clear").bounds().size.height, px(button_height));
+            assert!(
+                window.find("control").bounds().right() <= window.find("clear").bounds().left()
+            );
+        }
+        window.focus_prev(cx);
+        assert!(state.read(cx).focus_handle(cx).is_focused(window));
+        window.focus_next(cx);
+        assert!(view.read(cx).focus.is_focused(window));
+        state.update(cx, |state, cx| state.set_disabled(true, cx));
+        window.render_frame(cx);
+        window.click("clear", cx);
+        window.press("space", cx);
+        window.press("enter", cx);
+        assert_eq!(
+            view.read(cx).calls,
+            3,
+            "root disabled rejects every path despite explicit child false"
+        );
+        window.click("before", cx);
+        window.focus_next(cx);
+        window.render_frame(cx);
+        assert_eq!(
+            window.find("after").focused(),
+            Some(true),
+            "disabled editor and action are skipped"
+        );
+    });
+}
+
+struct Mount {
+    state: Option<Entity<InputState>>,
+}
+impl Render for Mount {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        let mut root = div().w(px(200.));
+        if let Some(state) = &self.state {
+            let target = state.downgrade();
+            root = root.child(
+                InputGroup::new("mounted", state).end(InputGroupAddon::button(
+                    "clear",
+                    "Clear",
+                    move |button, _, _| {
+                        let target = target.clone();
+                        button.on_click(move |_, window, cx| {
+                            let _ = target.update(cx, |state, cx| state.set_value("", window, cx));
+                        })
+                    },
+                )),
+            );
+        }
+        root
+    }
+}
+#[gpui_kit::test]
+fn weak_action_factory_releases_input_and_focus_subscriptions_after_unmount(
+    cx: &mut TestAppContext,
+) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| Mount {
+        state: Some(cx.new(|cx| InputState::new("Search", window, cx))),
+    });
+    let target = cx.read(|cx| view.read(cx).state.as_ref().unwrap().downgrade());
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.render_frame(cx);
+        window.click("clear", cx);
+        view.update(cx, |view, cx| {
+            view.state = None;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        window.render_frame(cx);
+    });
+    cx.run_until_parked();
+    assert!(
+        target.upgrade().is_none(),
+        "unmount must release retained factory, editor and focus subscriptions"
+    );
+}

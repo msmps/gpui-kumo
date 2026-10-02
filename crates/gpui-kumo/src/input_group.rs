@@ -6,10 +6,19 @@ use gpui_kit::{
     SharedString, Styled, Window, div, px,
 };
 
+type ActionFactory = dyn Fn(Size, &mut Window, &mut App) -> crate::Button;
+pub(crate) struct AddonContext<'a> {
+    pub theme: &'a Theme,
+    pub size: Size,
+    pub disabled: bool,
+    pub start: bool,
+}
+
 #[derive(Clone)]
 pub enum InputGroupAddon {
     Text(SharedString),
     Icon(SharedString),
+    Action(std::rc::Rc<ActionFactory>),
 }
 impl InputGroupAddon {
     pub fn text(text: impl Into<SharedString>) -> Self {
@@ -18,14 +27,100 @@ impl InputGroupAddon {
     pub fn icon(path: impl Into<SharedString>) -> Self {
         Self::Icon(path.into())
     }
+    /// Configure a source-sized ghost button each render.
+    ///
+    /// This factory is retained by InputState. Capture WeakEntity handles for
+    /// that state and its owner: strong captures form a reference cycle.
+    /// ```
+    /// # use gpui_kumo::{InputGroup, InputGroupAddon, InputState};
+    /// # use gpui_kit::Entity;
+    /// # fn clear_group(input: &Entity<InputState>) -> InputGroup {
+    /// let target = input.downgrade();
+    /// InputGroup::new("search", input).end(InputGroupAddon::button(
+    ///     "clear", "Clear", move |button, _, _| {
+    ///         let target = target.clone();
+    ///         button.on_click(move |_, window, cx| {
+    ///             let _ = target.update(cx, |state, cx| state.set_value("", window, cx));
+    ///         })
+    ///     },
+    /// ))
+    /// # }
+    /// ```
+    pub fn button(
+        id: impl Into<ElementId>,
+        label: impl Into<SharedString>,
+        configure: impl Fn(crate::Button, &mut Window, &mut App) -> crate::Button + 'static,
+    ) -> Self {
+        let id = id.into();
+        let label = label.into();
+        Self::Action(std::rc::Rc::new(move |size, window, cx| {
+            configure(
+                crate::Button::new(id.clone(), label.clone())
+                    .variant(crate::button::Variant::Ghost)
+                    .size(compact_size(size)),
+                window,
+                cx,
+            )
+        }))
+    }
+    /// Icon-only action; the factory follows the same weak-capture contract as `button`.
+    pub fn icon_button(
+        id: impl Into<ElementId>,
+        name: impl Into<SharedString>,
+        path: impl Into<SharedString>,
+        configure: impl Fn(crate::Button, &mut Window, &mut App) -> crate::Button + 'static,
+    ) -> Self {
+        let id = id.into();
+        let name = name.into();
+        let path = path.into();
+        Self::Action(std::rc::Rc::new(move |size, window, cx| {
+            let icon_size = match size {
+                Size::Xs => 10.,
+                Size::Sm => 13.,
+                Size::Base => 18.,
+                Size::Lg => 20.,
+            };
+            configure(
+                crate::Button::icon(
+                    id.clone(),
+                    name.clone(),
+                    crate::Icon::new(path.clone()).size(px(icon_size)),
+                )
+                .variant(crate::button::Variant::Ghost)
+                .size(compact_size(size)),
+                window,
+                cx,
+            )
+        }))
+    }
     pub(crate) fn render(
         &self,
         id: &'static str,
-        outer: f32,
-        icon_size: f32,
-        start: bool,
-        theme: &Theme,
+        context: AddonContext<'_>,
+        window: &mut Window,
+        cx: &mut App,
     ) -> gpui_kit::AnyElement {
+        let AddonContext {
+            theme,
+            size,
+            disabled,
+            start,
+        } = context;
+        let (outer, icon_size) = match size {
+            Size::Xs => (6., 10.),
+            Size::Sm => (6., 13.),
+            Size::Base => (8., 18.),
+            Size::Lg => (10., 20.),
+        };
+        let outer = if matches!(self, Self::Action(_)) {
+            match (size, start) {
+                (Size::Lg, true) => 6.,
+                (Size::Lg, false) => 2.,
+                _ => 4.,
+            }
+        } else {
+            outer
+        };
         let addon = div()
             .id(id)
             .test_support()
@@ -39,6 +134,12 @@ impl InputGroupAddon {
             addon.pr(px(outer))
         };
         match self {
+            Self::Action(render) => addon
+                .on_mouse_down(gpui_kit::MouseButton::Left, |_, _, cx| {
+                    cx.stop_propagation()
+                })
+                .child(render(size, window, cx).input_group_action(disabled))
+                .into_any_element(),
             Self::Text(text) => addon.child(text.clone()).into_any_element(),
             Self::Icon(path) => addon
                 .child(crate::Icon::new(path.clone()).size(px(icon_size)))
@@ -54,7 +155,8 @@ pub(crate) struct Container {
 }
 /// Initial shared-container slice. The retained InputState owns editing and availability.
 /// Passive addons use source padding and icon sizes; suffixes follow displayed text.
-/// Compact action buttons and individual/hybrid zones remain pending.
+/// Compact actions retain Base activation and shared focus-within.
+/// Individual/hybrid zones remain pending.
 #[derive(IntoElement)]
 #[must_use]
 pub struct InputGroup {
@@ -117,3 +219,11 @@ pub(crate) const EDITOR_CARET_MARGIN: gpui_kit::Pixels = px(10.);
 pub(crate) const SUFFIX_OVERLAP: gpui_kit::Pixels = px(8.);
 #[cfg(target_os = "macos")]
 pub(crate) const SUFFIX_OVERLAP: gpui_kit::Pixels = px(8.5);
+
+fn compact_size(size: Size) -> crate::button::Size {
+    match size {
+        Size::Xs | Size::Sm => crate::button::Size::Xs,
+        Size::Base => crate::button::Size::Sm,
+        Size::Lg => crate::button::Size::Base,
+    }
+}
