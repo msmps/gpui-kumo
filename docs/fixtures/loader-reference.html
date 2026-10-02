@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Pinned Kumo Loader reference</title>
+<style>
+  body { font: 14px system-ui; padding: 24px; background: #fff; color: #171717; }
+  .row { display: flex; align-items: center; gap: 24px; margin: 24px 0; }
+  .dark { background: #171717; color: #fafafa; padding: 24px; }
+  svg { overflow: visible; }
+</style>
+<h1>Pinned Kumo Loader reference</h1>
+<p>SVG recipe from Kumo 3fd5b648df578cb1ba214dedd30f475009f6a668. Paused deterministic samples; this fixture isolates Loader from React and surrounding CSS.</p>
+<label>Time in seconds <input id="time" type="number" min="0" max="6" step="0.125" value="0.75"></label>
+<button id="sample">Sample</button>
+<div class="row" id="light"></div>
+<div class="row dark" id="dark"></div>
+<script>
+  for (const row of [document.querySelector('#light'), document.querySelector('#dark')]) {
+    for (const size of [16, 24, 32, 40]) {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" style="height:${size}px;width:${size}px" role="status" aria-label="Loading">
+        <circle cx="12" cy="12" r="9.5" fill="none" stroke-width="2" stroke-linecap="round">
+          <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="stroke-dasharray" values="0 150;42 150;42 150" keyTimes="0;0.5;1" dur="1.5s" repeatCount="indefinite"/>
+          <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="12" cy="12" r="9.5" fill="none" opacity="0.1" stroke-width="2" stroke-linecap="round"/>
+      </svg>`;
+      row.append(wrapper);
+    }
+  }
+  function sample() {
+    for (const svg of document.querySelectorAll('svg')) {
+      svg.pauseAnimations();
+      svg.setCurrentTime(Number(document.querySelector('#time').value));
+    }
+  }
+  document.querySelector('#sample').addEventListener('click', sample);
+  sample();
+</script>
+</html>

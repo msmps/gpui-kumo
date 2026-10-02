@@ -1,13 +1,11 @@
 //! Kumo Button: application-owned props over Base's activation and focus behavior.
 //! See `docs/kumo-component-recipes.md` for the contract and native recipe policies.
 
-use std::time::Duration;
-
 use gpui_kit::{
-    Animation, AnimationExt, AnyElement, App, Background, BoxShadow, ClickEvent, ElementId,
-    FocusHandle, FontWeight, HitboxBehavior, Hsla, InteractiveElement, IntoElement, ParentElement,
-    PathBuilder, Pixels, RenderOnce, SharedString, StatefulInteractiveElement, Styled, Window,
-    base, canvas, div, point, prelude::FluentBuilder, px, quad, rgb,
+    AnyElement, App, Background, BoxShadow, ClickEvent, ElementId, FocusHandle, FontWeight,
+    HitboxBehavior, Hsla, InteractiveElement, IntoElement, ParentElement, Pixels, RenderOnce,
+    SharedString, StatefulInteractiveElement, Styled, Window, base, canvas, div,
+    prelude::FluentBuilder, px, quad, rgb,
 };
 
 use crate::{Theme, theme};
@@ -405,22 +403,10 @@ impl RenderOnce for Button {
             button = button.on_click(handler);
         }
         let leading = if self.loading {
-            Some(
-                Loader {
-                    size: px(if self.size == Size::Lg { 16. } else { 14. }),
-                    color: rest.foreground,
-                    phase: 0.,
-                }
-                .with_animation(
-                    "loader",
-                    Animation::new(Duration::from_secs(1)).repeat(),
-                    |mut loader, phase| {
-                        loader.phase = phase;
-                        loader
-                    },
-                )
-                .into_any_element(),
-            )
+            Some(crate::loader::indicator(
+                px(if self.size == Size::Lg { 16. } else { 14. }),
+                cx,
+            ))
         } else {
             self.leading
         };
@@ -471,41 +457,6 @@ impl RenderOnce for Button {
                 )
                 .child(ring),
         )
-    }
-}
-
-#[derive(IntoElement)]
-struct Loader {
-    size: Pixels,
-    color: Hsla,
-    phase: f32,
-}
-
-impl RenderOnce for Loader {
-    fn render(self, _: &mut Window, _: &mut App) -> impl IntoElement {
-        canvas(
-            |_, _, _| (),
-            move |bounds, _, window, _| {
-                let center = bounds.center();
-                let radius = self.size / 2. - px(1.5);
-                let mut path = PathBuilder::stroke(px(1.5));
-                for step in 0..=32 {
-                    let angle = std::f32::consts::TAU * (self.phase + step as f32 / 32. * 0.75);
-                    let position = center + point(radius * angle.cos(), radius * angle.sin());
-                    if step == 0 {
-                        path.move_to(position);
-                    } else {
-                        path.line_to(position);
-                    }
-                }
-                if let Ok(path) = path.build() {
-                    window.paint_path(path, self.color);
-                }
-            },
-        )
-        .w(self.size)
-        .h(self.size)
-        .flex_shrink_0()
     }
 }
 

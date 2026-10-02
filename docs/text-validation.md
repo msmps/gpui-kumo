@@ -27,3 +27,5 @@ Independent review found a medium fidelity issue: copy/headings forced the theme
 On 2026-10-02, rebuilt macOS gallery inspection showed modern headings, all copy/mono examples, inline emphasis, café/emoji wrapping and ellipsis in light appearance. These observations are not a browser pixel comparison. Repeated dark-button clicks left the appearance unchanged and the native accessibility tree exposed only window chrome; native dark and heading-level platform exposure remain pending. Quit completed and process inspection confirmed no kumo-gallery process remained. Windows/Linux and spoken-reader checks were not run.
 
 Text is implemented with automated coverage, awaiting the native dark/accessibility and pinned-browser comparison checks above. Do not infer complete platform parity from compilation or the render probe.
+
+During the subsequent Loader gallery check, the native tree exposed all Text names and the semantic Heading node, including full truncated Unicode names. This improves role/name evidence; the tree still did not expose a heading level, and appearance input still left light rendering unchanged.

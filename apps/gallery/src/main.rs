@@ -12,6 +12,7 @@ use gpui_kumo::{
 
 mod buttons;
 mod inputs;
+mod loaders;
 mod popovers;
 mod texts;
 
@@ -131,6 +132,7 @@ impl Render for Gallery {
                         }),
                     )),
             )
+            .child(loaders::panel(&theme))
             .child(texts::panel(&theme))
             .child(self.popovers.clone())
             .child(self.inputs.clone())
