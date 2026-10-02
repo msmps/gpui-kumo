@@ -63,6 +63,7 @@ pub struct Button {
     loading: bool,
     input_group_action: bool,
     input_group_zone: Option<Box<crate::input_group::Zone>>,
+    tooltip_trigger: Option<Box<crate::tooltip::TriggerHooks>>,
     open: bool,
     popover_expanded: Option<bool>,
     focus_handle: Option<FocusHandle>,
@@ -88,6 +89,7 @@ impl Button {
             loading: false,
             input_group_action: false,
             input_group_zone: None,
+            tooltip_trigger: None,
             open: false,
             popover_expanded: None,
             focus_handle: None,
@@ -124,6 +126,10 @@ impl Button {
     ) -> Self {
         self.disabled |= disabled;
         self.input_group_zone = Some(Box::new(zone));
+        self
+    }
+    pub(crate) fn tooltip_trigger(mut self, hooks: crate::tooltip::TriggerHooks) -> Self {
+        self.tooltip_trigger = Some(Box::new(hooks));
         self
     }
     pub(crate) fn provided_focus(&self) -> Option<FocusHandle> {
@@ -527,9 +533,27 @@ impl RenderOnce for Button {
             .when(!unavailable, |this| {
                 this.hover(|style| style.bg(hovered.background).text_color(hovered.foreground))
             });
-        if let Some(handler) = self.on_click {
+        let tooltip_bounds = self
+            .tooltip_trigger
+            .as_ref()
+            .map(|hooks| (hooks.bounds.clone(), hooks.moved.clone()));
+        if let Some(hooks) = self.tooltip_trigger {
+            let crate::tooltip::TriggerHooks { hover, press, .. } = *hooks;
+            if !unavailable {
+                button = button.on_hover(move |hovered, window, cx| hover(hovered, window, cx));
+            }
+            let handler = self.on_click;
+            button = button.on_click(move |event, window, cx| {
+                press(window, cx);
+                if let Some(handler) = &handler {
+                    handler(event, window, cx);
+                }
+            });
+            button = button.cursor_default();
+        } else if let Some(handler) = self.on_click {
             button = button.on_click(handler);
         }
+
         button.style().refine(&self.style);
         let joined_rings = self
             .join
@@ -602,7 +626,22 @@ impl RenderOnce for Button {
         };
         let input_group_action = self.input_group_action;
         let ring = canvas(
-            |bounds, window, _| window.insert_hitbox(bounds, HitboxBehavior::Normal),
+            move |bounds, window, cx| {
+                if let Some((target, moved)) = &tooltip_bounds {
+                    let border = borders.to_pixels(window.rem_size());
+                    let measured = Bounds::new(
+                        bounds.origin - point(border.left, border.top),
+                        size(
+                            bounds.size.width + border.left + border.right,
+                            bounds.size.height + border.top + border.bottom,
+                        ),
+                    );
+                    if target.replace(measured) != measured {
+                        moved(window, cx);
+                    }
+                }
+                window.insert_hitbox(bounds, HitboxBehavior::Normal)
+            },
             move |bounds, hitbox, window, cx| {
                 let focused = !unavailable && ring_focus.is_focused(window);
                 if let Some(zone) = &zone {

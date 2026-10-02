@@ -19,6 +19,7 @@ This is the agent entry point for building a design system on GPUI primitives. R
 | Inspect rounded border fringes and Badge hover rings | [Ring edge repair](ring-edge-validation.md) |
 | Verify a component or diagnose a visual discrepancy | [Verification](gpui-verification.md), [Popover results](popover-validation.md) |
 | Investigate scrolling lag, animation cost or debug/release runtime differences | [Performance measurements](performance-validation.md) |
+| Compose retained native Tooltip disclosure | [Tooltip acceptance](tooltip-validation.md) |
 | Review remaining component work | [Local issue tracker](issues/README.md) |
 | Resume the full port and select the next milestone | [Port progress and backlog](port-progress.md) |
 | Use or verify supported Text styles and composition | [Text contract and results](text-validation.md) |

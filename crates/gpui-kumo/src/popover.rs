@@ -506,7 +506,7 @@ impl Render for PopoverState {
 }
 
 #[path = "popover_arrow.rs"]
-mod arrow;
+pub(crate) mod arrow;
 
 #[cfg(test)]
 #[path = "popover_tests.rs"]

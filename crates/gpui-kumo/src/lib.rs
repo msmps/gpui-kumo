@@ -40,6 +40,7 @@ pub use theme::{Appearance, Theme, set_appearance, set_theme, theme};
 pub fn init(cx: &mut App) {
     gpui_kit::init(cx);
     popover::init(cx);
+    tooltip::init(cx);
     set_theme(Theme::new(Appearance::Light), cx);
 }
 
@@ -60,3 +61,6 @@ pub use button_group::ButtonGroup;
 
 pub mod input_group;
 pub use input_group::{InputGroup, InputGroupAddon};
+
+pub mod tooltip;
+pub use tooltip::{Tooltip, TooltipEvent, TooltipProvider, TooltipState};

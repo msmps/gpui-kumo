@@ -6,10 +6,19 @@ use gpui_kit::{
 };
 use std::{cell::Cell, rc::Rc};
 
-pub(super) fn element(
+pub(crate) fn element(
     trigger: Rc<Cell<Bounds<Pixels>>>,
     resolved: Rc<Cell<Option<base::ResolvedPosition>>>,
     theme: &Theme,
+) -> AnyElement {
+    element_with_inset(trigger, resolved, theme, px(18.))
+}
+
+pub(crate) fn element_with_inset(
+    trigger: Rc<Cell<Bounds<Pixels>>>,
+    resolved: Rc<Cell<Option<base::ResolvedPosition>>>,
+    theme: &Theme,
+    inset: Pixels,
 ) -> AnyElement {
     let colors = [
         theme.colors.base,
@@ -28,13 +37,11 @@ pub(super) fn element(
             let bounds = position.bounds;
             let trigger = trigger.get();
             // Clamp the arrow clear of rounded corners after cross-axis snapping.
-            if bounds.size.width < px(36.) || bounds.size.height < px(36.) {
+            if bounds.size.width < inset * 2. || bounds.size.height < inset * 2. {
                 return;
             }
-            let x =
-                (trigger.center().x - bounds.left()).clamp(px(18.), bounds.size.width - px(18.));
-            let y =
-                (trigger.center().y - bounds.top()).clamp(px(18.), bounds.size.height - px(18.));
+            let x = (trigger.center().x - bounds.left()).clamp(inset, bounds.size.width - inset);
+            let y = (trigger.center().y - bounds.top()).clamp(inset, bounds.size.height - inset);
             let at = |u: f32, v: f32| match side {
                 base::Placement::Bottom => {
                     point(bounds.left() + x + px(u - 10.), bounds.top() + px(v - 8.))

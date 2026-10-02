@@ -26,11 +26,12 @@ mod popovers;
 mod radios;
 mod switches;
 mod texts;
+mod tooltips;
 
 #[cfg(feature = "frame-profiler")]
 mod performance;
 
-gpui_kit::actions!(gallery, [Quit, ToggleAppearance]);
+gpui_kit::actions!(gallery, [Quit, ToggleAppearance, FocusNext, FocusPrevious]);
 
 struct GalleryAssets;
 
@@ -75,6 +76,7 @@ struct Gallery {
     switches: gpui_kit::Entity<switches::Switches>,
     button_groups: gpui_kit::Entity<button_groups::ButtonGroups>,
     input_groups: gpui_kit::Entity<input_groups::InputGroups>,
+    tooltips: gpui_kit::Entity<tooltips::Tooltips>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -88,6 +90,8 @@ impl Render for Gallery {
         let root = div()
             .id("gallery")
             .track_focus(&self.focus_handle)
+            .on_action(|_: &FocusNext, window, cx| window.focus_next(cx))
+            .on_action(|_: &FocusPrevious, window, cx| window.focus_prev(cx))
             .on_action(|_: &Quit, _, cx| cx.quit())
             .on_action(|_: &ToggleAppearance, _, cx| {
                 set_appearance(current_theme(cx).appearance.opposite(), cx);
@@ -180,6 +184,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.tooltips.clone())
         .child(self.input_groups.clone())
         .child(self.button_groups.clone())
         .child(self.switches.clone())
@@ -364,6 +369,8 @@ fn main() {
         .run(|cx: &mut App| {
             gpui_kumo::init(cx);
             cx.bind_keys([
+                KeyBinding::new("tab", FocusNext, None),
+                KeyBinding::new("shift-tab", FocusPrevious, None),
                 KeyBinding::new("cmd-q", Quit, None),
                 KeyBinding::new("cmd-l", ToggleAppearance, None),
             ]);
@@ -412,6 +419,7 @@ fn main() {
                             switches: cx.new(switches::Switches::new),
                             button_groups: cx.new(button_groups::ButtonGroups::new),
                             input_groups: cx.new(|cx| input_groups::InputGroups::new(window, cx)),
+                            tooltips: cx.new(|cx| tooltips::Tooltips::new(window, cx)),
                             activations: 0,
                             disabled: false,
                             loading: false,
