@@ -310,7 +310,7 @@ impl RenderOnce for Graphic {
                 window.paint_quad(quad(
                     bounds.dilate(width),
                     px(5.) + width,
-                    Hsla::transparent_black(),
+                    color.alpha(0.),
                     width,
                     color,
                     Default::default(),

@@ -4,7 +4,7 @@
 
 use gpui_kit::base::TestSupportExt;
 use gpui_kit::{
-    AbsoluteLength, AnyElement, App, Bounds, ClickEvent, Corners, Edges, ElementId, Hsla,
+    AbsoluteLength, AnyElement, App, Bounds, ClickEvent, Corners, Edges, ElementId,
     InteractiveElement, IntoElement, ParentElement, Refineable, RenderOnce, SharedString,
     StatefulInteractiveElement, StyleRefinement, Styled, UnderlineStyle, Window, base, canvas, div,
     point, quad, size, svg,
@@ -262,7 +262,7 @@ impl RenderOnce for Link {
                                     .to_pixels(window.rem_size())
                                     .map(|radius| *radius + focus_width)
                                     .clamp_radii_for_quad_size(outer.size),
-                                Hsla::transparent_black(),
+                                focus_color.alpha(0.),
                                 focus_width,
                                 focus_color,
                                 Default::default(),

@@ -4,7 +4,7 @@
 
 use gpui_kit::base::TestSupportExt;
 use gpui_kit::{
-    AbsoluteLength, AnyElement, App, Bounds, Corners, Edges, ElementId, FontWeight, Hsla,
+    AbsoluteLength, AnyElement, App, Bounds, Corners, Edges, ElementId, FontWeight,
     InteractiveElement, IntoElement, ParentElement, Refineable, RenderOnce, Role, SharedString,
     StatefulInteractiveElement, StyleRefinement, Styled, Window, canvas, div, point, px, quad,
     size,
@@ -271,7 +271,7 @@ impl<P> Badge<P> {
                                     .to_pixels(window.rem_size())
                                     .map(|radius| *radius + px(1.))
                                     .clamp_radii_for_quad_size(outer.size),
-                                Hsla::transparent_black(),
+                                color.alpha(0.),
                                 px(1.),
                                 color,
                                 Default::default(),

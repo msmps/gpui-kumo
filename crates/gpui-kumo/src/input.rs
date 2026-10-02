@@ -2,7 +2,7 @@
 
 use gpui_kit::{
     App, AppContext, Context, ElementId, Entity, EventEmitter, FocusHandle, Focusable, FontWeight,
-    Hsla, InteractiveElement, IntoElement, ParentElement, Render, RenderOnce, SharedString,
+    InteractiveElement, IntoElement, ParentElement, Render, RenderOnce, SharedString,
     StatefulInteractiveElement, Styled, Subscription, Window, base, canvas, div,
     prelude::FluentBuilder, px, quad,
 };
@@ -376,7 +376,7 @@ impl Render for InputState {
                                 window.paint_quad(quad(
                                     bounds.dilate(ring_width),
                                     radius + ring_width,
-                                    Hsla::transparent_black(),
+                                    ring_color.alpha(0.),
                                     ring_width,
                                     ring_color,
                                     Default::default(),

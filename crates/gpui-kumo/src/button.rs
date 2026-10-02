@@ -528,7 +528,9 @@ impl RenderOnce for Button {
                             .to_pixels(window.rem_size())
                             .map(|radius| *radius + width)
                             .clamp_radii_for_quad_size(outer.size),
-                        Hsla::transparent_black(),
+                        // GPUI interpolates straight RGB at the inner edge before
+                        // premultiplication; transparent black creates a dark fringe.
+                        color.alpha(0.),
                         width,
                         color,
                         Default::default(),

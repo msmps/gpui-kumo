@@ -3,9 +3,9 @@
 use crate::{Button, Text, button, text, theme};
 use gpui_kit::base::TestSupportExt;
 use gpui_kit::{
-    AnyElement, App, ClipboardItem, ElementId, Hsla, InteractiveElement, IntoElement,
-    ParentElement, RenderOnce, SharedString, StatefulInteractiveElement, Styled, Task, Window,
-    canvas, div, prelude::FluentBuilder, px, quad, relative, svg,
+    AnyElement, App, ClipboardItem, ElementId, InteractiveElement, IntoElement, ParentElement,
+    RenderOnce, SharedString, StatefulInteractiveElement, Styled, Task, Window, canvas, div,
+    prelude::FluentBuilder, px, quad, relative, svg,
 };
 use std::time::Duration;
 
@@ -192,7 +192,7 @@ impl RenderOnce for Empty {
                                     window.paint_quad(quad(
                                         bounds.dilate(px(1.)),
                                         theme.radii.lg + px(1.),
-                                        Hsla::transparent_black(),
+                                        theme.colors.line.alpha(0.),
                                         px(1.),
                                         theme.colors.line,
                                         Default::default(),

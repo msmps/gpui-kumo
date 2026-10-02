@@ -5,7 +5,7 @@ use std::{cell::Cell, rc::Rc, time::Duration};
 use gpui_kit::base::TestSupportExt;
 
 use gpui_kit::{
-    AnyElement, App, Bounds, Context, Entity, EventEmitter, FocusHandle, FontWeight, Hsla,
+    AnyElement, App, Bounds, Context, Entity, EventEmitter, FocusHandle, FontWeight,
     InteractiveElement, IntoElement, KeyBinding, ParentElement, Pixels, Render, RenderOnce, Role,
     SharedString, StatefulInteractiveElement, Styled, Subscription, WeakFocusHandle, Window, base,
     canvas, deferred, div, px, quad,
@@ -459,7 +459,7 @@ impl Render for PopoverState {
                         window.paint_quad(quad(
                             bounds.dilate(dilation),
                             radius + dilation,
-                            Hsla::transparent_black(),
+                            outline_color.alpha(0.),
                             outline_width,
                             outline_color,
                             Default::default(),

@@ -2,10 +2,9 @@
 use crate::{Label, theme};
 use gpui_kit::base::TestSupportExt;
 use gpui_kit::{
-    AnyElement, App, Axis, ClickEvent, ElementId, FocusHandle, FontWeight, Hsla,
-    InteractiveElement, IntoElement, KeyDownEvent, ParentElement, RenderOnce, SharedString,
-    StatefulInteractiveElement, Styled, Window, base, canvas, div, prelude::FluentBuilder, px,
-    quad,
+    AnyElement, App, Axis, ClickEvent, ElementId, FocusHandle, FontWeight, InteractiveElement,
+    IntoElement, KeyDownEvent, ParentElement, RenderOnce, SharedString, StatefulInteractiveElement,
+    Styled, Window, base, canvas, div, prelude::FluentBuilder, px, quad,
 };
 use std::rc::Rc;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -345,7 +344,7 @@ impl<T: Clone + Eq + 'static> RenderOnce for RadioGroup<T> {
                     window.paint_quad(quad(
                         bounds.dilate(width),
                         (bounds.size.width / 2.) + width,
-                        Hsla::transparent_black(),
+                        color.alpha(0.),
                         width,
                         color,
                         Default::default(),

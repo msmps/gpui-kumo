@@ -1,7 +1,7 @@
 //! Kumo Checkbox presentation over Base's controlled toggle and focus behavior.
 use crate::{Label, theme};
 use gpui_kit::{
-    App, ClickEvent, ElementId, FocusHandle, FontWeight, HitboxBehavior, Hsla, IntoElement,
+    App, ClickEvent, ElementId, FocusHandle, FontWeight, HitboxBehavior, IntoElement,
     ParentElement, RenderOnce, SharedString, StatefulInteractiveElement, Styled, Window, base,
     canvas, div, prelude::FluentBuilder, px, quad, svg,
 };
@@ -165,7 +165,7 @@ impl RenderOnce for Checkbox {
                 window.paint_quad(quad(
                     bounds.dilate(width),
                     theme.radii.sm + width,
-                    Hsla::transparent_black(),
+                    color.alpha(0.),
                     width,
                     color,
                     Default::default(),
