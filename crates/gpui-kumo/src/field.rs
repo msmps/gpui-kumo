@@ -1,8 +1,8 @@
 //! Application-owned Field layout and message presentation.
-use crate::{Label, Theme, theme};
+use crate::{Label, Theme, TooltipState, theme};
 use gpui_kit::{
-    AnyElement, App, Div, ElementId, FocusHandle, InteractiveElement, IntoElement, ParentElement,
-    Pixels, RenderOnce, SharedString, Styled, Window, div, prelude::FluentBuilder,
+    AnyElement, App, Div, ElementId, Entity, FocusHandle, InteractiveElement, IntoElement,
+    ParentElement, Pixels, RenderOnce, SharedString, Styled, Window, div, prelude::FluentBuilder,
 };
 
 /// Native layout choice, replacing web descendant type selectors.
@@ -31,6 +31,7 @@ pub struct Field {
     hide_label: bool,
     layout: Layout,
     description: Option<SharedString>,
+    tooltip: Option<(Entity<TooltipState>, SharedString)>,
     error: Option<(SharedString, bool)>,
 }
 impl Field {
@@ -50,6 +51,7 @@ impl Field {
             hide_label: false,
             layout: Layout::default(),
             description: None,
+            tooltip: None,
             error: None,
         }
     }
@@ -79,6 +81,15 @@ impl Field {
         self.layout = layout;
         self
     }
+    /// Add an independently focusable contextual help button beside the label.
+    pub fn label_tooltip(
+        mut self,
+        state: &Entity<TooltipState>,
+        content: impl Into<SharedString>,
+    ) -> Self {
+        self.tooltip = Some((state.clone(), content.into()));
+        self
+    }
     /// Helper text, hidden whenever an error is supplied.
     pub fn description(mut self, description: impl Into<SharedString>) -> Self {
         self.description = Some(description.into());
@@ -93,12 +104,20 @@ impl Field {
 }
 impl RenderOnce for Field {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
+        if self.hide_label
+            && let Some((state, _)) = &self.tooltip
+        {
+            state.update(cx, |state, cx| state.set_open(false, cx));
+        }
         let theme = theme(cx);
         let label = (!self.hide_label).then(|| {
             Label::new("label", self.label)
                 .optional(self.optional)
                 .disabled(self.disabled)
                 .when_some(self.focus, |label, focus| label.focus_target(&focus))
+                .when_some(self.tooltip, |label, (state, content)| {
+                    label.tooltip(&state, content)
+                })
         });
         let contents = div()
             .flex()

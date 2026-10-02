@@ -11,6 +11,7 @@ This is the agent entry point for building a design system on GPUI primitives. R
 | Implement the first slice's palette, typography, spacing or effects | [Kumo token extraction](kumo-tokens.md) |
 | Translate Button, Input or Popover geometry and visual states | [Kumo component recipes](kumo-component-recipes.md) |
 | Compare raw GPUI with GPUI Base as the behavior foundation | [GPUI Base assessment](gpui-base-assessment.md) |
+| Integrate the exact-version reverse-Tab correction | [GPUI patch and consumer setup](gpui-tab-registration-patch.md) |
 | Understand state ownership, rendering, or startup | [GPUI grounding](gpui-grounding.md) |
 | Choose layout, text, assets, lists, overlays, or custom drawing | [Primitives](gpui-primitives.md) |
 | Implement tokens, themes, typography, or state styling | [Styling](gpui-styling.md) |

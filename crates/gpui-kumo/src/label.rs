@@ -1,8 +1,8 @@
 //! Form labels with explicit native focus association.
-use crate::theme;
+use crate::{Tooltip, TooltipState, theme};
 use gpui_kit::base::TestSupportExt;
 use gpui_kit::{
-    AnyElement, App, ElementId, FocusHandle, FontWeight, InteractiveElement, IntoElement,
+    AnyElement, App, ElementId, Entity, FocusHandle, FontWeight, InteractiveElement, IntoElement,
     ParentElement, RenderOnce, Role, SharedString, StatefulInteractiveElement, Styled, Window, div,
     prelude::FluentBuilder,
 };
@@ -18,6 +18,7 @@ pub struct Label {
     disabled: bool,
     focus: Option<FocusHandle>,
     content: Option<AnyElement>,
+    tooltip: Option<(Entity<TooltipState>, SharedString)>,
     as_content: bool,
 }
 impl Label {
@@ -30,6 +31,7 @@ impl Label {
             disabled: false,
             focus: None,
             content: None,
+            tooltip: None,
             as_content: false,
         }
     }
@@ -53,15 +55,34 @@ impl Label {
         self.as_content = true;
         self
     }
+    /// Contextual help uses a separately retained Tooltip and an independent
+    /// info button. Label availability only gates the associated control focus.
+    pub fn tooltip(
+        mut self,
+        state: &Entity<TooltipState>,
+        content: impl Into<SharedString>,
+    ) -> Self {
+        let content = content.into();
+        self.tooltip = Some((state.clone(), content));
+        self
+    }
     /// Rich decorative content; `new` remains the complete accessible name.
-    /// Keep independent interactive accessories outside the label.
+    /// Use `tooltip` for help; keep other interactive accessories outside the label.
     pub fn content(mut self, content: impl IntoElement) -> Self {
         self.content = Some(content.into_any_element());
         self
     }
 }
 impl RenderOnce for Label {
-    fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
+    fn render(mut self, _: &mut Window, cx: &mut App) -> impl IntoElement {
+        if self
+            .tooltip
+            .as_ref()
+            .is_some_and(|(_, content)| content.is_empty())
+            && let Some((state, _)) = self.tooltip.take()
+        {
+            state.update(cx, |state, cx| state.set_open(false, cx));
+        }
         let theme = theme(cx);
         let name = if self.optional {
             format!("{} (optional)", self.text).into()
@@ -72,7 +93,11 @@ impl RenderOnce for Label {
             .id(self.id)
             .test_support()
             .when(!self.as_content, |this| {
-                this.role(Role::Label).aria_label(name)
+                this.role(Role::Label)
+                    .aria_label(name)
+                    .on_mouse_down(gpui_kit::MouseButton::Left, |_, window, _| {
+                        window.prevent_default()
+                    })
             })
             .flex()
             .items_center()
@@ -101,6 +126,21 @@ impl RenderOnce for Label {
                         .text_color(theme.text.subtle)
                         .child("(optional)"),
                 )
+            })
+            .when_some(self.tooltip, |this, (state, content)| {
+                this.child(Tooltip::new("label-tooltip", &state, content, |_, cx| {
+                    crate::Button::icon(
+                        "label-help",
+                        "More information",
+                        gpui_kit::svg()
+                            .data(include_bytes!("../assets/info.svg"))
+                            .size(gpui_kit::px(16.))
+                            .text_color(crate::theme(cx).text.default),
+                    )
+                    .variant(crate::button::Variant::Ghost)
+                    .size(crate::button::Size::Xs)
+                    .on_click(|_, _, cx| cx.stop_propagation())
+                }))
             })
     }
 }

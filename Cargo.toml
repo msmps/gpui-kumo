@@ -15,3 +15,8 @@ gpui-kumo = { path = "crates/gpui-kumo" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+
+# Preserve accessible Input focus tracking without duplicate reverse-Tab stops.
+# Exact0.3.7 source plus the documented TabStopMap correction.
+[patch.crates-io]
+gpui-pre = { path = "vendor/gpui-pre-0.3.7" }

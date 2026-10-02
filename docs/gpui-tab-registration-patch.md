@@ -1,0 +1,32 @@
+# GPUI0.3.7 repeated focus registration correction
+
+The pinned GPUI Kit/Base0.7.0 and GPUI family0.3.7 remain selected. `gpui-pre` is now resolved from `vendor/gpui-pre-0.3.7`: complete published crate source, Apache2.0 license preserved, package checksum before modification `0e87a42bb37c7cb4e76dd1ac0ce88851e46e976e0373a47ab3e0757abffee54d`. Derived Zed revision remains `1a28cff4b409169bac058bca40dfbfeb7621d19b`. No upstream version change or other lockfile resolution change.
+
+## Concrete defect and local boundary
+
+Kumo Input's accessible `InputBase` frame and Base's retained inner editor legitimately track the same FocusHandle. Installed `TabStopMap::insert` appended both nodes, while `by_id` pointed only at the last. `focus_prev` from the editor selected its earlier identical handle, leaving focus unchanged indefinitely. The actual Field help regression failed with Input still focused after Shift-Tab plus native focus_prev, before this correction (`/tmp/label-tooltip-tests.log` initial diagnostic; failure reported in review). This was a pre-existing composition defect, exposed by a new consumer.
+
+Public APIs offer no per-element registration opt-out for a tracked handle. `Div::tab_stop` only controls automatically created handles; `FocusHandle::tab_stop` changes shared policy, including future clones of the editor handle. Removing the semantic frame's tracking loses its reported accessibility focus: the roleless Base editor cannot map focus upward, and aria_active_descendant only maps to a descendant. Independent reviewer checked these actual source boundaries. A speculative focus-navigation replacement or removal of supported focus metadata was rejected.
+
+Only `src/tab_stop.rs` is modified: before inserting the latest order for a FocusId, remove its previous order from the keyed SumTree. Keep insertion history unchanged, so cached-frame replay applies the same deduplication. Preserve existing latest-position policy, native editing, accessibility focus tracking, focus handles and public APIs. The regression at the dependency boundary checks forward/reverse traversal and replay for repeated registration in a nested tab group. Consumer Field tests check actual reverse navigation from the retained Unicode Input to the independent help trigger in both themes, plus availability and Escape.
+
+## Maintenance and validation
+
+The design-system maintainers own this small patch; do not edit the vendored editor, platform adapters or dependency APIs incidentally. Remove the override after adopting a compatible GPUI family release that coalesces repeated FocusId registrations, then re-run Input/Field/InputGroup/native navigation and accessibility checks. Upstream-only fixes or new source pins need a focused baseline update; do not float one family crate.
+
+Workspace formatting, tests, warning-denied Clippy and all-target/example builds validate the actual patched crate through consumers. The dependency's complete own test suite requires its upstream test assets/platform setup and is not covered by workspace test counts; record any separately attempted result. Browser/OS spoken semantics remain separate from the repaired native tab traversal and preserved metadata.
+
+
+Measured gate:101 workspace tests/nine doctests passed with the patch; all-target/all-feature builds and workspace Clippy with warnings denied passed. The path dependency exposes the pinned crate's pre-existing profiler `AtomicUsize::fetch_update` deprecation warning under Rust1.99 (`src/profiler/journal.rs:384`); this was not suppressed or changed incidentally. The earlier upstream `block` future-compatibility notice remains separate.
+
+Attempted `cargo test -p gpui-pre --lib repeated_focus_registration --locked --offline` failed before running tests because the published crate omits external `assets/fonts/ibm-plex-sans/IBMPlexSans-Regular.ttf` and `assets/fonts/lilex/Lilex-Regular.ttf`, required by unrelated svg_renderer test compilation. Do not claim the dependency unit ran. Consumer rendering/input regressions execute the actual patched registry and passed. A full upstream test checkout/asset setup remains necessary for its own suite.
+
+Consumer integration caveat: Cargo overrides are read at the consumer workspace root; dependency `[patch]` sections do not propagate. A downstream project must copy this exact vendored package and add `gpui-pre = { path = "vendor/gpui-pre-0.3.7" }` under its own `[patch.crates-io]`, or use an equivalent pinned source containing this correction. This workspace is configured already. An unpatched0.3.7 consumer retains the duplicate-registration reverse-Tab defect. No crate release or external upstream publication is authorized or performed here.
+
+## Dependency direction reviewed2026-10-02
+
+Keep Kit/Base0.7.0 as the behavioral foundation. Vendor additional Base changes only for a verified missing behavior/API that prevents the pinned Kumo contract; the Kit facade itself does not own editor/focus/renderer defects. Presentation fixes remain in Kumo. Each dependency patch requires a small source diff, observable consumer regression, maintenance/removal condition and explicit downstream setup.
+
+User-requested GPUI CE comparison inspected README, GPUI Cargo manifest, style/scene and TabStopMap source at `c6b17e616a35271183ab49f0da1890ee81953a99` ([source](https://github.com/gpui-ce/gpui-ce/tree/c6b17e616a35271183ab49f0da1890ee81953a99)). CE is a separate framework fork; README explicitly says API compatibility is changing. It exposes transitions, corner smoothing and backdrop blur, but this review does not establish arbitrary-descendant rounded clipping support. Its TabStopMap still inserts repeated FocusId orders without removing the previous order, so the present defect is not solved by switching. Installed Kit/Base depend on exact gpui-pre0.3.7 (and matching macros/platform family), while inspected CE package is gpui-ce0.2.2 with different family packages. A migration needs a coordinated dependency-family/Base compatibility experiment and complete native regression validation; no switch or broader vendor fork is justified by current evidence. Scope the experiment to a concrete remaining blocker if one warrants it.
+
+Staged whitespace review found two trailing spaces in unchanged upstream `src/_accessibility.rs` documentation (lines236/240). These are preserved to keep vendored source identical outside tab_stop.rs; authored changes pass diff whitespace checks.

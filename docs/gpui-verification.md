@@ -16,7 +16,7 @@ For native screenshot checks, verify platform presentation visibility as well as
 | --- | --- |
 | Appearance | Variants/sizes, supported themes, foreground/surface contrast, long labels, narrow widths, text and density scaling |
 | Corners and layers | Inspect rounded corners at useful scale: parent/child fills, border continuity (including arrow-to-body joins: no separator across the arrow mouth, outline paints beneath its fill), corner-mask offsets, shadow/ring extents and nested layer contrast. Check both themes, resized/narrow bounds and state changes; preserve documented clipping limits. Inspect enlarged inner edges for dark fringes; border-only transparent fills must retain ring RGB ([renderer evidence](ring-edge-validation.md)) |
-| Alignment | Inspect and measure icon/control centre lines, text/prompt baselines, labels, sibling gaps and edge padding. Check normal/feedback/loading content in both themes and wide/narrow compositions; ensure child wrappers respect parent cross-axis alignment |
+| Alignment | Inspect and measure visible icon/control centre lines (verify the glyph actually paints, not only its layout box), text/prompt baselines, labels, sibling gaps and edge padding. Check normal/feedback/loading content in both themes and wide/narrow compositions; ensure child wrappers respect parent cross-axis alignment |
 | Activation | Pointer, Enter, Space, and accessible action invoke one operation; nested accessory follows its routing policy |
 | Availability | Disabled/loading policy holds through every exposed activation path, including after a state change |
 | Focus | Tab traversal, visible indicator, focus changes during a held key, and disabling a focused control follow the contract |
