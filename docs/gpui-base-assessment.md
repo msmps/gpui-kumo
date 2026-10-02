@@ -1,6 +1,22 @@
 # GPUI Base assessment
 
-Reviewed 2026-10-01. This is an assessment and proposed approach, not an accepted dependency decision. Source inspected: GPUI Kit `main` at [`3a142844d3661159964dce9e5512ca9a40286160`](https://github.com/longbridge/gpui-kit/tree/3a142844d3661159964dce9e5512ca9a40286160). GitHub reports [v0.7.0](https://github.com/longbridge/gpui-kit/releases/tag/v0.7.0) published on 2026-09-28. Published release and inspected `main` are distinct baselines.
+Research reviewed 2026-10-01; dependency decision recorded 2026-10-02 below. Initial source inspected: GPUI Kit `main` at [`3a142844d3661159964dce9e5512ca9a40286160`](https://github.com/longbridge/gpui-kit/tree/3a142844d3661159964dce9e5512ca9a40286160). GitHub reports [v0.7.0](https://github.com/longbridge/gpui-kit/releases/tag/v0.7.0) published on 2026-09-28. Published release and inspected `main` are distinct baselines.
+
+## Decision after the first slice
+
+Retain GPUI Kit/Base **0.7.0**, with defaults disabled, as a selective behavior foundation. Keep the GPUI **0.3.7** family and lockfile pinned. The running implementation now supplies evidence beyond the original source assessment; the historical limits section below describes the original research only. This decision does not declare complete Kumo visual or platform accessibility parity.
+
+| Component | Retain | Adapt or replace locally |
+| --- | --- | --- |
+| Button | Base role/name, focus and tab policy, pointer/Enter/Space activation and unavailable gating | Kumo typed props, geometry, gradient/ring/shadow/loader presentation; actual AccessKit node enriched with disabled/busy flags through the existing synthetic-child hook |
+| Input | Base retained editing engine, selection, clipboard, Unicode, UTF-16 composition, history and editing availability | Kumo-owned state facade, frame/Field presentation and event mapping; text-run bridge over Base's measured ranges; disabled/read-only/invalid flags on the existing control node |
+| Popover | Base Root/deferred registration, Positioner placement and opposite-side collision resolution | Kumo-owned open state, single Button trigger, nesting/dismissal/focus lifecycle, outlines/arrow and opening fade; weak parent reassignment cleanup and ancestry-cycle rejection |
+
+Do not replace the text engine or create a duplicate accessibility control. The missing fluent state setters can be repaired using installed GPUI's `a11y_synthetic_children` / `A11ySubtreeBuilder::parent_node` and installed AccessKit setters; these are not reasons to fork GPUI. Incoming reversed selection direction needs a Base API extension; the current ordered-range normalization stays documented. Linux EditableText and expanded/collapsed export are adapter limitations. Whole-subtree scale/exit motion requires a deliberate GPUI capability or lifecycle extension; the current fade/immediate-close policy remains explicit.
+
+Measured host graph and build costs are in [Port progress](port-progress.md#measured-baseline): 374 unique normal package/version entries, no styled Component/assets, approximately 54 seconds for a fresh cached-dependency debug gallery build and 2.769 seconds for an incremental Button/Input rebuild on a 10-CPU, 16-GiB macOS host. These results support reuse for the substantially harder editing and overlay behavior; they do not isolate Base's marginal cost or predict every target/release build. No CI workflows/runs were returned by the repository Actions API at this checkpoint.
+
+Maintenance policy: keep private bounded adapters inside component modules, require rendered/input regressions and actual platform evidence for changed semantics, and upgrade Kit/Base plus the compatible GPUI family together in a focused checkpoint. Never float one snapshot crate. Prefer supported hooks and upstream fixes; adopt a dependency patch only for a concrete issue with a recorded source revision, owner/boundary, regression, and removal condition. No dependency fork or patch is selected now. Track unresolved fidelity and platform acceptance in [component issues](issues/README.md), independently from runnable local checks.
 
 ## Recommendation
 

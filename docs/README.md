@@ -18,6 +18,7 @@ This is the agent entry point for building a design system on GPUI primitives. R
 | Design a component API or decide where its state lives | [Component construction](design-system-components.md) |
 | Verify a component or diagnose a visual discrepancy | [Verification](gpui-verification.md), [Popover results](popover-validation.md) |
 | Review remaining component work | [Local issue tracker](issues/README.md) |
+| Resume the full port and select the next milestone | [Port progress and backlog](port-progress.md) |
 | Select dependencies, check an API, or refresh these notes | [Source baseline](gpui-sources.md) |
 
 ## Work sequence

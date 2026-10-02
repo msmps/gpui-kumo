@@ -278,6 +278,7 @@ impl Render for InputState {
         .join(". ");
         let label_focus = focus.clone();
         let disabled = self.disabled;
+        let read_only = self.read_only;
         let accessibility = self.accessibility.clone();
         let text_prepaint = accessibility.clone();
         let text_editor = self.editor.downgrade();
@@ -313,7 +314,19 @@ impl Render for InputState {
                     .aria_value(value)
                     .aria_placeholder(placeholder)
                     .aria_description(semantic_description)
-                    .a11y_synthetic_children(move |builder| accessibility.build(builder))
+                    .a11y_synthetic_children(move |builder| {
+                        let node = builder.parent_node();
+                        if disabled {
+                            node.set_disabled();
+                        }
+                        if read_only {
+                            node.set_read_only();
+                        }
+                        if invalid {
+                            node.set_invalid(gpui_kit::accesskit::Invalid::True);
+                        }
+                        accessibility.build(builder);
+                    })
                     .when(!disabled, |this| {
                         let run_id = text_prepaint.run_id.clone();
                         this.on_a11y_action(

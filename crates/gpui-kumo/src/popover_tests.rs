@@ -549,3 +549,132 @@ fn opening_fade_settles_and_reduced_motion_opens_opaque(cx: &mut TestAppContext)
         assert_eq!(opacity(window), 1.);
     });
 }
+
+struct Reparenting {
+    parents: [Entity<PopoverState>; 2],
+    child: Entity<PopoverState>,
+    selected_parent: Option<usize>,
+}
+
+impl Render for Reparenting {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        let child = Popover::new("child", &self.child, "Child")
+            .when_some(self.selected_parent, |child, index| {
+                child.parent(&PopoverClose {
+                    state: self.parents[index].downgrade(),
+                })
+            })
+            .content(|_, _, _| "Child content");
+        div()
+            .flex()
+            .gap(px(100.))
+            .p(px(32.))
+            .children(self.parents.iter().enumerate().map(|(index, parent)| {
+                Popover::new(("parent", index), parent, "Parent")
+                    .content(|_, _, _| "Parent content")
+            }))
+            .child(child)
+    }
+}
+
+fn reparenting_harness(cx: &mut TestAppContext) -> (Entity<Reparenting>, &mut VisualTestContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|_, cx| Reparenting {
+        parents: std::array::from_fn(|_| cx.new(|cx| PopoverState::new("Parent dialog", cx))),
+        child: cx.new(|cx| PopoverState::new("Child dialog", cx)),
+        selected_parent: Some(0),
+    });
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.render_frame(cx);
+    });
+    (view, cx)
+}
+
+#[gpui_kit::test]
+fn reassigned_child_only_dismisses_with_its_current_parent(cx: &mut TestAppContext) {
+    let (view, cx) = reparenting_harness(cx);
+    cx.update(|window, cx| {
+        let parents = view.read(cx).parents.clone();
+        let child = view.read(cx).child.clone();
+        for state in parents.iter().chain(std::iter::once(&child)) {
+            state.update(cx, |state, cx| state.set_open(true, window, cx));
+        }
+        window.render_frame(cx);
+        view.update(cx, |view, cx| {
+            view.selected_parent = Some(1);
+            cx.notify();
+        });
+        window.render_frame(cx);
+        parents[0].update(cx, |state, cx| state.dismiss(window, cx));
+        window.render_frame(cx);
+        assert!(child.read(cx).is_open());
+        assert!(window.within("child").try_find("surface").is_some());
+        parents[1].update(cx, |state, cx| state.dismiss(window, cx));
+        window.render_frame(cx);
+        assert!(!child.read(cx).is_open());
+        assert!(window.within("child").try_find("surface").is_none());
+    });
+}
+
+#[gpui_kit::test]
+fn detached_child_stays_open_when_its_previous_parent_dismisses(cx: &mut TestAppContext) {
+    let (view, cx) = reparenting_harness(cx);
+    cx.update(|window, cx| {
+        let parent = view.read(cx).parents[0].clone();
+        let child = view.read(cx).child.clone();
+        for state in [&parent, &child] {
+            state.update(cx, |state, cx| state.set_open(true, window, cx));
+        }
+        window.render_frame(cx);
+        view.update(cx, |view, cx| {
+            view.selected_parent = None;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        parent.update(cx, |state, cx| state.dismiss(window, cx));
+        window.render_frame(cx);
+        assert!(child.read(cx).is_open());
+        assert!(window.within("child").try_find("surface").is_some());
+    });
+}
+
+#[gpui_kit::test]
+fn ancestry_cycle_is_rejected_before_mutation_or_dismissal_borrowing(cx: &mut TestAppContext) {
+    let (view, cx) = reparenting_harness(cx);
+    cx.update(|window, cx| {
+        let parents = view.read(cx).parents.clone();
+        let child = view.read(cx).child.clone();
+        // Existing chain: child -> first parent -> second parent.
+        let _ = Popover::new("association", &parents[0], "First")
+            .parent(&PopoverClose {
+                state: parents[1].downgrade(),
+            })
+            .render(window, cx);
+        let rejection = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _ = Popover::new("cycle", &parents[1], "Second")
+                .parent(&PopoverClose {
+                    state: child.downgrade(),
+                })
+                .render(window, cx);
+        }))
+        .expect_err("a three-node ancestry cycle must be rejected");
+        let message = rejection
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| rejection.downcast_ref::<&str>().copied())
+            .unwrap();
+        assert!(message.contains("cannot create an ancestry cycle"));
+        for state in parents.iter().chain(std::iter::once(&child)) {
+            state.update(cx, |state, cx| state.set_open(true, window, cx));
+        }
+        // The rejected relation left the original tree intact; recursive close
+        // succeeds without trying to borrow an ancestor that is already updating.
+        parents[1].update(cx, |state, cx| state.dismiss(window, cx));
+        for state in parents.iter().chain(std::iter::once(&child)) {
+            assert!(!state.read(cx).is_open());
+        }
+        window.render_frame(cx);
+        assert!(window.within("child").try_find("surface").is_none());
+    });
+}

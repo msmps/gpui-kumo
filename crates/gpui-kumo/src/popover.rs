@@ -88,6 +88,7 @@ pub struct PopoverState {
     presentation: Presentation,
     trigger_bounds: Rc<Cell<Bounds<Pixels>>>,
     resolved_position: Rc<Cell<Option<base::ResolvedPosition>>>,
+    parent: Option<gpui_kit::WeakEntity<PopoverState>>,
     children: Vec<gpui_kit::WeakEntity<PopoverState>>,
     _theme_subscription: Subscription,
 }
@@ -114,6 +115,7 @@ impl PopoverState {
             presentation: Presentation::default(),
             trigger_bounds: Rc::new(Cell::new(Bounds::default())),
             resolved_position: Rc::new(Cell::new(None)),
+            parent: None,
             children: Vec::new(),
             _theme_subscription: cx.observe_global::<Theme>(|_, cx| cx.notify()),
         }
@@ -244,6 +246,8 @@ impl Popover {
     }
     /// Associate a nested popup with its parent's weak close capability.
     /// Closing the parent also closes registered descendants.
+    /// Reassigning or omitting this association removes the old registration.
+    /// Panics if the association would create an ancestry cycle.
     pub fn parent(mut self, parent: &PopoverClose) -> Self {
         self.presentation.parent = Some(parent.state.clone());
         self
@@ -262,13 +266,34 @@ impl Popover {
 
 impl RenderOnce for Popover {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
-        if let Some(parent) = &self.presentation.parent {
-            let child = self.state.downgrade();
+        let child = self.state.downgrade();
+        // Validate before changing either side: a rejected association must not
+        // leave a partial relationship that can recurse during dismissal.
+        let mut ancestor = self.presentation.parent.clone();
+        while let Some(parent) = ancestor.and_then(|parent| parent.upgrade()) {
             assert_ne!(
                 parent.entity_id(),
                 child.entity_id(),
-                "A Popover cannot parent itself"
+                "A Popover parent association cannot create an ancestry cycle"
             );
+            ancestor = parent.read(cx).parent.clone();
+        }
+        let previous = self.state.read(cx).parent.clone();
+        if previous.as_ref().map(|parent| parent.entity_id())
+            != self
+                .presentation
+                .parent
+                .as_ref()
+                .map(|parent| parent.entity_id())
+            && let Some(previous) = previous
+        {
+            let _ = previous.update(cx, |parent, _| {
+                parent
+                    .children
+                    .retain(|existing| existing.entity_id() != child.entity_id());
+            });
+        }
+        if let Some(parent) = &self.presentation.parent {
             let _ = parent.update(cx, |parent, _| {
                 if !parent
                     .children
@@ -279,8 +304,10 @@ impl RenderOnce for Popover {
                 }
             });
         }
-        self.state
-            .update(cx, |state, _| state.presentation = self.presentation);
+        self.state.update(cx, |state, _| {
+            state.parent = self.presentation.parent.clone();
+            state.presentation = self.presentation;
+        });
         div()
             .id(self.id)
             .flex()

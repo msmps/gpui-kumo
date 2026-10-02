@@ -358,6 +358,16 @@ impl RenderOnce for Button {
             .accessibility_label(self.name)
             .track_focus(&focus_handle)
             .disabled(unavailable)
+            .a11y_synthetic_children(move |builder| {
+                // Enrich Base's actual control node; do not add another button.
+                let node = builder.parent_node();
+                if unavailable {
+                    node.set_disabled();
+                }
+                if self.loading {
+                    node.set_busy();
+                }
+            })
             .when_some(self.popover_expanded, |this, expanded| {
                 this.aria_expanded(expanded).aria_description(if expanded {
                     "Expanded nonmodal dialog"

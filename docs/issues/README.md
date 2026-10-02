@@ -6,11 +6,11 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 
 | ID | Area | Issue | Status |
 | --- | --- | --- | --- |
-| KUMO-001 | Button | [expose disabled and loading accessibility state](001-button-availability-semantics.md) | Open |
+| KUMO-001 | Button | [expose disabled and loading accessibility state](001-button-availability-semantics.md) | In progress |
 | KUMO-002 | Button | [implement the authored 100ms outline color transition](002-button-outline-transition.md) | Open |
 | KUMO-003 | Button | [evaluate faithful shadow rendering on transparent outlines](003-button-outline-shadow.md) | Open |
 | KUMO-004 | Button | [complete pinned browser visual and narrow-layout comparisons](004-button-browser-parity.md) | Open |
-| KUMO-005 | Input | [expose disabled, read-only and invalid accessibility metadata](005-input-state-semantics.md) | Open |
+| KUMO-005 | Input | [expose disabled, read-only and invalid accessibility metadata](005-input-state-semantics.md) | In progress |
 | KUMO-006 | Input | [provide accessible text ranges, selection and editing actions](006-input-accessible-text.md) | Blocked |
 | KUMO-007 | Input | [validate composition through operating-system IMEs](007-input-os-ime.md) | Open |
 | KUMO-008 | Input | [complete pinned browser and Field visual comparisons](008-input-browser-parity.md) | Open |
@@ -23,7 +23,7 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 | KUMO-015 | Components | [validate Button, Input and Popover with VoiceOver](015-macos-voiceover.md) | Open |
 | KUMO-016 | Components | [validate Button, Input and Popover with a Windows screen reader](016-windows-screen-reader.md) | Open |
 | KUMO-017 | Components | [validate the native gallery and interactions on Windows](017-windows-native-components.md) | Open |
-| KUMO-018 | Components | [record the Base dependency decision after the first slice](018-base-foundation-decision.md) | Open |
+| KUMO-018 | Components | [record the Base dependency decision after the first slice](018-base-foundation-decision.md) | Resolved |
 
 ## Maintaining the tracker
 
