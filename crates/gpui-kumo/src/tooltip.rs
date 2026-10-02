@@ -4,8 +4,8 @@ use crate::{Button, Theme, theme};
 use gpui_kit::base::TestSupportExt;
 use gpui_kit::{
     App, Bounds, Context, ElementId, Entity, EventEmitter, FocusHandle, InteractiveElement,
-    IntoElement, ParentElement, Pixels, Render, RenderOnce, SharedString, Styled, Subscription,
-    Task, Window, base, canvas, deferred, div, px, quad,
+    IntoElement, ParentElement, Pixels, Point, Render, RenderOnce, SharedString, Styled,
+    Subscription, Task, Window, base, canvas, deferred, div, px, quad,
 };
 use std::{cell::Cell, rc::Rc, time::Duration};
 gpui_kit::actions!(kumo_tooltip, [Dismiss]);
@@ -75,9 +75,7 @@ impl TooltipState {
             cx.on_focus_out(&scope, window, |state: &mut Self, _, window, cx| {
                 state.keyboard_focus = false;
                 state.suppressed = false;
-                if !state.hovered {
-                    state.request(false, state.close_delay(), window, cx);
-                }
+                state.pointer_moved(window.mouse_position(), window, cx);
             }),
         ];
         Self {
@@ -117,6 +115,25 @@ impl TooltipState {
         self.presentation
             .as_ref()
             .map_or(Duration::ZERO, |p| p.close_delay)
+    }
+    fn pointer_moved(&mut self, point: Point<Pixels>, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.open || self.keyboard_focus {
+            return;
+        }
+        let inside = self.bounds.get().contains(&point)
+            || self.resolved.get().is_some_and(|popup| {
+                popup.bounds.contains(&point)
+                    || popup
+                        .placement
+                        .is_some_and(|side| in_bridge(point, self.bounds.get(), popup.bounds, side))
+            });
+        if inside {
+            // Returning during closeDelay cancels dismissal without changing open
+            // state or emitting a duplicate event.
+            self.task = None;
+        } else if self.task.is_none() {
+            self.request(false, self.close_delay(), window, cx);
+        }
     }
     fn request(
         &mut self,
@@ -215,9 +232,16 @@ impl Render for TooltipState {
                         state.suppressed = false;
                     }
                     if *hovered {
-                        state.request(true, delay, window, cx);
-                    } else if !state.keyboard_focus {
-                        state.request(false, state.close_delay(), window, cx);
+                        if state.open {
+                            state.task = None;
+                        } else {
+                            state.request(true, delay, window, cx);
+                        }
+                    } else if state.open {
+                        state.pointer_moved(window.mouse_position(), window, cx);
+                    } else {
+                        // Cancel a pending opening even though there is no popup.
+                        state.task = None;
                     }
                 });
             }),
@@ -264,6 +288,27 @@ impl Render for TooltipState {
         if !self.open {
             return root.into_any_element();
         }
+        let pointer_state = cx.entity().downgrade();
+        let root = root.child(
+            canvas(
+                |_, _, _| (),
+                move |_, _, window, _| {
+                    let pointer_state = pointer_state.clone();
+                    window.on_mouse_event(
+                        move |event: &gpui_kit::MouseMoveEvent, phase, window, cx| {
+                            if phase.capture() {
+                                let _ = pointer_state.update(cx, |state, cx| {
+                                    state.pointer_moved(event.position, window, cx)
+                                });
+                            }
+                        },
+                    );
+                },
+            )
+            .absolute()
+            .inset_0()
+            .size_full(),
+        );
         let t = theme(cx).clone();
         let placement = match p.side {
             Side::Top => base::Placement::Top,
@@ -278,6 +323,12 @@ impl Render for TooltipState {
         };
         let resolved = self.resolved.clone();
         let content = p.content.clone();
+        let arrow = crate::popover::arrow::element_with_inset(
+            self.bounds.clone(),
+            self.resolved.clone(),
+            &t,
+            px(10.),
+        );
         let popup = base::Tooltip::new("tooltip-popup")
             .flex()
             .flex_col()
@@ -299,12 +350,6 @@ impl Render for TooltipState {
                     tone: crate::text::Tone::Default,
                 }),
             )
-            .child(crate::popover::arrow::element_with_inset(
-                self.bounds.clone(),
-                self.resolved.clone(),
-                &t,
-                px(10.),
-            ))
             .child(
                 canvas(
                     |_, _, _| (),
@@ -322,7 +367,10 @@ impl Render for TooltipState {
                 .absolute()
                 .inset_0()
                 .size_full(),
-            );
+            )
+            // Like the source SVG child, arrow fill paints over the popup outline
+            // at the notch. Painting the outline last creates a false separator.
+            .child(arrow);
         root.child(
             deferred(
                 base::Positioner::side(exclusion_bounds(self.bounds.get(), p.side))
@@ -336,6 +384,64 @@ impl Render for TooltipState {
         )
         .into_any_element()
     }
+}
+
+// A native safe bridge joins the facing trigger/popup edges. It preserves
+// hoverability across Kumo's gap without delaying dismissal elsewhere. Browser
+// Base UI1.8 uses safePolygon; this bounded trapezoid adapts that pointer contract.
+fn in_bridge(
+    point: Point<Pixels>,
+    trigger: Bounds<Pixels>,
+    popup: Bounds<Pixels>,
+    side: base::Placement,
+) -> bool {
+    let (main, start, end, cross, a0, a1, b0, b1) = match side {
+        base::Placement::Top => (
+            point.y,
+            popup.bottom(),
+            trigger.top(),
+            point.x,
+            popup.left(),
+            popup.right(),
+            trigger.left(),
+            trigger.right(),
+        ),
+        base::Placement::Bottom => (
+            point.y,
+            trigger.bottom(),
+            popup.top(),
+            point.x,
+            trigger.left(),
+            trigger.right(),
+            popup.left(),
+            popup.right(),
+        ),
+        base::Placement::Left => (
+            point.x,
+            popup.right(),
+            trigger.left(),
+            point.y,
+            popup.top(),
+            popup.bottom(),
+            trigger.top(),
+            trigger.bottom(),
+        ),
+        base::Placement::Right => (
+            point.x,
+            trigger.right(),
+            popup.left(),
+            point.y,
+            trigger.top(),
+            trigger.bottom(),
+            popup.top(),
+            popup.bottom(),
+        ),
+    };
+    if main < start || main > end || end <= start {
+        return false;
+    }
+    let fraction = f32::from(main - start) / f32::from(end - start);
+    cross >= a0 + (b0 - a0) * fraction && cross <= a1 + (b1 - a1) * fraction
 }
 
 // Base resolves flipping before applying offset. Expand only the main axis to

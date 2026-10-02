@@ -6,6 +6,7 @@ struct Harness {
     offset: f32,
     side: Side,
     align: Align,
+    close_delay: Duration,
 }
 impl Render for Harness {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
@@ -32,7 +33,8 @@ impl Render for Harness {
                         })
                     })
                     .side(self.side)
-                    .align(self.align),
+                    .align(self.align)
+                    .close_delay(self.close_delay),
                 )
                 .child(Button::new("after", "After")),
         )
@@ -47,6 +49,7 @@ fn focus_disclosure_escape_and_activation_do_not_take_trigger_focus(cx: &mut Tes
         offset: 200.,
         side: Side::Top,
         align: Align::Center,
+        close_delay: Duration::ZERO,
     });
     let state = cx.read(|cx| view.read(cx).state.clone());
     cx.update(|window, cx| {
@@ -100,6 +103,7 @@ fn hover_timer_cancellation_and_disabled_disclosure(cx: &mut TestAppContext) {
         offset: 200.,
         side: Side::Top,
         align: Align::Center,
+        close_delay: Duration::ZERO,
     });
     let state = cx.read(|cx| view.read(cx).state.clone());
     cx.update(|window, cx| {
@@ -147,6 +151,7 @@ fn source_gap_alignment_and_anchor_movement(cx: &mut TestAppContext) {
         offset: 200.,
         side: Side::Top,
         align: Align::Start,
+        close_delay: Duration::ZERO,
     });
     let state = cx.read(|cx| view.read(cx).state.clone());
     for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
@@ -216,4 +221,106 @@ fn source_gap_alignment_and_anchor_movement(cx: &mut TestAppContext) {
         assert_eq!(popup.left() - old.left(), px(80.));
         assert_eq!(popup.left(), window.find("help").bounds().left());
     });
+}
+
+fn move_pointer(window: &mut Window, point: gpui_kit::Point<Pixels>, cx: &mut App) {
+    window.dispatch_event(
+        gpui_kit::PlatformInput::MouseMove(gpui_kit::MouseMoveEvent {
+            position: point,
+            pressed_button: None,
+            modifiers: Default::default(),
+        }),
+        cx,
+    );
+}
+#[gpui_kit::test]
+fn popup_and_gap_are_hoverable_and_close_delay_is_cancellable(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| Harness {
+        state: cx.new(|cx| TooltipState::new(window, cx)),
+        calls: 0,
+        offset: 200.,
+        side: Side::Top,
+        align: Align::Center,
+        close_delay: Duration::ZERO,
+    });
+    let state = cx.read(|cx| view.read(cx).state.clone());
+    for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+        for side in [Side::Top, Side::Bottom, Side::Left, Side::Right] {
+            cx.update(|window, cx| {
+                crate::set_appearance(appearance, cx);
+                view.update(cx, |view, cx| {
+                    view.side = side;
+                    cx.notify();
+                });
+                window.render_frame(cx);
+                window.hover("help", cx);
+                state.update(cx, |state, cx| state.set_open(true, cx));
+                window.render_frame(cx);
+                let trigger = window.find("help").bounds();
+                let popup = state.read(cx).resolved.get().unwrap().bounds;
+                let gap = match side {
+                    Side::Top => {
+                        gpui_kit::point(trigger.center().x, (popup.bottom() + trigger.top()) / 2.)
+                    }
+                    Side::Bottom => {
+                        gpui_kit::point(trigger.center().x, (trigger.bottom() + popup.top()) / 2.)
+                    }
+                    Side::Left => {
+                        gpui_kit::point((popup.right() + trigger.left()) / 2., trigger.center().y)
+                    }
+                    Side::Right => {
+                        gpui_kit::point((trigger.right() + popup.left()) / 2., trigger.center().y)
+                    }
+                };
+                move_pointer(window, gap, cx);
+                assert!(state.read(cx).is_open(), "gap {side:?}");
+                window.render_frame(cx);
+                move_pointer(window, popup.center(), cx);
+                assert!(state.read(cx).is_open(), "popup {side:?}");
+                window.render_frame(cx);
+                // Reentering an already open trigger must not start another
+                // opening timer which would prevent immediate outside closure.
+                window.hover("help", cx);
+                assert!(state.read(cx).is_open());
+                window.render_frame(cx);
+                move_pointer(window, gpui_kit::point(px(10.), px(10.)), cx);
+                assert!(!state.read(cx).is_open(), "outside {side:?}");
+            });
+        }
+    }
+    cx.update(|window, cx| {
+        view.update(cx, |view, cx| {
+            view.close_delay = Duration::from_millis(200);
+            cx.notify();
+        });
+        window.render_frame(cx);
+        window.hover("help", cx);
+        state.update(cx, |state, cx| state.set_open(true, cx));
+        window.render_frame(cx);
+        move_pointer(window, gpui_kit::point(px(10.), px(10.)), cx);
+    });
+    cx.run_until_parked();
+    cx.background_executor
+        .advance_clock(Duration::from_millis(199));
+    cx.run_until_parked();
+    cx.read(|cx| assert!(state.read(cx).is_open()));
+    cx.update(|window, cx| {
+        let popup = state.read(cx).resolved.get().unwrap().bounds;
+        move_pointer(window, popup.center(), cx);
+        window.render_frame(cx);
+    });
+    cx.run_until_parked();
+    cx.background_executor
+        .advance_clock(Duration::from_millis(201));
+    cx.run_until_parked();
+    cx.read(|cx| assert!(state.read(cx).is_open(), "return cancels close"));
+    cx.update(|window, cx| {
+        move_pointer(window, gpui_kit::point(px(10.), px(10.)), cx);
+    });
+    cx.run_until_parked();
+    cx.background_executor
+        .advance_clock(Duration::from_millis(200));
+    cx.run_until_parked();
+    cx.read(|cx| assert!(!state.read(cx).is_open()));
 }

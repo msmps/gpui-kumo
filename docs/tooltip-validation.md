@@ -22,7 +22,7 @@ The explicit weak-list `TooltipProvider` mounts above participating focusable co
 | Activation | Pointer/Space/Enter each retain consumer callback once and dismiss | Keyboard counters and provider dismissal tests; native sequence reviewed |
 | Disabled | Tooltip-disabled state cancels pending/open; unavailable Base Button inert | Disclosure cancellation tested; Button's existing availability tests remain applicable |
 | Escape | Focused trigger and provider capture suppress reopening until exit/reentry | Tested focus preserved and outside-trigger focus dismissal |
-| Persistent content | Hovering tooltip content / safe passage through10px gap | Pending; current0ms leave hides immediately. Do not claim WCAG hoverable content parity |
+| Persistent content | Hovering tooltip content / safe passage through10px gap | Native bounded trapezoid bridge and popup hover implemented; all four sides/both themes tested. Browser pointer-intent heuristics differ (documented below) |
 | Motion/provider |150ms source opacity/scale and grouped instantaneous switching | Pending; current popup appears/disappears without motion |
 | Accessibility | Base role Tooltip; Text label metadata | Trigger-to-tooltip spoken relation, native platform screen reader verification pending. Role alone is insufficient |
 | Edge cases | Unicode, long text, narrow widths, repeated retained instances | Gallery exercises; empty text/oversized height and nested overlay stress pending |
@@ -37,6 +37,24 @@ Actual Button hover/measurement hooks avoid a stretched column wrapper opening o
 
 ## Validation
 
-99 workspace tests and nine doctests passed; formatting, warning-denied all-target/all-feature Clippy and affected workspace/example builds passed at the core gate. Re-run after any subsequent changes. Native Linux software Vulkan/Xvfb captures are in `docs/evidence/tooltip-*.png`; final capture review results are recorded in the port checkpoint. Required macOS/screen reader/browser checks remain unrun here. No repository CI workflow is configured.
+100 workspace tests and nine doctests passed; formatting, warning-denied all-target/all-feature Clippy and affected workspace/example builds passed at the core gate. Re-run after any subsequent changes. Native Linux software Vulkan/Xvfb captures are in `docs/evidence/tooltip-*.png`; final capture review results are recorded in the port checkpoint. Required macOS/screen reader/browser checks remain unrun here. No repository CI workflow is configured.
 
 Final native review:1040×800 Top disclosure has a clean outline/arrow join in light/dark;520×800 long Unicode content wraps inside the4px viewport margin without corner clipping. `tooltip-activation-dark.png` shows counter3 after one pointer, Space and Enter activation and no popup. `tooltip-keyboard-dark.png` shows Tab moving focus to Bottom and disclosure; `tooltip-escape-dark.png` records dismissal with the keyboard focus outline retained. Initial1s capture ran before a presented popup; repeated3s settled capture confirmed disclosure, without changing600ms tested timing. Screenshots establish appearance only; event/timer/focus assertions are separate tests. Apps were terminated after review.
+
+
+## Pointer persistence checkpoint
+
+Kumo's lockfile selects `@base-ui/react`1.8.0. Matching upstream TooltipRoot/TooltipTrigger inspected at Git tag `v1.8.0`: `disableHoverablePopup=false` and `safePolygon()` are the default. Public npm access was unavailable; the same-tag GitHub source was readable. The native implementation uses a bounded trapezoid connecting the facing trigger/popup edges, based on Base's actual resolved/flipped geometry. It is direction-independent and does not reproduce browser velocity/pointer-intent heuristics. No additional delay is imposed outside that region.
+
+While open, a frame-scoped weak MouseMove capture handler preserves disclosure over the trigger, bridge or popup. Outside movement schedules the configured closeDelay once; returning cancels it without another open event. Keyboard-focus persistence remains until blur/Escape/activation. Pending opening still cancels on trigger exit. Returning to an already-open trigger must cancel closing rather than schedule another600ms opening; a regression explicitly covers reentry followed by immediate exit.
+
+Acceptance tests traverse gap→popup→trigger→outside in four sides and both themes; a200ms closeDelay remains open at199ms, cancels on return, and closes at200ms on a subsequent exit. Independent skeptical review found no blocker and required documenting the browser heuristic difference. Native gap and popup captures in both themes verify persistence while the pointer rests; exit capture verifies dismissal.100 workspace tests/nine doctests, warning-denied Clippy, formatting and workspace/example builds pass. Earlier wide/narrow popup appearance remains unchanged.
+
+
+## User-found arrow separator repair
+
+The initial native review incorrectly accepted a horizontal separator across the arrow mouth. Kumo's three SVG paths blend their base fill into the popup: popup outline must paint underneath the SVG child. Tooltip had reversed that order (Popover already uses the correct order). Paint Tooltip outline first, then arrow paths. Updated native captures `tooltip-arrow-join-light.png`/`tooltip-arrow-join-dark.png` show a continuous body; at the unchanged join centre(80,202), light changed from(230,230,230) to base(255,255,255), dark from line(51,51,51) to base(15,15,15). Adjacent outline pixels remain unchanged. Pixel checks and rendered captures establish this repair; compilation alone did not catch it. Earlier core/gap screenshots retain the pre-repair state and must not be used as final visual evidence. Hover-popup captures were refreshed after repair.
+
+Shared verification now explicitly checks arrow-to-body joins, including outline paint order and absence of a separator through the mouth, in addition to rounded corners, alignments and layers in both themes.
+
+Follow-up native review captured all four placements in both themes (`tooltip-arrow-*`) and refreshed both520px narrow captures. Arrow mouth joins now remain continuous on top, bottom, left and right; surrounding outlines, rotated edge strokes, corner radii and narrow Unicode wrapping remain intact. Independent review confirmed the local order fix matches Popover and changes no geometry or events. Final100 tests/nine doctests and all Rust gates pass after the repair.
