@@ -16,10 +16,10 @@ Reference source: Cloudflare Kumo commit `3fd5b648df578cb1ba214dedd30f475009f6a6
 | Outline | 1px, offset 0 light / −1px dark | Outside/inside outline canvas; screenshots |
 | Surface | White light / neutral OKLCH 17% dark | Kumo base colors |
 | Collision | Bottom flips to top near bottom edge | All four opposite-side flips tested; moving trigger tested |
-| Shadow | Two CSS layers: 4/6/−1 and 2/4/−2px, 10% black | Authored shadow; GPUI lacks CSS spread, a documented paint difference |
+| Shadow | Two CSS layers: 4/6/−1 and 2/4/−2px, 10% black | Both layers and negative spread are authored; rasterization still needs comparison |
 | Motion | 150ms scale 90% + opacity on enter/exit | 150ms linear opening opacity; immediate dismissal; reduced-motion tests |
 
-Browser assertions pass for width, padding, radius, body size, gap, outline offsets, bottom-to-top flipping, Escape returning focus to the trigger, and outside dismissal preserving the clicked control's focus. Native rendered-input tests establish the corresponding lifecycle and positioning behavior. This is a measured geometry/behavior comparison, not a whole-image pixel-equivalence claim. Fonts, shadow rasterization, CSS spread, motion and collision strategies can differ.
+Browser assertions pass for width, padding, radius, body size, gap, outline offsets, bottom-to-top flipping, Escape returning focus to the trigger, and outside dismissal preserving the clicked control's focus. Native rendered-input tests establish the corresponding lifecycle and positioning behavior. This is a measured geometry/behavior comparison, not a whole-image pixel-equivalence claim. Fonts, shadow rasterization, motion and collision strategies can differ. Correction on 2026-10-02: the selected GPUI 0.3.7 has `BoxShadow::spread_radius`, and its drop-shadow painter dilates by that value. The two Kumo medium-shadow layers already specify −1px and −2px spread. Installed `style.rs` and `window.rs` match the cached crate archive; missing spread was an outdated documentation claim, not a dependency limit.
 
 ## Native checks
 

@@ -178,7 +178,7 @@ fn placement_geometry_and_theme_update_keep_open(cx: &mut TestAppContext) {
 }
 
 #[gpui_kit::test]
-fn nested_escape_closes_nearest_panel_and_parent_dismiss_closes_descendants(
+fn nested_resize_keeps_focus_and_escape_closes_nearest_panel_then_descendants(
     cx: &mut TestAppContext,
 ) {
     struct Nested {
@@ -250,9 +250,28 @@ fn nested_escape_closes_nearest_panel_and_parent_dismiss_closes_descendants(
             })
             .expect("nested popup settles opaque");
         assert_eq!(child_alpha, 1.);
+    });
+    cx.simulate_resize(gpui_kit::size(px(320.), px(240.)));
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.render_frame(cx);
         let parent = view.read(cx).parent.clone();
         let child = view.read(cx).child.clone();
         assert!(parent.read(cx).is_open() && child.read(cx).is_open());
+        assert!(child.read(cx).content_focus.contains_focused(window, cx));
+        let parent_bounds = parent.read(cx).resolved_position.get().unwrap().bounds;
+        let child_bounds = window.within("child").find("surface").bounds();
+        assert!(window.painted_quads().iter().any(|quad| {
+            quad.bounds == parent_bounds.scale(window.scale_factor())
+                && quad
+                    .background
+                    .as_solid()
+                    .is_some_and(|color| color.a == 1.)
+        }));
+        for bounds in [parent_bounds, child_bounds] {
+            assert!(bounds.left() >= px(8.) && bounds.top() >= px(8.));
+            assert!(bounds.right() <= px(312.) && bounds.bottom() <= px(232.));
+        }
         window.press("escape", cx);
         assert!(parent.read(cx).is_open());
         assert!(!child.read(cx).is_open());
@@ -553,6 +572,163 @@ fn opening_fade_settles_and_reduced_motion_opens_opaque(cx: &mut TestAppContext)
 struct StressHarness {
     popup: Entity<PopoverState>,
     activated: Rc<Cell<usize>>,
+}
+
+#[gpui_kit::test]
+fn corner_clamping_and_neither_side_fitting_preserve_input_boundaries(cx: &mut TestAppContext) {
+    struct Collision {
+        state: Entity<PopoverState>,
+        origin: gpui_kit::Point<Pixels>,
+        placement: Placement,
+        tall: bool,
+        activations: Rc<Cell<usize>>,
+    }
+    impl Render for Collision {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            let tall = self.tall;
+            let activations = self.activations.clone();
+            div().size_full().child(
+                div()
+                    .absolute()
+                    .left(self.origin.x)
+                    .top(self.origin.y)
+                    .child(
+                        Popover::new("collision", &self.state, "Open")
+                            .placement(self.placement)
+                            .width(px(200.))
+                            .arrow(true)
+                            .content(move |_, _, _| {
+                                let activations = activations.clone();
+                                div().h(px(if tall { 200. } else { 60. })).child(
+                                    Button::new("inside", "Inside").on_click(move |_, _, _| {
+                                        activations.set(activations.get() + 1);
+                                    }),
+                                )
+                            }),
+                    ),
+            )
+        }
+    }
+    cx.update(|cx| {
+        crate::init(cx);
+        cx.set_reduce_motion(true);
+    });
+    let (view, cx) = cx.add_window_view(|_, cx| Collision {
+        state: cx.new(|cx| PopoverState::new("Collision dialog", cx)),
+        origin: gpui_kit::point(px(8.), px(8.)),
+        placement: Placement::Bottom,
+        tall: false,
+        activations: Rc::new(Cell::new(0)),
+    });
+    cx.simulate_resize(gpui_kit::size(px(400.), px(300.)));
+    for (x, y, placement) in [
+        (8., 8., Placement::Bottom),
+        (330., 8., Placement::Bottom),
+        (8., 256., Placement::Top),
+        (330., 256., Placement::Top),
+        (8., 8., Placement::Right),
+        (330., 8., Placement::Left),
+        (8., 256., Placement::Right),
+        (330., 256., Placement::Left),
+    ] {
+        cx.update(|window, cx| {
+            let state = view.read(cx).state.clone();
+            state.update(cx, |state, cx| state.dismiss(window, cx));
+            view.update(cx, |view, cx| {
+                view.origin = gpui_kit::point(px(x), px(y));
+                view.placement = placement;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            window.render_frame(cx);
+            window.click("trigger", cx);
+            let bounds = window.find("surface").bounds();
+            assert!(bounds.left() >= px(8.) && bounds.top() >= px(8.));
+            assert!(bounds.right() <= px(392.) && bounds.bottom() <= px(292.));
+            window.click("inside", cx);
+            assert!(state.read(cx).is_open());
+        });
+    }
+    cx.update(|window, cx| {
+        let state = view.read(cx).state.clone();
+        state.update(cx, |state, cx| state.dismiss(window, cx));
+        view.update(cx, |view, cx| {
+            view.origin = gpui_kit::point(px(180.), px(140.));
+            view.placement = Placement::Bottom;
+            view.tall = true;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        window.render_frame(cx);
+        window.click("trigger", cx);
+        let surface = window.find("surface").bounds();
+        let trigger = window.find("trigger").bounds();
+        assert!(
+            surface.contains(&trigger.center()),
+            "{surface:?}, {trigger:?}"
+        );
+        // Neither side fits: Base clamps the popup across its trigger. The overlay
+        // must consume this pointer event rather than activating the covered trigger.
+        window.click("trigger", cx);
+        assert!(state.read(cx).is_open());
+        assert_eq!(view.read(cx).activations.get(), 8);
+        window.press("escape", cx);
+        assert!(!state.read(cx).is_open());
+        assert!(state.read(cx).trigger_focus().is_focused(window));
+    });
+}
+
+#[gpui_kit::test]
+fn resized_popup_dismissal_removes_painted_surface_without_forcing_refresh(
+    cx: &mut TestAppContext,
+) {
+    use gpui_kit::{InputEvent, KeyDownEvent, Keystroke};
+
+    cx.update(|cx| {
+        crate::init(cx);
+        cx.set_reduce_motion(true);
+    });
+    let (view, cx) = cx.add_window_view(|_, cx| StressHarness {
+        popup: cx.new(|cx| PopoverState::new("Stress dialog", cx)),
+        activated: Rc::new(Cell::new(0)),
+    });
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.render_frame(cx);
+        window.click("trigger", cx);
+    });
+    cx.simulate_resize(gpui_kit::size(px(400.), px(280.)));
+    cx.update(|window, cx| {
+        window.draw(cx).clear(cx);
+        window.simulate_next_frame(cx);
+        window.draw(cx).clear(cx);
+        let surface = window.find("surface").bounds().scale(window.scale_factor());
+        assert!(
+            window
+                .painted_quads()
+                .iter()
+                .any(|quad| quad.bounds == surface)
+        );
+        window.dispatch_event(
+            KeyDownEvent {
+                keystroke: Keystroke::parse("escape").unwrap(),
+                is_held: false,
+                prefer_character_input: false,
+            }
+            .to_platform_input(),
+            cx,
+        );
+        assert!(!view.read(cx).popup.read(cx).is_open());
+        // TestWindowExt::render_frame forces a full refresh and can hide cache defects.
+        window.draw(cx).clear(cx);
+        assert!(window.try_find("surface").is_none());
+        assert!(
+            !window
+                .painted_quads()
+                .iter()
+                .any(|quad| quad.bounds == surface)
+        );
+    });
 }
 
 #[gpui_kit::test]

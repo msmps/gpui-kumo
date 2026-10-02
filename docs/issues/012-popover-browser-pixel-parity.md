@@ -6,7 +6,7 @@ GitHub issue: Pending publication
 
 ## Problem
 
-The pinned comparison establishes geometry and behavior, not whole-image pixel equivalence. Native arrow seams were inspected, but font rendering, shadows (including missing CSS spread), colors and corner collision presentation still need controlled visual comparisons.
+The pinned comparison establishes geometry and behavior, not whole-image pixel equivalence. Native arrow seams were inspected, but font rendering, shadow rasterization, colors and corner collision presentation still need controlled visual comparisons. The selected GPUI 0.3.7 supports spread and the implementation authors both negative-spread layers; the previous missing-spread claim was corrected on 2026-10-02 after checking the installed source against its crate archive.
 
 ## Evidence
 

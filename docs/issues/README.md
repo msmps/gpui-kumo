@@ -16,7 +16,7 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 | KUMO-008 | Input | [complete pinned browser and Field visual comparisons](008-input-browser-parity.md) | Open |
 | KUMO-009 | Popover | [export expanded/collapsed state through Linux AT-SPI](009-popover-expanded-state.md) | Open |
 | KUMO-010 | Popover | [evaluate scale and exit-motion parity with Kumo](010-popover-motion-parity.md) | Open |
-| KUMO-011 | Popover | [validate scrolling, resizing and extreme collision geometry](011-popover-geometry-stress.md) | Open |
+| KUMO-011 | Popover | [validate scrolling, resizing and extreme collision geometry](011-popover-geometry-stress.md) | In progress |
 | KUMO-012 | Popover | [complete browser/native pixel comparisons](012-popover-browser-pixel-parity.md) | Open |
 | KUMO-013 | Components | [measure browser color gamut and gradient parity](013-component-color-parity.md) | Open |
 | KUMO-014 | Components | [validate spoken screen-reader workflows on Linux](014-linux-spoken-reader.md) | Open |
