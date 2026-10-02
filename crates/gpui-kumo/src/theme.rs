@@ -35,6 +35,8 @@ pub struct TextColors {
     pub placeholder: Hsla,
     pub inverse: Hsla,
     pub brand: Hsla,
+    /// Kumo's link tone, also used by its success Text variant.
+    pub link: Hsla,
     pub danger: Hsla,
 }
 
@@ -98,10 +100,14 @@ impl TextStyle {
 #[derive(Clone, Debug)]
 pub struct Typography {
     pub font_family: SharedString,
+    /// Native monospace counterpart of Kumo's consumer-provided mono stack.
+    pub mono_font_family: SharedString,
     pub xs: TextStyle,
     pub sm: TextStyle,
     pub base: TextStyle,
     pub lg: TextStyle,
+    pub heading: TextStyle,
+    pub heading_lg: TextStyle,
     pub field_description: TextStyle,
     pub popover_title: TextStyle,
     pub popover_description: TextStyle,
@@ -223,6 +229,12 @@ impl Theme {
             placeholder: neutral(0.708, 0.556),
             inverse: neutral(0.97, 0.205),
             brand: rgb(0xf6821f).into(),
+            link: if dark {
+                Oklch::new(0.707, 0.165, 254.624)
+            } else {
+                Oklch::new(0.424, 0.199, 265.638)
+            }
+            .paint(),
             danger: if dark {
                 Oklch::new(0.704, 0.191, 22.216)
             } else {
@@ -267,10 +279,19 @@ impl Theme {
             colors,
             typography: Typography {
                 font_family: system_font().into(),
+                mono_font_family: system_mono_font().into(),
                 xs: TextStyle::new(12., 16.),
                 sm: TextStyle::new(13., 13. / 0.85),
                 base: TextStyle::new(14., 21.),
                 lg: TextStyle::new(16., 24.),
+                heading: TextStyle {
+                    weight: FontWeight::SEMIBOLD,
+                    ..TextStyle::new(16., 24.)
+                },
+                heading_lg: TextStyle {
+                    weight: FontWeight::SEMIBOLD,
+                    ..TextStyle::new(20., 28.)
+                },
                 field_description: TextStyle::new(13., 17.875),
                 popover_title: TextStyle {
                     weight: FontWeight::MEDIUM,
@@ -332,6 +353,16 @@ fn system_font() -> &'static str {
     }
 }
 
+fn system_mono_font() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "Menlo"
+    } else if cfg!(target_os = "windows") {
+        "Consolas"
+    } else {
+        "monospace"
+    }
+}
+
 /// Read during render; consumers retain `observe_global::<Theme>` subscriptions.
 pub fn theme(cx: &App) -> &Theme {
     cx.global::<Theme>()
@@ -349,7 +380,10 @@ pub fn set_theme(theme: Theme, cx: &mut App) {
 /// Custom palette overrides should instead publish a complete `Theme` snapshot.
 pub fn set_appearance(appearance: Appearance, cx: &mut App) {
     let family = theme(cx).typography.font_family.clone();
-    set_theme(Theme::new(appearance).with_font_family(family), cx);
+    let mono_family = theme(cx).typography.mono_font_family.clone();
+    let mut next = Theme::new(appearance).with_font_family(family);
+    next.typography.mono_font_family = mono_family;
+    set_theme(next, cx);
 }
 
 // This is the only boundary that knows Base's token vocabulary. Keep unrelated

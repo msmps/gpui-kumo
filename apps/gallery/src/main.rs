@@ -13,6 +13,7 @@ use gpui_kumo::{
 mod buttons;
 mod inputs;
 mod popovers;
+mod texts;
 
 gpui_kit::actions!(gallery, [Quit, ToggleAppearance]);
 
@@ -97,7 +98,7 @@ impl Render for Gallery {
                                     .child(
                                         div()
                                             .text_color(theme.text.subtle)
-                                            .child("Button · Input · Popover · foundations"),
+                                            .child("Text · Button · Input · Popover · foundations"),
                                     ),
                             ),
                     )
@@ -130,6 +131,7 @@ impl Render for Gallery {
                         }),
                     )),
             )
+            .child(texts::panel(&theme))
             .child(self.popovers.clone())
             .child(self.inputs.clone())
             .child(buttons::interaction_panel(self, &theme, cx))
@@ -150,7 +152,9 @@ impl Render for Gallery {
                 div()
                     .text_color(theme.text.subtle)
                     .text_size(theme.typography.xs.size)
-                    .child("System font · ⌘L switches appearance · Button · Input · Popover"),
+                    .child(
+                        "System font · ⌘L switches appearance · Text · Button · Input · Popover",
+                    ),
             )
     }
 }
