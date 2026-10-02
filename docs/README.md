@@ -21,6 +21,7 @@ This is the agent entry point for building a design system on GPUI primitives. R
 | Resume the full port and select the next milestone | [Port progress and backlog](port-progress.md) |
 | Use or verify supported Text styles and composition | [Text contract and results](text-validation.md) |
 | Use or verify Loader sizing, motion and status semantics | [Loader contract and results](loader-validation.md) |
+| Implement supported simple and layered card containers | [LayerCard acceptance](layer-card-validation.md) |
 | Select dependencies, check an API, or refresh these notes | [Source baseline](gpui-sources.md) |
 
 ## Work sequence
