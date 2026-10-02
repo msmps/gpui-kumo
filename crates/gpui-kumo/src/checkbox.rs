@@ -50,6 +50,7 @@ pub struct Checkbox {
     control_first: bool,
     optional: bool,
     focus: Option<FocusHandle>,
+    group_item: bool,
     on_change: Option<ChangeHandler>,
 }
 impl Checkbox {
@@ -66,8 +67,13 @@ impl Checkbox {
             control_first: true,
             optional: false,
             focus: None,
+            group_item: false,
             on_change: None,
         }
+    }
+    pub(crate) fn group_item(mut self) -> Self {
+        self.group_item = true;
+        self
     }
     pub fn state(mut self, state: State) -> Self {
         self.state = state;
@@ -186,7 +192,11 @@ impl RenderOnce for Checkbox {
             .rounded(theme.radii.sm)
             .bg(fill)
             .text_color(theme.text.inverse)
-            .opacity(if disabled { 0.5 } else { 1. })
+            .opacity(if disabled && !self.group_item {
+                0.5
+            } else {
+                1.
+            })
             .when(self.show_label, |this| this.mt(px(2.)))
             .when_some(icon, |this, icon| {
                 this.child(
@@ -213,6 +223,7 @@ impl RenderOnce for Checkbox {
                 }
             })
             .flex()
+            .opacity(if disabled && self.group_item { 0.5 } else { 1. })
             .items_start()
             .text_size(theme.typography.base.size)
             .line_height(theme.typography.base.line_height)

@@ -45,3 +45,6 @@ pub fn init(cx: &mut App) {
 
 pub mod checkbox;
 pub use checkbox::Checkbox;
+
+pub mod checkbox_group;
+pub use checkbox_group::{CheckboxGroup, CheckboxItem};
