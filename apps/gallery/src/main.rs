@@ -184,13 +184,13 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.checkboxes.clone())
         .child(self.fields.clone())
         .child(self.tooltips.clone())
         .child(self.input_groups.clone())
         .child(self.button_groups.clone())
         .child(self.switches.clone())
         .child(self.radios.clone())
-        .child(self.checkboxes.clone())
         .child(empties::panel(&theme))
         .child(self.banners.clone())
         .child(badges::panel(&theme))

@@ -6,10 +6,11 @@ use crate::{
 };
 use gpui_kit::base::TestSupportExt;
 use gpui_kit::{
-    AnyElement, App, ElementId, InteractiveElement, IntoElement, ParentElement, RenderOnce, Role,
-    SharedString, StatefulInteractiveElement, Styled, Window, div, prelude::FluentBuilder,
+    AnyElement, App, ClickEvent, ElementId, InteractiveElement, IntoElement, ParentElement,
+    RenderOnce, Role, SharedString, StatefulInteractiveElement, Styled, Window, div,
+    prelude::FluentBuilder,
 };
-use std::rc::Rc;
+use std::{ops::ControlFlow, rc::Rc};
 
 /// A valued checkbox item. Identity and value are stable and unique within a group.
 #[must_use]
@@ -18,6 +19,7 @@ pub struct CheckboxItem {
     label: SharedString,
     disabled: bool,
     variant: Variant,
+    on_change: Option<ItemHandler>,
 }
 impl CheckboxItem {
     pub fn new(value: impl Into<SharedString>, label: impl Into<SharedString>) -> Self {
@@ -33,6 +35,7 @@ impl CheckboxItem {
             label,
             disabled: false,
             variant: Variant::Default,
+            on_change: None,
         }
     }
     pub fn disabled(mut self, disabled: bool) -> Self {
@@ -43,7 +46,18 @@ impl CheckboxItem {
         self.variant = variant;
         self
     }
+    /// Observe the user's proposed checked state before the group callback.
+    /// Return Break(()) to cancel the group proposal, or Continue(()) to permit it.
+    /// Group rendering and select-all changes do not invoke this callback.
+    pub fn on_change(
+        mut self,
+        handler: impl Fn(State, &ClickEvent, &mut Window, &mut App) -> ControlFlow<()> + 'static,
+    ) -> Self {
+        self.on_change = Some(Box::new(handler));
+        self
+    }
 }
+type ItemHandler = Box<dyn Fn(State, &ClickEvent, &mut Window, &mut App) -> ControlFlow<()>>;
 type ValueHandler = Rc<dyn Fn(Vec<SharedString>, &mut Window, &mut App)>;
 /// A stateless group. Selection is supplied by the application on every render.
 /// Unknown selected values are preserved; values are never mirrored in a UI entity.
@@ -201,6 +215,7 @@ impl RenderOnce for CheckboxGroup {
             let value = item.value;
             let selected = self.selected.clone();
             let handler = self.on_change.clone();
+            let item_handler = item.on_change;
             let checked = selected.contains(&value);
             // A separate native ID namespace prevents a value "select-all" from
             // colliding with the aggregate control's retained focus state.
@@ -214,8 +229,14 @@ impl RenderOnce for CheckboxGroup {
                 .variant(item.variant)
                 .disabled(self.disabled || item.disabled)
                 .control_first(self.control_first)
-                .when_some(handler, |this, handler| {
-                    this.on_change(move |state, _, window, cx| {
+                .when(handler.is_some() || item_handler.is_some(), |this| {
+                    this.on_change(move |state, event, window, cx| {
+                        if let Some(item_handler) = &item_handler
+                            && item_handler(state, event, window, cx).is_break()
+                        {
+                            return;
+                        }
+                        let Some(handler) = &handler else { return };
                         let mut next = selected.clone();
                         if state == State::Checked {
                             if !next.contains(&value) {

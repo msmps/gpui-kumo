@@ -175,3 +175,218 @@ fn repeated_groups_keep_scoped_ids_and_empty_aggregate_is_inert(cx: &mut TestApp
         assert_eq!(view.read(cx).changes, 4);
     });
 }
+
+struct ItemCallbacks {
+    selected: Vec<SharedString>,
+    log: Vec<SharedString>,
+    cancel: bool,
+    apply: bool,
+    disabled: bool,
+    group_handler: bool,
+    item_disabled: bool,
+}
+impl Render for ItemCallbacks {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let item_owner = cx.entity().downgrade();
+        let group_owner = item_owner.clone();
+        let disabled_owner = item_owner.clone();
+        CheckboxGroup::new("callbacks", "Preferences", &self.selected)
+            .select_all("All", &["email".into(), "sms".into()])
+            .item(CheckboxItem::new("email", "Email notifications").on_change(
+                move |state, _, _, cx| {
+                    item_owner
+                        .update(cx, |view, cx| {
+                            view.log.push(format!("item:{state:?}").into());
+                            cx.notify();
+                            if view.cancel {
+                                ControlFlow::Break(())
+                            } else {
+                                ControlFlow::Continue(())
+                            }
+                        })
+                        .unwrap()
+                },
+            ))
+            .item(
+                CheckboxItem::new("sms", "SMS notifications")
+                    .disabled(self.item_disabled)
+                    .on_change(move |_, _, _, cx| {
+                        let _ = disabled_owner.update(cx, |view, cx| {
+                            view.log.push("disabled-item".into());
+                            cx.notify();
+                        });
+                        ControlFlow::Continue(())
+                    }),
+            )
+            .disabled(self.disabled)
+            .when(self.group_handler, |group| {
+                group.on_change(move |next, _, cx| {
+                    let _ = group_owner.update(cx, |view, cx| {
+                        view.log.push("group".into());
+                        if view.apply {
+                            view.selected = next;
+                        }
+                        cx.notify();
+                    });
+                })
+            })
+    }
+}
+#[gpui_kit::test]
+fn item_callbacks_run_before_group_proposals_and_can_cancel(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|_, _| ItemCallbacks {
+        selected: vec!["unrelated".into()],
+        log: vec![],
+        cancel: false,
+        apply: true,
+        disabled: false,
+        group_handler: true,
+        item_disabled: true,
+    });
+    for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+        cx.update(|window, cx| {
+            crate::set_appearance(appearance, cx);
+            view.update(cx, |v, cx| {
+                v.selected = vec!["unrelated".into()];
+                v.log.clear();
+                v.cancel = false;
+                v.apply = true;
+                v.disabled = false;
+                v.group_handler = true;
+                v.item_disabled = true;
+                cx.notify();
+            });
+            window.activate_window();
+            window.render_frame(cx);
+            window.click("item:email", cx);
+            window.render_frame(cx);
+            assert_eq!(view.read(cx).log, ["item:Checked", "group"]);
+            assert_eq!(view.read(cx).selected, ["unrelated", "email"]);
+            window.press("space", cx);
+            window.render_frame(cx);
+            window.press("enter", cx);
+            window.render_frame(cx);
+            assert_eq!(
+                view.read(cx).log,
+                [
+                    "item:Checked",
+                    "group",
+                    "item:Unchecked",
+                    "group",
+                    "item:Checked",
+                    "group"
+                ]
+            );
+            view.update(cx, |v, cx| {
+                v.cancel = true;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            window.click("item:email", cx);
+            window.render_frame(cx);
+            assert_eq!(view.read(cx).log.last().unwrap(), "item:Unchecked");
+            assert_eq!(
+                view.read(cx).log.len(),
+                7,
+                "cancellation omits group callback"
+            );
+            assert_eq!(view.read(cx).selected, ["unrelated", "email"]);
+            assert_eq!(window.find("item:email").checked(), Some(true));
+            view.update(cx, |v, cx| {
+                v.cancel = false;
+                v.apply = false;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            window.press("space", cx);
+            window.render_frame(cx);
+            assert_eq!(
+                view.read(cx).selected,
+                ["unrelated", "email"],
+                "ignored proposal stays controlled"
+            );
+            assert_eq!(window.find("item:email").checked(), Some(true));
+            assert_eq!(&view.read(cx).log[7..], ["item:Unchecked", "group"]);
+            view.update(cx, |v, cx| {
+                v.group_handler = false;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            window.press("enter", cx);
+            window.render_frame(cx);
+            assert_eq!(
+                view.read(cx).log.last().unwrap(),
+                "item:Unchecked",
+                "observer works without group handler"
+            );
+            assert_eq!(view.read(cx).log.len(), 10);
+            view.update(cx, |v, cx| {
+                v.group_handler = true;
+                v.apply = true;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            window.click("select-all", cx);
+            window.render_frame(cx);
+            assert_eq!(view.read(cx).log.last().unwrap(), "group");
+            assert_eq!(
+                view.read(cx).log.len(),
+                11,
+                "aggregate does not fire child callbacks"
+            );
+            assert_eq!(view.read(cx).selected, ["unrelated", "email", "sms"]);
+            view.update(cx, |v, cx| {
+                v.item_disabled = false;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            window.click("item:sms", cx);
+            window.render_frame(cx);
+            view.update(cx, |v, cx| {
+                v.item_disabled = true;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            let count = view.read(cx).log.len();
+            window.click("item:sms", cx);
+            window.press("space", cx);
+            window.press("enter", cx);
+            window.render_frame(cx);
+            assert_eq!(
+                view.read(cx).log.len(),
+                count,
+                "disabled item rejects every activation"
+            );
+            window.click("item:email", cx);
+            window.render_frame(cx);
+            view.update(cx, |v, cx| {
+                v.disabled = true;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            let count = view.read(cx).log.len();
+            window.click("item:email", cx);
+            window.press("space", cx);
+            window.press("enter", cx);
+            window.click("select-all", cx);
+            window.render_frame(cx);
+            assert_eq!(
+                view.read(cx).log.len(),
+                count,
+                "disabled group rejects callbacks"
+            );
+            view.update(cx, |v, cx| {
+                v.selected = vec!["email".into()];
+                cx.notify();
+            });
+            window.render_frame(cx);
+            assert_eq!(
+                view.read(cx).log.len(),
+                count,
+                "external changes do not emit item events"
+            );
+            assert_eq!(window.find("item:email").checked(), Some(true));
+        });
+    }
+}

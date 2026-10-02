@@ -46,3 +46,5 @@ This is the agent entry point for building a design system on GPUI primitives. R
 The first slice has pinned Kumo references, an application-owned typed theme, a Base adapter, and Button/Input/Popover components. The gallery uses the macOS system font and switches appearance. Component APIs and supported-platform contracts remain implementation decisions; see [Kumo tokens](kumo-tokens.md#initial-native-implementation) for native policies and the [implementation plan](implementation-plan.md) for progress and acceptance criteria.
 
 - [Checkbox acceptance and native evidence](checkbox-validation.md)
+
+For current catalog counts and explicit exclusions, see [component coverage](component-coverage.md).

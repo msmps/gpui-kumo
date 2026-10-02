@@ -6,10 +6,13 @@ use gpui_kumo::{
     checkbox::{State, Variant},
     theme,
 };
+use std::ops::ControlFlow;
 pub(super) struct Checkboxes {
     state: State,
     changes: usize,
     preferences: Vec<SharedString>,
+    item_changes: usize,
+    rejected: usize,
     _theme: Subscription,
 }
 impl Checkboxes {
@@ -18,6 +21,8 @@ impl Checkboxes {
             state: State::Indeterminate,
             changes: 0,
             preferences: vec!["email".into()],
+            item_changes: 0,
+            rejected: 0,
             _theme: cx.observe_global::<Theme>(|_, cx| cx.notify()),
         }
     }
@@ -26,6 +31,8 @@ impl Render for Checkboxes {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let owner = cx.entity().downgrade();
         let group_owner = owner.clone();
+        let item_owner = owner.clone();
+        let cancel_owner = owner.clone();
         super::panel(theme(cx), "Checkbox · controlled state and Base activation").child(
             div()
                 .flex()
@@ -50,9 +57,15 @@ impl Render for Checkboxes {
                         &self.preferences,
                     )
                     .select_all("Select all", &["email".into(), "sms".into()])
-                    .item(CheckboxItem::new("email", "Email notifications"))
-                    .item(CheckboxItem::new("sms", "SMS notifications"))
-                    .description("Choose delivery methods")
+                    .item(CheckboxItem::new("email", "Email notifications").on_change(move |_, _, _, cx| {
+                        let _ = item_owner.update(cx, |this, cx| { this.item_changes += 1; cx.notify(); });
+                        ControlFlow::Continue(())
+                    }))
+                    .item(CheckboxItem::new("sms", "SMS notifications (individual changes canceled)").on_change(move |_, _, _, cx| {
+                        let _ = cancel_owner.update(cx, |this, cx| { this.rejected += 1; cx.notify(); });
+                        ControlFlow::Break(())
+                    }))
+                    .description("Observe Email or cancel an individual SMS change. Select all proposes a group change.")
                     .on_change(move |values, _, cx| {
                         let _ = group_owner.update(cx, |this, cx| {
                             this.preferences = values;
@@ -60,6 +73,7 @@ impl Render for Checkboxes {
                         });
                     }),
                 )
+                .child(format!("Email events: {} · SMS canceled: {}", self.item_changes, self.rejected))
                 .child(
                     Checkbox::new("optional", "Email updates")
                         .required(false)
