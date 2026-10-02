@@ -221,6 +221,15 @@ impl InputGroup {
         self.input = self.input.label(show);
         self
     }
+    /// Independent contextual help beside the group's visible label.
+    pub fn label_tooltip(
+        mut self,
+        state: &Entity<crate::TooltipState>,
+        content: impl Into<SharedString>,
+    ) -> Self {
+        self.input = self.input.label_tooltip(state, content);
+        self
+    }
     /// Explicit false adds the optional indicator to a visible label.
     /// This is presentation; validation and editor required semantics stay owner-controlled.
     pub fn required(mut self, required: bool) -> Self {

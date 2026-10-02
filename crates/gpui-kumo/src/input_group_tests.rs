@@ -266,7 +266,7 @@ fn addon_actions_keep_base_focus_callbacks_and_root_disabled_gating(cx: &mut Tes
         state.update(cx, |state, cx| state.set_value("café 🦀", window, cx));
         window.render_frame(cx);
         assert_eq!(
-            window.find("field-root").role(),
+            window.find("group-content").role(),
             Some(gpui_kit::Role::Group)
         );
         assert_eq!(

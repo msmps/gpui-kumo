@@ -542,7 +542,9 @@ fn system_font() -> &'static str {
     } else if cfg!(target_os = "windows") {
         "Segoe UI"
     } else {
-        "sans-serif"
+        // GPUI0.3.7 matches concrete family names; CSS generic aliases are
+        // not resolved by its CosmicText backend. Use a concrete sans family.
+        "DejaVu Sans"
     }
 }
 

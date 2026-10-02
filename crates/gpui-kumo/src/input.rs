@@ -160,6 +160,7 @@ impl Focusable for InputState {
 struct Presentation {
     size: Size,
     label: bool,
+    tooltip: Option<(Entity<crate::TooltipState>, SharedString)>,
     optional: bool,
     description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
@@ -198,6 +199,16 @@ impl Input {
         self.presentation.label = show;
         self
     }
+    /// Contextual help beside a visible label. Retain the TooltipState once.
+    /// Editing availability does not disable the independent help trigger.
+    pub fn label_tooltip(
+        mut self,
+        state: &Entity<crate::TooltipState>,
+        content: impl Into<SharedString>,
+    ) -> Self {
+        self.presentation.tooltip = Some((state.clone(), content.into()));
+        self
+    }
     pub fn description(mut self, description: impl Into<SharedString>) -> Self {
         self.presentation.description = Some(description.into());
         self
@@ -220,8 +231,23 @@ impl Input {
 impl RenderOnce for Input {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
         // Presentation is refreshed by the owner; the editing entity is never recreated.
-        self.state
-            .update(cx, |state, _| state.presentation = self.presentation);
+        self.state.update(cx, |state, cx| {
+            if let Some((old, _)) = &state.presentation.tooltip
+                && self
+                    .presentation
+                    .tooltip
+                    .as_ref()
+                    .is_none_or(|(new, _)| old != new)
+            {
+                old.update(cx, |tooltip, cx| tooltip.set_open(false, cx));
+            }
+            state.presentation = self.presentation;
+            if !state.presentation.label
+                && let Some((tooltip, _)) = &state.presentation.tooltip
+            {
+                tooltip.update(cx, |tooltip, cx| tooltip.set_open(false, cx));
+            }
+        });
         div().id(self.id).w_full().min_w_0().child(self.state)
     }
 }
@@ -701,9 +727,11 @@ impl Render for InputState {
         } else {
             surface.into_any_element()
         };
-        div()
-            .id("field-root")
+        let content = div()
+            .id("group-content")
             .test_support()
+            .w_full()
+            .min_w_0()
             .when_some(group_focus, |this, handle| {
                 this.track_focus(&handle)
                     .role(gpui_kit::Role::Group)
@@ -715,12 +743,16 @@ impl Render for InputState {
                     })
             })
             .when(group.is_some(), |this| {
-                // Scope handles track descendant focus; pointer activation belongs
-                // to the editor, label or Base button, never this non-tab-stop scope.
+                // Only controls belong to focus-within and disabled Group
+                // semantics; contextual label help remains independent.
                 this.on_mouse_down(gpui_kit::MouseButton::Left, |_, window, _| {
                     window.prevent_default()
                 })
             })
+            .child(content);
+        div()
+            .id("field-root")
+            .test_support()
             .flex()
             .flex_col()
             .w_full()
@@ -731,7 +763,11 @@ impl Render for InputState {
                     crate::Label::new("label", self.name.clone())
                         .optional(self.presentation.optional)
                         .focus_target(&label_focus)
-                        .disabled(disabled),
+                        .disabled(disabled)
+                        .when_some(
+                            self.presentation.tooltip.clone(),
+                            |label, (state, content)| label.tooltip(&state, content),
+                        ),
                 )
             })
             .child(content)

@@ -511,3 +511,176 @@ fn surface_padding_focuses_editor_without_changing_value_and_disabled_rejects(
         assert_eq!(window.find("before").focused(), Some(true));
     });
 }
+
+struct HelpHarness {
+    input: Entity<InputState>,
+    help: Entity<crate::TooltipState>,
+    replacement: Entity<crate::TooltipState>,
+    group: bool,
+    label: bool,
+    attach: bool,
+    replace: bool,
+    text: SharedString,
+}
+impl Render for HelpHarness {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        let state = if self.replace {
+            &self.replacement
+        } else {
+            &self.help
+        };
+        let control = if self.group {
+            crate::InputGroup::new("with-help", &self.input)
+                .label(self.label)
+                .description("Retained editing")
+                .when(self.attach, |group| {
+                    group.label_tooltip(state, self.text.clone())
+                })
+                .end(crate::InputGroupAddon::button(
+                    "action",
+                    "Action",
+                    |button, _, _| button,
+                ))
+                .into_any_element()
+        } else {
+            Input::new("with-help", &self.input)
+                .label(self.label)
+                .description("Retained editing")
+                .when(self.attach, |input| {
+                    input.label_tooltip(state, self.text.clone())
+                })
+                .into_any_element()
+        };
+        crate::TooltipProvider::new(
+            "help-provider",
+            [self.help.downgrade(), self.replacement.downgrade()],
+            div()
+                .w(px(240.))
+                .flex()
+                .flex_col()
+                .tab_group()
+                .child(control)
+                .child(crate::Button::new("outside-help", "Outside")),
+        )
+    }
+}
+#[gpui_kit::test]
+fn input_help_preserves_editing_and_excludes_label_from_group_focus(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| HelpHarness {
+        input: cx.new(|cx| InputState::new("API key", window, cx)),
+        help: cx.new(|cx| crate::TooltipState::new(window, cx)),
+        replacement: cx.new(|cx| crate::TooltipState::new(window, cx)),
+        group: false,
+        label: true,
+        attach: true,
+        replace: false,
+        text: "Find this in Settings.".into(),
+    });
+    let (input, help, replacement) = cx.read(|cx| {
+        let v = view.read(cx);
+        (v.input.clone(), v.help.clone(), v.replacement.clone())
+    });
+    for group in [false, true] {
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            cx.update(|window, cx| {
+                crate::set_appearance(appearance, cx);
+                view.update(cx, |v, cx| {
+                    v.group = group;
+                    v.attach = true;
+                    v.label = true;
+                    v.replace = false;
+                    v.text = "Find this in Settings.".into();
+                    cx.notify();
+                });
+                input.update(cx, |v, cx| {
+                    v.set_disabled(false, cx);
+                    v.set_value("café 🦀", window, cx);
+                });
+                window.activate_window();
+                window.render_frame(cx);
+                window.click("label", cx);
+                let editor = input.read(cx).editor.clone();
+                editor.update(cx, |e, cx| e.select_all(window, cx));
+                window.click("label-help", cx);
+                window.render_frame(cx);
+                assert_eq!(window.find("label-help").focused(), Some(true));
+                assert!(!input.read(cx).focus_handle(cx).is_focused(window));
+                assert_eq!(input.read(cx).selected_value(cx).as_ref(), "café 🦀");
+            });
+            cx.run_until_parked();
+            cx.update(|window, cx| {
+                window.render_frame(cx);
+                let bounds = window.find("surface").bounds();
+                let theme = crate::theme(cx);
+                assert!(
+                    window.painted_quads().iter().any(|q| q.bounds
+                        == bounds
+                            .dilate(theme.effects.control_ring_width)
+                            .scale(window.scale_factor())
+                        && q.border_color == theme.colors.line),
+                    "label help must not light editor/container focus ring: group={group}, appearance={appearance:?}"
+                );
+                assert_eq!(
+                    window.find("label-help").bounds().center().y,
+                    window.find("label").bounds().center().y
+                );
+                window.click("label", cx);
+                window.render_frame(cx);
+                window.press("shift-tab", cx);
+                window.focus_prev(cx);
+                window.render_frame(cx);
+            });
+            cx.run_until_parked();
+            cx.update(|window, cx| {
+                window.render_frame(cx);
+                assert!(help.read(cx).is_open());
+                assert_eq!(window.find("label-help").focused(), Some(true));
+                window.press("escape", cx);
+                assert!(!help.read(cx).is_open());
+                window.press("tab", cx);
+                window.focus_next(cx);
+                window.render_frame(cx);
+                assert!(input.read(cx).focus_handle(cx).is_focused(window));
+                input.update(cx, |v, cx| v.set_disabled(true, cx));
+                window.render_frame(cx);
+                window.click("label-help", cx);
+                window.render_frame(cx);
+                assert_eq!(window.find("label-help").focused(), Some(true));
+                assert!(!window.find("label-help").disabled().unwrap_or(false));
+                assert_eq!(input.read(cx).value(cx).as_ref(), "café 🦀");
+                for mode in 0..4 {
+                    help.update(cx, |t, cx| t.set_open(true, cx));
+                    view.update(cx, |v, cx| {
+                        v.label = mode != 0;
+                        v.attach = mode != 2;
+                        v.replace = mode == 3;
+                        v.text = if mode == 1 {
+                            ""
+                        } else {
+                            "Find this in Settings."
+                        }
+                        .into();
+                        cx.notify();
+                    });
+                    window.render_frame(cx);
+                    assert!(
+                        !help.read(cx).is_open(),
+                        "hidden, empty, removed or replaced help cancels old disclosure"
+                    );
+                    assert_eq!(window.try_find("label-help").is_some(), mode == 3);
+                    assert_eq!(input.read(cx).value(cx).as_ref(), "café 🦀");
+                    view.update(cx, |v, cx| {
+                        v.label = true;
+                        v.attach = true;
+                        v.replace = false;
+                        v.text = "Find this in Settings.".into();
+                        cx.notify();
+                    });
+                    window.render_frame(cx);
+                }
+                replacement.update(cx, |t, cx| t.set_open(false, cx));
+            });
+        }
+    }
+}
