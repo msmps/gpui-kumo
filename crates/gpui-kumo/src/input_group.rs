@@ -221,6 +221,18 @@ impl InputGroup {
         self.input = self.input.label(show);
         self
     }
+    /// Explicit false adds the optional indicator to a visible label.
+    /// This is presentation; validation and editor required semantics stay owner-controlled.
+    pub fn required(mut self, required: bool) -> Self {
+        self.input = self.input.required(required);
+        self
+    }
+    /// An error suppresses helper text even when its message is hidden.
+    /// The group remains invalid; `show` replaces the browser match result.
+    pub fn error_visible(mut self, text: impl Into<SharedString>, show: bool) -> Self {
+        self.input = self.input.error_visible(text.into(), show);
+        self
+    }
     pub fn description(mut self, text: impl Into<SharedString>) -> Self {
         self.input = self.input.description(text);
         self

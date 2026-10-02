@@ -37,6 +37,9 @@ impl Render for InputGroups {
         )
         .child(
             InputGroup::new("joined-search", &self.inputs[10])
+                .label(true)
+                .required(false)
+                .description("Search for packages.")
                 .button(
                     "joined-submit",
                     "Search",

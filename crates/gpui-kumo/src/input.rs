@@ -160,8 +160,9 @@ impl Focusable for InputState {
 struct Presentation {
     size: Size,
     label: bool,
+    optional: bool,
     description: Option<SharedString>,
-    error: Option<SharedString>,
+    error: Option<(SharedString, bool)>,
     group: Option<crate::input_group::Container>,
 }
 
@@ -203,7 +204,15 @@ impl Input {
     }
     /// Error text replaces the description and selects the danger ring.
     pub fn error(mut self, error: impl Into<SharedString>) -> Self {
-        self.presentation.error = Some(error.into());
+        self.presentation.error = Some((error.into(), true));
+        self
+    }
+    pub(crate) fn required(mut self, required: bool) -> Self {
+        self.presentation.optional = !required;
+        self
+    }
+    pub(crate) fn error_visible(mut self, text: SharedString, show: bool) -> Self {
+        self.presentation.error = Some((text, show));
         self
     }
 }
@@ -454,11 +463,11 @@ impl Render for InputState {
         let editor = self.editor.read(cx);
         let placeholder = editor.presentation().placeholder().clone();
         let value = editor.value();
-        let description = self
-            .presentation
-            .error
-            .clone()
-            .or_else(|| self.presentation.description.clone());
+        let description = crate::field::resolve_message(
+            self.presentation.description.clone(),
+            self.presentation.error.clone(),
+        )
+        .map(|(text, _)| text);
         let semantic_description = [
             description.as_deref(),
             self.disabled.then_some("Unavailable"),
@@ -705,6 +714,13 @@ impl Render for InputState {
                         }
                     })
             })
+            .when(group.is_some(), |this| {
+                // Scope handles track descendant focus; pointer activation belongs
+                // to the editor, label or Base button, never this non-tab-stop scope.
+                this.on_mouse_down(gpui_kit::MouseButton::Left, |_, window, _| {
+                    window.prevent_default()
+                })
+            })
             .flex()
             .flex_col()
             .w_full()
@@ -713,6 +729,7 @@ impl Render for InputState {
             .when(self.presentation.label, |this| {
                 this.child(
                     crate::Label::new("label", self.name.clone())
+                        .optional(self.presentation.optional)
                         .focus_target(&label_focus)
                         .disabled(disabled),
                 )

@@ -637,3 +637,117 @@ fn assert_zone_focus_border(
         "zone must paint its own 1px border with expected focus color"
     );
 }
+
+struct GroupField {
+    state: Entity<InputState>,
+    required: Option<bool>,
+    error: Option<bool>,
+    label: bool,
+}
+impl Render for GroupField {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        let mut group = InputGroup::new("group-field", &self.state)
+            .label(self.label)
+            .description("Account recovery only");
+        if let Some(required) = self.required {
+            group = group.required(required);
+        }
+        if let Some(show) = self.error {
+            group = group.error_visible("Invalid phone", show);
+        }
+        div()
+            .w(px(240.))
+            .child(group)
+            .child(crate::Button::new("field-outside", "Outside"))
+    }
+}
+#[gpui_kit::test]
+fn input_group_field_optional_and_hidden_error_preserve_editor_contract(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| GroupField {
+        state: cx.new(|cx| InputState::new("Phone", window, cx)),
+        required: None,
+        error: None,
+        label: true,
+    });
+    let state = cx.read(|cx| view.read(cx).state.clone());
+    cx.update(|window, cx| {
+        window.activate_window();
+        window.render_frame(cx);
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            for required in [None, Some(false), Some(true)] {
+                view.update(cx, |view, cx| {
+                    view.required = required;
+                    cx.notify();
+                });
+                window.render_frame(cx);
+                assert_eq!(
+                    window.find("label").label(),
+                    Some(if required == Some(false) {
+                        "Phone (optional)"
+                    } else {
+                        "Phone"
+                    })
+                );
+                assert_eq!(
+                    window.find("message").label(),
+                    Some("Account recovery only")
+                );
+                assert_eq!(
+                    window.find("surface").bounds().top() - window.find("label").bounds().bottom(),
+                    px(8.)
+                );
+                window.click("label", cx);
+                assert!(state.read(cx).focus_handle(cx).is_focused(window));
+            }
+        }
+        window.input("café 🦀", cx);
+        for show in [true, false] {
+            view.update(cx, |view, cx| {
+                view.error = Some(show);
+                cx.notify();
+            });
+            window.render_frame(cx);
+            assert_eq!(
+                window
+                    .try_find("message")
+                    .map(|message| message.label().map(str::to_owned)),
+                if show {
+                    Some(Some("Invalid phone".to_owned()))
+                } else {
+                    None
+                }
+            );
+            assert_eq!(state.read(cx).value(cx).as_ref(), "café 🦀");
+        }
+        view.update(cx, |view, cx| {
+            view.label = false;
+            view.error = None;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        assert!(window.try_find("label").is_none());
+        assert_eq!(
+            window.find("message").label(),
+            Some("Account recovery only")
+        );
+        view.update(cx, |view, cx| {
+            view.label = true;
+            cx.notify();
+        });
+        state.update(cx, |state, cx| state.set_disabled(true, cx));
+        window.render_frame(cx);
+        window.click("field-outside", cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("field-outside").focused(), Some(true));
+        window.click("label", cx);
+        window.render_frame(cx);
+        assert!(!state.read(cx).focus_handle(cx).is_focused(window));
+        assert_eq!(
+            window.find("field-outside").focused(),
+            Some(true),
+            "disabled label must preserve outside focus"
+        );
+    });
+}

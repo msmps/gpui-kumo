@@ -117,11 +117,7 @@ impl RenderOnce for Field {
                 }
             }))
             .child(self.control);
-        let message = match self.error {
-            Some((error, true)) => Some((error, true)),
-            Some((_, false)) => None,
-            None => self.description.map(|description| (description, false)),
-        };
+        let message = resolve_message(self.description, self.error);
         div()
             .id(self.id)
             .w_full()
@@ -133,6 +129,17 @@ impl RenderOnce for Field {
             .when_some(message, |this, (text, invalid)| {
                 this.child(message_element(theme, text, invalid))
             })
+    }
+}
+
+pub(crate) fn resolve_message(
+    description: Option<SharedString>,
+    error: Option<(SharedString, bool)>,
+) -> Option<(SharedString, bool)> {
+    match error {
+        Some((error, true)) => Some((error, true)),
+        Some((_, false)) => None,
+        None => description.map(|description| (description, false)),
     }
 }
 
