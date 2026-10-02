@@ -56,6 +56,10 @@ pub(super) struct Snapshot {
 
 impl Snapshot {
     pub fn new(editor: &gpui_kit::base::input::InputState) -> Option<Self> {
+        // A password display must never acquire a plaintext synthetic run.
+        if editor.presentation().is_masked() {
+            return None;
+        }
         let text = editor.value();
         let bounds = editor.range_to_bounds(&(0..text.len()))?;
         let mut positions = Vec::new();

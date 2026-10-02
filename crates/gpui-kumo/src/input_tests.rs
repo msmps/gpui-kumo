@@ -1,6 +1,36 @@
 use super::*;
 use gpui_kit::{EntityInputHandler, TestAppContext, VisualTestContext, test::TestWindowExt};
 
+#[gpui_kit::test]
+fn password_presentation_redacts_value_and_synthetic_text(cx: &mut TestAppContext) {
+    let (input, cx) = harness(cx);
+    cx.update(|window, cx| {
+        input.update(cx, |input, cx| {
+            input.set_value("café 🦀 secret", window, cx);
+            input.set_masked(true, window, cx);
+        });
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            window.render_frame(cx);
+            assert_eq!(
+                window.find("control").role(),
+                Some(gpui_kit::Role::PasswordInput)
+            );
+            assert_eq!(window.find("control").value(), Some("••••••••"));
+            assert!(accessibility::Snapshot::new(input.read(cx).editor.read(cx)).is_none());
+            assert_eq!(input.read(cx).value(cx).as_ref(), "café 🦀 secret");
+        }
+        input.update(cx, |input, cx| input.set_masked(false, window, cx));
+        window.render_frame(cx);
+        assert_eq!(
+            window.find("control").role(),
+            Some(gpui_kit::Role::TextInput)
+        );
+        assert_eq!(window.find("control").value(), Some("café 🦀 secret"));
+        assert!(accessibility::Snapshot::new(input.read(cx).editor.read(cx)).is_some());
+    });
+}
+
 struct Harness {
     input: Entity<InputState>,
     before: FocusHandle,

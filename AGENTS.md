@@ -13,3 +13,5 @@ Complete checks that can run in the current environment and resolve failures bef
 During every visual review, explicitly inspect alignments: icon/control centres, text baselines, label/control offsets, sibling spacing and edge padding in both themes and narrow layouts. Follow the alignment branch in [verification](docs/gpui-verification.md); default-state screenshots alone do not establish composition alignment.
 
 Inspect rounded corners and layered surfaces during every visual review: child backgrounds must respect the supported clipping contract; borders, fills, focus rings and shadows must agree across nested layers, both themes, resized and narrow layouts. Record unsupported arbitrary-descendant clipping explicitly instead of masking it with a default-case screenshot.
+
+For floating action tabs and overlapping controls, verify pointer activation leaves focus on the intended action before testing Space/Enter; also test owner updates that remove a focused action and subsequent Tab exit.

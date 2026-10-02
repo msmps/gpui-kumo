@@ -1,12 +1,12 @@
 # KUMO-043: Port SensitiveInput with Kumo fidelity over GPUI Base
 
-Status: Open
+Status: Working implementation; acceptance gaps remain open
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/28
 
 ## Goal and status
 
-Port the supported **SensitiveInput** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **SensitiveInput** Kumo family to Rust/GPUI. The working native implementation is present; the issue covers its supported parts and public API, not just a static default-state demo.
 
 ## GPUI Kit/Base foundation
 
@@ -46,4 +46,8 @@ Build on: Input, InputGroup, Field, Tooltip, Button. These are dependencies, not
 
 - [Kumo SensitiveInput source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/sensitive-input/sensitive-input.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
 - GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
-- Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+- Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts at issue creation: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+
+## Validated implementation checkpoint
+
+Retained Base editor/Button composition, source modes/focus/copy feedback, four sizes and both-theme native gallery implemented.109 workspace tests/nine doctests, formatting, all-target/all-feature build and warning-denied workspace Clippy pass; independent focus/geometry review findings fixed. [Detailed matrix, evidence, remaining API and platform gaps](../sensitive-input-validation.md). Copy event means native clipboard API submission: this GPUI version cannot report OS write success/failure. Keep issue open for remaining rich slots/localisation, hover brightness/opacity motion and browser/platform acceptance.

@@ -64,3 +64,6 @@ pub use input_group::{InputGroup, InputGroupAddon};
 
 pub mod tooltip;
 pub use tooltip::{Tooltip, TooltipEvent, TooltipProvider, TooltipState};
+
+pub mod sensitive_input;
+pub use sensitive_input::{SensitiveInput, SensitiveInputEvent, SensitiveInputState};

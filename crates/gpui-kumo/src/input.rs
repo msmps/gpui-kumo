@@ -21,6 +21,39 @@ pub enum Size {
     Lg,
 }
 
+/// Shared source input dimensions; group overrides remain in InputGroup.
+pub(crate) fn metrics(
+    size: Size,
+    theme: &Theme,
+) -> (
+    f32,
+    gpui_kit::Pixels,
+    gpui_kit::Pixels,
+    crate::theme::TextStyle,
+) {
+    match size {
+        Size::Xs => (20., theme.spacing.six, theme.radii.sm, theme.typography.xs),
+        Size::Sm => (
+            26.,
+            theme.spacing.eight,
+            theme.radii.md,
+            theme.typography.xs,
+        ),
+        Size::Base => (
+            36.,
+            theme.spacing.twelve,
+            theme.radii.lg,
+            theme.typography.base,
+        ),
+        Size::Lg => (
+            40.,
+            theme.spacing.sixteen,
+            theme.radii.lg,
+            theme.typography.base,
+        ),
+    }
+}
+
 /// Notifications from the editing engine. Read the value from the emitting state.
 #[derive(Clone, Debug)]
 pub enum InputEvent {
@@ -125,6 +158,14 @@ impl InputState {
         self.read_only
     }
 
+    pub(crate) fn set_masked(&mut self, masked: bool, window: &mut Window, cx: &mut Context<Self>) {
+        if self.editor.read(cx).presentation().is_masked() != masked {
+            self.editor
+                .update(cx, |editor, cx| editor.set_masked(masked, window, cx));
+            cx.notify();
+        }
+    }
+
     /// Reject user edits and exclude the control from Tab traversal.
     /// Existing focus is retained; the owner may move it explicitly.
     pub fn set_disabled(&mut self, disabled: bool, cx: &mut Context<Self>) {
@@ -165,6 +206,8 @@ struct Presentation {
     description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
     group: Option<crate::input_group::Container>,
+    end_reserve: gpui_kit::Pixels,
+    focus_scope: Option<FocusHandle>,
 }
 
 /// Consumed presentation over an application-retained `Entity<InputState>`.
@@ -222,6 +265,11 @@ impl Input {
         self.presentation.optional = !required;
         self
     }
+    pub(crate) fn sensitive(mut self, reserve: gpui_kit::Pixels, scope: &FocusHandle) -> Self {
+        self.presentation.end_reserve = reserve;
+        self.presentation.focus_scope = Some(scope.clone());
+        self
+    }
     pub(crate) fn error_visible(mut self, text: SharedString, show: bool) -> Self {
         self.presentation.error = Some((text, show));
         self
@@ -255,27 +303,7 @@ impl RenderOnce for Input {
 impl Render for InputState {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = theme(cx).clone();
-        let (mut height, padding, radius, text) = match self.presentation.size {
-            Size::Xs => (20., theme.spacing.six, theme.radii.sm, theme.typography.xs),
-            Size::Sm => (
-                26.,
-                theme.spacing.eight,
-                theme.radii.md,
-                theme.typography.xs,
-            ),
-            Size::Base => (
-                36.,
-                theme.spacing.twelve,
-                theme.radii.lg,
-                theme.typography.base,
-            ),
-            Size::Lg => (
-                40.,
-                theme.spacing.sixteen,
-                theme.radii.lg,
-                theme.typography.base,
-            ),
-        };
+        let (mut height, padding, radius, text) = metrics(self.presentation.size, &theme);
         if self.presentation.group.is_some() && self.group_focus.is_none() {
             let handle = cx.focus_handle().tab_stop(false);
             self._subscriptions
@@ -453,7 +481,9 @@ impl Render for InputState {
             && (if joined {
                 zone_focus.as_ref()
             } else {
-                group_focus.as_ref()
+                group_focus
+                    .as_ref()
+                    .or(self.presentation.focus_scope.as_ref())
             })
             .map_or_else(
                 || focus.is_focused(window),
@@ -489,6 +519,7 @@ impl Render for InputState {
         let editor = self.editor.read(cx);
         let placeholder = editor.presentation().placeholder().clone();
         let value = editor.value();
+        let masked = editor.presentation().is_masked();
         let description = crate::field::resolve_message(
             self.presentation.description.clone(),
             self.presentation.error.clone(),
@@ -516,8 +547,17 @@ impl Render for InputState {
         let paint_state = selection_state.clone();
         let target = focus.clone();
         let editor_semantics = base::input::InputBase::new("control")
+            .role(if masked {
+                gpui_kit::Role::PasswordInput
+            } else {
+                gpui_kit::Role::TextInput
+            })
             .accessibility_label(self.name.clone())
-            .aria_value(value)
+            .aria_value(if masked && !value.is_empty() {
+                "••••••••".into()
+            } else {
+                value
+            })
             .aria_placeholder(placeholder)
             .aria_description(semantic_description)
             .a11y_synthetic_children(move |builder| {
@@ -531,7 +571,9 @@ impl Render for InputState {
                 if invalid {
                     node.set_invalid(gpui_kit::accesskit::Invalid::True);
                 }
-                accessibility.build(builder);
+                if !masked {
+                    accessibility.build(builder);
+                }
             })
             .when(!disabled, |this| {
                 let run_id = text_prepaint.run_id.clone();
@@ -584,7 +626,7 @@ impl Render for InputState {
             } else if end.is_some() {
                 px(seam)
             } else {
-                padding
+                padding + self.presentation.end_reserve
             })
             .when_some(editor_content_width, |this, width| {
                 this.flex_initial().w(width).max_w_full()

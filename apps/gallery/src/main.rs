@@ -24,6 +24,7 @@ mod links;
 mod loaders;
 mod popovers;
 mod radios;
+mod sensitive_inputs;
 mod switches;
 mod texts;
 mod tooltips;
@@ -77,6 +78,7 @@ struct Gallery {
     button_groups: gpui_kit::Entity<button_groups::ButtonGroups>,
     input_groups: gpui_kit::Entity<input_groups::InputGroups>,
     tooltips: gpui_kit::Entity<tooltips::Tooltips>,
+    sensitive_inputs: gpui_kit::Entity<sensitive_inputs::SensitiveInputs>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -184,6 +186,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.sensitive_inputs.clone())
         .child(self.checkboxes.clone())
         .child(self.fields.clone())
         .child(self.tooltips.clone())
@@ -420,6 +423,8 @@ fn main() {
                             button_groups: cx.new(button_groups::ButtonGroups::new),
                             input_groups: cx.new(|cx| input_groups::InputGroups::new(window, cx)),
                             tooltips: cx.new(|cx| tooltips::Tooltips::new(window, cx)),
+                            sensitive_inputs: cx
+                                .new(|cx| sensitive_inputs::SensitiveInputs::new(window, cx)),
                             activations: 0,
                             disabled: false,
                             loading: false,

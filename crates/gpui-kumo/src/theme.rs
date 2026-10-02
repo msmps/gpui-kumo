@@ -28,6 +28,8 @@ impl Appearance {
 
 #[derive(Clone, Debug)]
 pub struct TextColors {
+    /// White text on Kumo's brand-filled copy/action surfaces in both themes.
+    pub on_brand: Hsla,
     pub default: Hsla,
     pub strong: Hsla,
     pub subtle: Hsla,
@@ -289,6 +291,7 @@ impl Theme {
         };
         let choose = |light, dark_value| if dark { dark_value } else { light };
         let text = TextColors {
+            on_brand: white,
             default: neutral(0.205, 0.97),
             strong: neutral(0.145, 0.985),
             subtle: neutral(0.556, 0.708),
