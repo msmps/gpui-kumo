@@ -48,3 +48,5 @@ A component is verified when all applicable contract branches have passing evide
 ## First-slice evidence
 
 [Popover validation](popover-validation.md) records the pinned browser comparison, actual Linux AT-SPI activation/focus checks, collision and motion tests, and concrete upstream/platform limits. Headless metadata assertions and operating-system accessibility checks are distinct evidence.
+
+When reviewing composable controls, exercise Base's default keyed focus while inserting or reordering passive parts. Explicit `track_focus` handles can conceal unstable ancestor IDs; keep action identity independent of positional decoration wrappers.

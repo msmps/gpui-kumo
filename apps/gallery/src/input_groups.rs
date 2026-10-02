@@ -50,10 +50,9 @@ impl Render for InputGroups {
         )
         .child(InputGroup::new("long-domain", &self.inputs[6]).suffix(".workers.dev"))
         .child(
-            InputGroup::new("search-actions", &self.inputs[7]).end(InputGroupAddon::button(
-                "clear",
-                "Clear",
-                move |button, _, _| {
+            InputGroup::new("search-actions", &self.inputs[7]).end(InputGroupAddon::parts([
+                InputGroupAddon::text("Reset"),
+                InputGroupAddon::button("clear", "Clear", move |button, _, _| {
                     let owner = clear_owner.clone();
                     button.on_click(move |_, window, cx| {
                         let _ = owner.update(cx, |this, cx| {
@@ -62,8 +61,8 @@ impl Render for InputGroups {
                             cx.notify();
                         });
                     })
-                },
-            )),
+                }),
+            ])),
         )
         .child(
             InputGroup::new("copy-actions", &self.inputs[8]).end(InputGroupAddon::icon_button(

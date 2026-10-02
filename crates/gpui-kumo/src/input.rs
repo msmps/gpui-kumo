@@ -261,32 +261,38 @@ impl Render for InputState {
             Size::Base => 8.,
             Size::Lg => 10.,
         };
-        let start = group.and_then(|g| g.start.as_ref()).map(|a| {
-            a.render(
-                "addon-start",
-                crate::input_group::AddonContext {
-                    theme: &theme,
-                    size: self.presentation.size,
-                    disabled: self.disabled,
-                    start: true,
-                },
-                window,
-                cx,
-            )
-        });
-        let end = group.and_then(|g| g.end.as_ref()).map(|a| {
-            a.render(
-                "addon-end",
-                crate::input_group::AddonContext {
-                    theme: &theme,
-                    size: self.presentation.size,
-                    disabled: self.disabled,
-                    start: false,
-                },
-                window,
-                cx,
-            )
-        });
+        let start = group
+            .and_then(|g| g.start.as_ref())
+            .filter(|a| !a.is_empty())
+            .map(|a| {
+                a.render(
+                    "addon-start",
+                    crate::input_group::AddonContext {
+                        theme: &theme,
+                        size: self.presentation.size,
+                        disabled: self.disabled,
+                        start: true,
+                    },
+                    window,
+                    cx,
+                )
+            });
+        let end = group
+            .and_then(|g| g.end.as_ref())
+            .filter(|a| !a.is_empty())
+            .map(|a| {
+                a.render(
+                    "addon-end",
+                    crate::input_group::AddonContext {
+                        theme: &theme,
+                        size: self.presentation.size,
+                        disabled: self.disabled,
+                        start: false,
+                    },
+                    window,
+                    cx,
+                )
+            });
         let suffix = group.and_then(|g| g.suffix.clone());
         let editor_content_width = suffix.as_ref().map(|_| {
             let editor = self.editor.read(cx);

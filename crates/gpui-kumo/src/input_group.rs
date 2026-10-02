@@ -18,6 +18,7 @@ pub(crate) struct AddonContext<'a> {
 pub enum InputGroupAddon {
     Text(SharedString),
     Icon(SharedString),
+    Parts(Vec<InputGroupAddon>),
     Action(std::rc::Rc<ActionFactory>),
 }
 impl InputGroupAddon {
@@ -26,6 +27,23 @@ impl InputGroupAddon {
     }
     pub fn icon(path: impl Into<SharedString>) -> Self {
         Self::Icon(path.into())
+    }
+    /// Several addon items share source padding and a 6px gap.
+    /// Nested collections are flattened; empty collections render no addon.
+    pub fn parts(parts: impl IntoIterator<Item = Self>) -> Self {
+        Self::Parts(parts.into_iter().collect())
+    }
+    pub(crate) fn is_empty(&self) -> bool {
+        match self {
+            Self::Parts(parts) => parts.iter().all(Self::is_empty),
+            _ => false,
+        }
+    }
+    fn items<'a>(&'a self, output: &mut Vec<&'a Self>) {
+        match self {
+            Self::Parts(parts) => parts.iter().for_each(|part| part.items(output)),
+            _ => output.push(self),
+        }
     }
     /// Configure a source-sized ghost button each render.
     ///
@@ -112,7 +130,12 @@ impl InputGroupAddon {
             Size::Base => (8., 18.),
             Size::Lg => (10., 20.),
         };
-        let outer = if matches!(self, Self::Action(_)) {
+        let mut items = Vec::new();
+        self.items(&mut items);
+        if items.is_empty() {
+            return div().into_any_element();
+        }
+        let outer = if items.iter().any(|item| matches!(item, Self::Action(_))) {
             match (size, start) {
                 (Size::Lg, true) => 6.,
                 (Size::Lg, false) => 2.,
@@ -127,24 +150,42 @@ impl InputGroupAddon {
             .flex()
             .items_center()
             .flex_shrink_0()
+            .gap(theme.spacing.six)
             .text_color(theme.text.subtle);
         let addon = if start {
             addon.pl(px(outer))
         } else {
             addon.pr(px(outer))
         };
-        match self {
-            Self::Action(render) => addon
-                .on_mouse_down(gpui_kit::MouseButton::Left, |_, _, cx| {
-                    cx.stop_propagation()
-                })
-                .child(render(size, window, cx).input_group_action(disabled))
-                .into_any_element(),
-            Self::Text(text) => addon.child(text.clone()).into_any_element(),
-            Self::Icon(path) => addon
-                .child(crate::Icon::new(path.clone()).size(px(icon_size)))
-                .into_any_element(),
-        }
+        addon
+            .children(items.into_iter().enumerate().map(|(index, item)| {
+                let child = div().flex().items_center().child(match item {
+                    Self::Action(render) => div()
+                        .on_mouse_down(gpui_kit::MouseButton::Left, |_, _, cx| {
+                            cx.stop_propagation()
+                        })
+                        .child(render(size, window, cx).input_group_action(disabled))
+                        .into_any_element(),
+                    Self::Text(text) => div().child(text.clone()).into_any_element(),
+                    Self::Icon(path) => crate::Icon::new(path.clone())
+                        .size(px(icon_size))
+                        .into_any_element(),
+                    Self::Parts(_) => {
+                        unreachable!("collections are flattened before rendering")
+                    }
+                });
+                // Action IDs are caller-owned; positional ancestor IDs would
+                // recreate Base's keyed focus when passive parts move.
+                if matches!(item, Self::Action(_)) {
+                    child.into_any_element()
+                } else {
+                    child
+                        .id(("addon-item", index))
+                        .test_support()
+                        .into_any_element()
+                }
+            }))
+            .into_any_element()
     }
 }
 #[derive(Default)]

@@ -213,20 +213,27 @@ impl Render for Actions {
             .w(px(240.))
             .child(crate::Button::new("before", "Before"))
             .child(InputGroup::new("actions", &self.state).size(self.size).end(
-                InputGroupAddon::button("clear", "Clear", move |button, _, _| {
-                    let owner = owner.clone();
-                    button
-                        .track_focus(&focus)
-                        .disabled(false)
-                        .on_click(move |_, window, cx| {
-                            let _ = owner.update(cx, |this, cx| {
-                                this.calls += 1;
-                                this.state
-                                    .update(cx, |state, cx| state.set_value("", window, cx));
-                                cx.notify();
-                            });
-                        })
-                }),
+                InputGroupAddon::parts([
+                    InputGroupAddon::text("Reset"),
+                    InputGroupAddon::parts([InputGroupAddon::button(
+                        "clear",
+                        "Clear",
+                        move |button, _, _| {
+                            let owner = owner.clone();
+                            button.track_focus(&focus).disabled(false).on_click(
+                                move |_, window, cx| {
+                                    let _ = owner.update(cx, |this, cx| {
+                                        this.calls += 1;
+                                        this.state.update(cx, |state, cx| {
+                                            state.set_value("", window, cx)
+                                        });
+                                        cx.notify();
+                                    });
+                                },
+                            )
+                        },
+                    )]),
+                ]),
             ))
             .child(crate::Button::new("after", "After"))
     }
@@ -267,6 +274,20 @@ fn addon_actions_keep_base_focus_callbacks_and_root_disabled_gating(cx: &mut Tes
             Some(gpui_kit::Role::TextInput)
         );
         assert_eq!(window.find("clear").role(), Some(gpui_kit::Role::Button));
+        let text = window.find(("addon-item", 0_usize)).bounds();
+        let action = window.find("clear").bounds();
+        assert_eq!(action.left() - text.right(), px(6.));
+        assert_eq!(action.center().y, text.center().y);
+        assert_eq!(
+            window.find("addon-end").bounds().right() - action.right(),
+            px(4.)
+        );
+        window.click(("addon-item", 0_usize), cx);
+        assert!(
+            state.read(cx).focus_handle(cx).is_focused(window),
+            "passive mixed-addon content still focuses editor"
+        );
+        view.update(cx, |view, _| view.editor_focus_events = 0);
         window.click("clear", cx);
         window.render_frame(cx);
         assert_eq!(view.read(cx).calls, 1);
@@ -391,4 +412,47 @@ fn weak_action_factory_releases_input_and_focus_subscriptions_after_unmount(
         target.upgrade().is_none(),
         "unmount must release retained factory, editor and focus subscriptions"
     );
+}
+
+struct ReorderedParts {
+    state: Entity<InputState>,
+    before: bool,
+}
+impl Render for ReorderedParts {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        let action = InputGroupAddon::button("stable-action", "Action", |button, _, _| button);
+        let text = InputGroupAddon::text("Info");
+        let parts = if self.before {
+            vec![text, action]
+        } else {
+            vec![action, text]
+        };
+        div()
+            .w(px(240.))
+            .child(InputGroup::new("reordered", &self.state).end(InputGroupAddon::parts(parts)))
+    }
+}
+#[gpui_kit::test]
+fn addon_reordering_preserves_default_base_action_focus(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| ReorderedParts {
+        state: cx.new(|cx| InputState::new("Query", window, cx)),
+        before: true,
+    });
+    cx.update(|window, cx| {
+        window.activate_window();
+        window.render_frame(cx);
+        window.click("stable-action", cx);
+        window.render_frame(cx);
+        assert!(window.find("stable-action").focused() == Some(true));
+        view.update(cx, |view, cx| {
+            view.before = false;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        assert!(
+            window.find("stable-action").focused() == Some(true),
+            "passive ordering must not replace the Base keyed focus handle"
+        );
+    });
 }
