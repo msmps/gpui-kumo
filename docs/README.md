@@ -22,6 +22,7 @@ This is the agent entry point for building a design system on GPUI primitives. R
 | Use or verify supported Text styles and composition | [Text contract and results](text-validation.md) |
 | Use or verify Loader sizing, motion and status semantics | [Loader contract and results](loader-validation.md) |
 | Implement navigation links or compact Banner inline actions | [Link acceptance](link-validation.md) |
+| Implement contextual messages and accent-aware actions | [Banner acceptance](banner-validation.md) |
 | Implement status/category badges or link-hover composition | [Badge acceptance](badge-validation.md) |
 | Implement supported simple and layered card containers | [LayerCard acceptance](layer-card-validation.md) |
 | Select dependencies, check an API, or refresh these notes | [Source baseline](gpui-sources.md) |

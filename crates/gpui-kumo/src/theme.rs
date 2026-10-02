@@ -40,6 +40,7 @@ pub struct TextColors {
     pub danger: Hsla,
     pub success: Hsla,
     pub warning: Hsla,
+    /// Information-message foreground, distinct from the general icon accent.
     pub info: Hsla,
 }
 
@@ -64,6 +65,8 @@ pub struct Colors {
     pub success_tint: Hsla,
     pub warning: Hsla,
     pub warning_tint: Hsla,
+    /// General information accent for icon fills and Banner actions.
+    pub info: Hsla,
     pub info_tint: Hsla,
     pub line: Hsla,
     pub hairline: Hsla,
@@ -97,6 +100,17 @@ pub struct BadgeColors {
 pub struct NativeColors {
     pub disabled_input_foreground: Hsla,
     pub selection: Hsla,
+}
+
+/// Accent gradients for Banner actions, mixed in source OKLCH before mapping.
+#[derive(Clone, Debug)]
+pub struct BannerAccents {
+    /// General information accent, using the defined Tailwind blue-500.
+    pub info: Emphasis,
+    /// Appearance-specific warning accent.
+    pub warning: Emphasis,
+    /// Neutral-700 accent, shared across appearances.
+    pub secondary: Emphasis,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -218,6 +232,7 @@ pub struct Theme {
     pub colors: Colors,
     pub native: NativeColors,
     pub badge: BadgeColors,
+    pub banner: BannerAccents,
     pub typography: Typography,
     pub spacing: Spacing,
     pub radii: Radii,
@@ -241,6 +256,13 @@ impl Theme {
             Oklch::new(0.577, 0.245, 27.325)
         } else {
             Oklch::new(0.637, 0.237, 25.331)
+        };
+        // Tailwind 4.3.3's defined blue-500 wins over Kumo's sky-colored fallback.
+        let info = Oklch::new(0.623, 0.214, 259.815);
+        let warning = if dark {
+            Oklch::new(0.645, 0.168, 50.)
+        } else {
+            Oklch::new(0.739, 0.177, 58.2)
         };
         let white = Hsla::from(rgb(0xffffff));
         let black = Hsla::from(rgb(0x000000));
@@ -318,11 +340,8 @@ impl Theme {
             )
             .paint()
             .alpha(if dark { 0.2 } else { 0.57 }),
-            warning: choose(
-                Oklch::new(0.739, 0.177, 58.2),
-                Oklch::new(0.645, 0.168, 50.),
-            )
-            .paint(),
+            warning: warning.paint(),
+            info: info.paint(),
             warning_tint: choose(
                 Oklch::new(0.931, 0.107, 94.6),
                 Oklch::new(0.353, 0.079, 65.),
@@ -455,6 +474,11 @@ impl Theme {
             },
             primary: Emphasis::new(action),
             destructive: Emphasis::new(danger),
+            banner: BannerAccents {
+                info: Emphasis::new(info),
+                warning: Emphasis::new(warning),
+                secondary: Emphasis::new(Oklch::gray(0.371)),
+            },
         }
     }
 

@@ -2,10 +2,11 @@
 //! See `docs/kumo-component-recipes.md` for the contract and native recipe policies.
 
 use gpui_kit::{
-    AnyElement, App, Background, BoxShadow, ClickEvent, ElementId, FocusHandle, FontWeight,
-    HitboxBehavior, Hsla, InteractiveElement, IntoElement, ParentElement, Pixels, RenderOnce,
-    SharedString, StatefulInteractiveElement, Styled, Window, base, canvas, div,
-    prelude::FluentBuilder, px, quad, rgb,
+    AbsoluteLength, AnyElement, App, Background, Bounds, BoxShadow, ClickEvent, Corners, Edges,
+    ElementId, FocusHandle, FontWeight, HitboxBehavior, Hsla, InteractiveElement, IntoElement,
+    ParentElement, Pixels, Refineable, RenderOnce, SharedString, StatefulInteractiveElement,
+    StyleRefinement, Styled, Window, base, canvas, div, point, prelude::FluentBuilder, px, quad,
+    rgb, size,
 };
 
 use crate::{Theme, theme};
@@ -61,6 +62,8 @@ pub struct Button {
     popover_expanded: Option<bool>,
     focus_handle: Option<FocusHandle>,
     on_click: Option<ActivationHandler>,
+    accent: Option<AccentRecipe>,
+    style: StyleRefinement,
 }
 
 impl Button {
@@ -81,6 +84,8 @@ impl Button {
             popover_expanded: None,
             focus_handle: None,
             on_click: None,
+            accent: None,
+            style: Default::default(),
         }
     }
 
@@ -100,6 +105,11 @@ impl Button {
 
     pub fn variant(mut self, variant: Variant) -> Self {
         self.variant = variant;
+        self
+    }
+
+    pub(crate) fn accent(mut self, recipe: AccentRecipe) -> Self {
+        self.accent = Some(recipe);
         self
     }
     pub fn size(mut self, size: Size) -> Self {
@@ -159,6 +169,14 @@ impl Button {
     ) -> Self {
         self.on_click = Some(Box::new(handler));
         self
+    }
+}
+
+impl Styled for Button {
+    /// Refine the interactive surface after its Kumo recipe. The surrounding
+    /// native intrinsic-width wrapper remains responsible for placement.
+    fn style(&mut self) -> &mut StyleRefinement {
+        &mut self.style
     }
 }
 
@@ -232,6 +250,47 @@ struct Paint {
     ring: Option<Hsla>,
     inset: Option<BoxShadow>,
     drop_shadow: bool,
+}
+
+/// Presentation-only seam for compound controls that reuse Button behavior.
+pub(crate) struct AccentRecipe {
+    pub emphasis: Option<crate::theme::Emphasis>,
+    pub foreground: Hsla,
+    pub unavailable_foreground: Hsla,
+    pub icon_foreground: Hsla,
+    pub ring: Option<Hsla>,
+    pub hover_background: Hsla,
+}
+
+impl AccentRecipe {
+    fn paint(&self, hovered: bool, unavailable: bool) -> Paint {
+        if let Some(emphasis) = &self.emphasis {
+            Paint {
+                background: emphasis.gradient(hovered && !unavailable),
+                foreground: self.foreground,
+                ring: Some(emphasis.ring),
+                inset: Some(emphasis.inset_highlight()),
+                drop_shadow: true,
+            }
+        } else {
+            Paint {
+                background: if hovered && !unavailable {
+                    self.hover_background
+                } else {
+                    Hsla::transparent_black()
+                }
+                .into(),
+                foreground: if unavailable {
+                    self.unavailable_foreground
+                } else {
+                    self.foreground
+                },
+                ring: self.ring,
+                inset: None,
+                drop_shadow: false,
+            }
+        }
+    }
 }
 
 impl Variant {
@@ -327,16 +386,21 @@ impl RenderOnce for Button {
         let theme = theme(cx);
         let geometry = self.size.geometry(self.shape, theme);
         let unavailable = self.disabled || self.loading;
-        let rest = self.variant.paint(theme, unavailable, self.open, false);
-        let hovered = self.variant.paint(theme, unavailable, self.open, true);
-        let focus_color = self
-            .variant
-            .emphasis(theme)
-            .map_or(theme.colors.focus.opacity(0.5), |e| e.ring);
-        let keyboard_color = self
-            .variant
-            .emphasis(theme)
-            .map_or(theme.colors.brand, |e| e.ring);
+        let rest = self.accent.as_ref().map_or_else(
+            || self.variant.paint(theme, unavailable, self.open, false),
+            |recipe| recipe.paint(false, unavailable),
+        );
+        let hovered = self.accent.as_ref().map_or_else(
+            || self.variant.paint(theme, unavailable, self.open, true),
+            |recipe| recipe.paint(true, unavailable),
+        );
+        let emphasis = self.accent.as_ref().map_or_else(
+            || self.variant.emphasis(theme),
+            |recipe| recipe.emphasis.as_ref(),
+        );
+        let is_emphasis = emphasis.is_some();
+        let focus_color = emphasis.map_or(theme.colors.focus.opacity(0.5), |e| e.ring);
+        let keyboard_color = emphasis.map_or(theme.colors.brand, |e| e.ring);
         // Supply Base with the same keyed focus handle used to resolve hover/focus
         // precedence. No component-owned copy of the application's state is needed.
         let theme = theme.clone();
@@ -346,8 +410,7 @@ impl RenderOnce for Button {
                 .read(cx)
                 .clone()
         });
-        let opacity = if self.disabled || (self.loading && self.variant.emphasis(&theme).is_some())
-        {
+        let opacity = if self.disabled || (self.loading && is_emphasis) {
             0.5
         } else {
             1.
@@ -402,6 +465,11 @@ impl RenderOnce for Button {
         if let Some(handler) = self.on_click {
             button = button.on_click(handler);
         }
+        button.style().refine(&self.style);
+        let radii =
+            Corners::<AbsoluteLength>::default().refined(button.style().corner_radii.clone());
+        let borders =
+            Edges::<AbsoluteLength>::default().refined(button.style().border_widths.clone());
         let leading = if self.loading {
             Some(crate::loader::indicator(
                 px(if self.size == Size::Lg { 16. } else { 14. }),
@@ -410,6 +478,24 @@ impl RenderOnce for Button {
         } else {
             self.leading
         };
+        let tint_icon = |icon: AnyElement| {
+            if let Some(recipe) = &self.accent {
+                div()
+                    .text_color(recipe.icon_foreground)
+                    .child(icon)
+                    .into_any_element()
+            } else {
+                icon
+            }
+        };
+        // Source fill utilities tint decorative icons, while Loader's stroke
+        // inherits the current text color through the existing loading path.
+        let leading = if self.loading {
+            leading
+        } else {
+            leading.map(tint_icon)
+        };
+        let trailing = self.trailing.map(tint_icon);
         let ring_focus = focus_handle.clone();
         let ring_width = theme.effects.control_ring_width;
         let keyboard_width = theme.effects.keyboard_focus_ring_width;
@@ -427,9 +513,21 @@ impl RenderOnce for Button {
                     (rest.ring, ring_width)
                 };
                 if let Some(color) = color {
+                    let border = borders.to_pixels(window.rem_size());
+                    let root = Bounds::new(
+                        bounds.origin - point(border.left, border.top),
+                        size(
+                            bounds.size.width + border.left + border.right,
+                            bounds.size.height + border.top + border.bottom,
+                        ),
+                    );
+                    let outer = root.dilate(width);
                     window.paint_quad(quad(
-                        bounds.dilate(width),
-                        geometry.radius + width,
+                        outer,
+                        radii
+                            .to_pixels(window.rem_size())
+                            .map(|radius| *radius + width)
+                            .clamp_radii_for_quad_size(outer.size),
                         Hsla::transparent_black(),
                         width,
                         color,
@@ -439,6 +537,7 @@ impl RenderOnce for Button {
             },
         )
         .absolute()
+        .inset_0()
         .size_full();
         div().flex().flex_shrink_0().self_start().child(
             button
@@ -446,14 +545,14 @@ impl RenderOnce for Button {
                     div()
                         .flex()
                         .items_center()
-                        .gap(if self.variant.emphasis(&theme).is_some() {
+                        .gap(if is_emphasis {
                             theme.spacing.six
                         } else {
                             geometry.gap
                         })
                         .children(leading)
                         .children(self.label)
-                        .children(self.trailing),
+                        .children(trailing),
                 )
                 .child(ring),
         )

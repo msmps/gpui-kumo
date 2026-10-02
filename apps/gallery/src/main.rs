@@ -11,6 +11,7 @@ use gpui_kumo::{
 };
 
 mod badges;
+mod banners;
 mod buttons;
 mod cards;
 mod inputs;
@@ -46,6 +47,7 @@ struct Gallery {
     inputs: gpui_kit::Entity<inputs::Inputs>,
     cards: gpui_kit::Entity<cards::Cards>,
     links: gpui_kit::Entity<links::Links>,
+    banners: gpui_kit::Entity<banners::Banners>,
     popovers: gpui_kit::Entity<popovers::Popovers>,
     activations: usize,
     disabled: bool,
@@ -137,6 +139,7 @@ impl Render for Gallery {
                         }),
                     )),
             )
+            .child(self.banners.clone())
             .child(badges::panel(&theme))
             .child(self.links.clone())
             .child(self.cards.clone())
@@ -349,6 +352,7 @@ fn main() {
                             inputs: cx.new(|cx| inputs::Inputs::new(window, cx)),
                             cards: cx.new(|cx| cards::Cards::new(window, cx)),
                             links: cx.new(links::Links::new),
+                            banners: cx.new(banners::Banners::new),
                             popovers: cx.new(|cx| popovers::Popovers::new(window, cx)),
                             activations: 0,
                             disabled: false,

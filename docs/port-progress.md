@@ -14,7 +14,7 @@ Continue the component library beyond the first Button/Input/Popover evaluation.
 | --- | --- | --- |
 | 0 | Foundation decision; locally repairable accessibility and nested-overlay defects | Repair checkpoint complete; platform export gaps remain |
 | 1 | Button/Input browser comparison; Popover geometry stress; transparent shadows and outline motion | First-slice fidelity work, tracked individually |
-| 2 | Text, Label/Field, Loader, LayerCard, Badge, Banner, Empty, Code, Link | Text/Loader/LayerCard/Badge/Link implemented with documented comparison/platform gaps; Banner next; Field portions currently inside Input |
+| 2 | Text, Label/Field, Loader, LayerCard, Badge, Banner, Empty, Code, Link | Text/Loader/LayerCard/Badge/Link implemented with documented comparison/platform gaps; Banner implemented with native/comparison gaps; Empty/Code and Label/Field remain; Field portions currently inside Input |
 | 3 | Checkbox, Radio, Switch; ButtonGroup, InputGroup, SensitiveInput, ClipboardText, InlineCopyText | Common form/composition controls; typed values, availability and labels |
 | 4 | Tooltip, Collapsible, Tabs, Meter, Pagination | Focus, motion, selection or presentation foundations |
 | 5 | Dialog, LayerDialog, Dropdown, Menubar, Toolbar, Select | Overlay and composite navigation; Button/Popover/focus foundations |
@@ -35,11 +35,11 @@ On macOS 26.6.2 / aarch64-apple-darwin, MacBookPro18,1, 10 CPUs, 16 GiB RAM, Rus
 
 ## Current checkpoint
 
-Link checkpoint (this commit), following pushed Badge `895432d` and LayerCard repair `ea86f71`. Link is implemented with application-owned navigation, supported variants, one-em external icon, typed Badge composition and private Base focus/activation. Five rendered regressions cover actual input, theme/underline paint, wrapping and scoped hover. [Link validation](link-validation.md) records native evidence and explicit remaining limits.
+Banner checkpoint (this commit), following pushed Link `62f5ab4`, Badge `895432d` and LayerCard repair `ea86f71`. Banner adds structured messages, supported variants/sizes, typed inline Link composition and accent-aware actions over the existing Button. Caller styles apply after recipes; the shared Button ring follows caller borders/radii. [Banner validation](banner-validation.md) records acceptance, actual-render tests and native evidence.
 
-Skeptical review repaired mismatched keyed focus namespaces and constrained-label overflow. Native pointer/Return/Space yielded three navigation requests; complete labels and destinations were exposed. Rebuilt wrapping is captured in light, while dark wrapping has rendered coverage and awaits a reliable final native capture. Underline offset, spoken disabled-state export and pinned browser comparison remain pending.
+Skeptical review repaired a zero-width text column inside the real scrolling gallery. The regression failed before switching to automatic flex basis and passes through resize down/up. Native rebuilt light output shows the corrected layout. Loader keeps stroke inheritance while decorative icons use the distinct general fill accent. Source OKLCH accent mixes are centralized in Theme before gamut mapping.
 
-Source inspection excludes deprecated Surface, Badge destructive/legacy alias, Link to alias and Banner legacy children/text/enum. KUMO-019 remains open for general descendant rounded clipping; the reported default card top-corner defect is fixed and inspected in both themes. No gallery process remains: registered-app Quit and session-owned raw-process termination were followed by an empty pgrep. Future native checks launch only the registered app to avoid duplicate instances.
+Deprecated Surface, Badge destructive/legacy alias, Link to alias and Banner children/text/legacy enum remain excluded. KUMO-019 tracks general descendant rounded clipping; the user's default LayerCard top-corner defect is fixed and inspected in both themes. KUMO-020 records native state/capture inconsistency without asserting a cause: Banner's accessible counter advanced to three while subsequent pixels/theme checks lagged. The registered gallery was quit and an empty pgrep confirmed cleanup.
 
 ## Validation and review evidence
 
@@ -49,12 +49,12 @@ Source inspection excludes deprecated Surface, Badge destructive/legacy alias, L
 - [Loader](loader-validation.md) is shared with Button and has size/name, light/dark foreground, animated endpoint and reduced-motion regressions. Native light/dark captures show advancing arcs. Deterministic pinned SVG comparison is prepared; browser surfaces were unavailable. Exact browser motion/path and spoken status checks remain pending.
 - [LayerCard](layer-card-validation.md) records the complete acceptance matrix and measured results. Skeptical review repaired inherited layered line-height and the default secondary fill defect. Follow-up geometry coverage caught padded absolute canvases shifting the mask; explicit zero insets fixed it. Nested controls retain their tested input paths.
 
-Current automated gate: 57 workspace tests and five doctests pass. Formatting, all-target/all-feature locked Clippy with warnings denied and gallery/example builds pass. The Loader timing regression failed during the gate because its executor clock did not drive GPUI’s unsynced animation; its test now advances the actual wall time, and both workspace and isolated checks pass. The upstream block 0.1.6 future-compatibility notice remains separate from current check results.
+Current automated gate: 62 workspace tests and six doctests pass. Formatting, all-target/all-feature locked Clippy with warnings denied and gallery/example builds pass. The Loader timing regression failed during the gate because its executor clock did not drive GPUI’s unsynced animation; its test now advances the actual wall time, and both workspace and isolated checks pass. The upstream block 0.1.6 future-compatibility notice remains separate from current check results.
 
 Final rebuilt captures show smooth corners in light/dark after cmd-l theme switching. The Save counter updated once; Unicode value changes reached the native tree, but Input pixels lagged the exposed value. Native input/frame consistency remains pending. The gallery was quit and its process absence verified.
 
 ## Next exact action
 
-Implement Banner’s supported structured title/description/action APIs. Link now unlocks compact inline actions; existing Button supplies Base interaction for Banner.Action. Define its acceptance matrix and extend Button’s private recipe boundary with the source’s three accent-aware treatments and banner-derived sizing. Inspect exact accent mixing against the pinned source; omit deprecated children/text and legacy enum.
+Investigate [KUMO-020](issues/020-native-frame-consistency.md) as a shared verification defect before further component work. Start with one registered gallery process, raise/activate its window through the supported native UI action, and compare counter/theme/input metadata with captured frames. Distinguish event delivery, presentation/invalidation and capture freshness; do not introduce a blanket refresh workaround. If native capability prevents resolution, record the exact evidence and continue independent Empty/Code or Label/Field work.
 
-Close every testing application and verify process termination. Apply Apollo Rust best practices and preserve explicit state ownership/private Base boundaries at each milestone.
+Next component milestone is Empty: inspect its pinned source/examples, define its presentation/composition contract and reuse existing Text, Button and theme roles. Close every testing application and verify process termination. Apply Apollo Rust best practices and preserve explicit state ownership/private Base boundaries at each milestone.

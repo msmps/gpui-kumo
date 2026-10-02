@@ -25,6 +25,7 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 | KUMO-017 | Components | [validate the native gallery and interactions on Windows](017-windows-native-components.md) | Open |
 | KUMO-018 | Components | [record the Base dependency decision after the first slice](018-base-foundation-decision.md) | Resolved |
 | KUMO-019 | LayerCard | [preserve rounded clipping for arbitrary content](019-layer-card-rounded-clipping.md) | Open |
+| KUMO-020 | Components | [reconcile native frames with updated state](020-native-frame-consistency.md) | Open |
 
 ## Maintaining the tracker
 
