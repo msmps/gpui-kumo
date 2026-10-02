@@ -20,6 +20,9 @@ mod loaders;
 mod popovers;
 mod texts;
 
+#[cfg(feature = "frame-profiler")]
+mod performance;
+
 gpui_kit::actions!(gallery, [Quit, ToggleAppearance]);
 
 struct GalleryAssets;
@@ -52,12 +55,14 @@ struct Gallery {
     activations: usize,
     disabled: bool,
     loading: bool,
+    #[cfg(feature = "frame-profiler")]
+    measurement: performance::Measurement,
 }
 
 impl Render for Gallery {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = current_theme(cx).clone();
-        div()
+        let root = div()
             .id("gallery")
             .track_focus(&self.focus_handle)
             .on_action(|_: &Quit, _, cx| cx.quit())
@@ -74,101 +79,110 @@ impl Render for Gallery {
             .text_color(theme.text.default)
             .font_family(theme.typography.font_family.clone())
             .text_size(theme.typography.base.size)
-            .line_height(theme.typography.base.line_height)
-            .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .justify_between()
-                    .child(
-                        div()
-                            .flex()
-                            .items_center()
-                            .gap(theme.spacing.twelve)
-                            .child(
-                                svg()
-                                    .path("workspace.svg")
-                                    .size_8()
-                                    .text_color(theme.text.brand),
-                            )
-                            .child(
-                                div()
-                                    .flex()
-                                    .flex_col()
-                                    .gap(theme.spacing.four)
-                                    .child(
-                                        div()
-                                            .text_size(px(24.))
-                                            .line_height(px(32.))
-                                            .font_weight(FontWeight::MEDIUM)
-                                            .child("Kumo component gallery"),
-                                    )
-                                    .child(
-                                        div()
-                                            .text_color(theme.text.subtle)
-                                            .child("Text · Button · Input · Popover · foundations"),
-                                    ),
-                            ),
-                    )
-                    .child(div().flex().gap(theme.spacing.eight).children(
-                        [Appearance::Light, Appearance::Dark].map(|appearance| {
-                            let selected = theme.appearance == appearance;
-                            Button::new(
-                                if appearance == Appearance::Light {
-                                    "light"
-                                } else {
-                                    "dark"
-                                },
-                                if appearance == Appearance::Light {
-                                    "Light"
-                                } else {
-                                    "Dark"
-                                },
-                            )
-                            .accessibility_label(if appearance == Appearance::Light {
-                                "Light appearance"
-                            } else {
-                                "Dark appearance"
-                            })
-                            .variant(if selected {
-                                Variant::Primary
-                            } else {
-                                Variant::Secondary
-                            })
-                            .on_click(move |_, _, cx| set_appearance(appearance, cx))
-                        }),
-                    )),
-            )
-            .child(self.banners.clone())
-            .child(badges::panel(&theme))
-            .child(self.links.clone())
-            .child(self.cards.clone())
-            .child(loaders::panel(&theme))
-            .child(texts::panel(&theme))
-            .child(self.popovers.clone())
-            .child(self.inputs.clone())
-            .child(buttons::interaction_panel(self, &theme, cx))
-            .child(buttons::variant_panel(&theme))
-            .child(buttons::size_panel(&theme))
-            .child(
-                div().flex().gap(px(24.)).child(color_panel(&theme)).child(
+            .line_height(theme.typography.base.line_height);
+        #[cfg(feature = "frame-profiler")]
+        let root = root
+            .on_action(cx.listener(|this, _: &performance::Start, window, cx| {
+                this.measurement.start(window, cx);
+            }))
+            .on_action(cx.listener(|this, _: &performance::Stop, window, cx| {
+                this.measurement.stop(window, cx);
+            }))
+            .on_action(|_: &performance::ToggleMotion, _, cx| {
+                cx.set_reduce_motion(!cx.reduce_motion());
+            });
+        root.child(
+            div()
+                .flex()
+                .items_center()
+                .justify_between()
+                .child(
                     div()
                         .flex()
-                        .flex_col()
-                        .gap(px(24.))
-                        .flex_1()
-                        .child(typography_panel(&theme))
-                        .child(effects_panel(&theme)),
-                ),
-            )
-            .child(
+                        .items_center()
+                        .gap(theme.spacing.twelve)
+                        .child(
+                            svg()
+                                .path("workspace.svg")
+                                .size_8()
+                                .text_color(theme.text.brand),
+                        )
+                        .child(
+                            div()
+                                .flex()
+                                .flex_col()
+                                .gap(theme.spacing.four)
+                                .child(
+                                    div()
+                                        .text_size(px(24.))
+                                        .line_height(px(32.))
+                                        .font_weight(FontWeight::MEDIUM)
+                                        .child("Kumo component gallery"),
+                                )
+                                .child(
+                                    div()
+                                        .text_color(theme.text.subtle)
+                                        .child("Text · Button · Input · Popover · foundations"),
+                                ),
+                        ),
+                )
+                .child(div().flex().gap(theme.spacing.eight).children(
+                    [Appearance::Light, Appearance::Dark].map(|appearance| {
+                        let selected = theme.appearance == appearance;
+                        Button::new(
+                            if appearance == Appearance::Light {
+                                "light"
+                            } else {
+                                "dark"
+                            },
+                            if appearance == Appearance::Light {
+                                "Light"
+                            } else {
+                                "Dark"
+                            },
+                        )
+                        .accessibility_label(if appearance == Appearance::Light {
+                            "Light appearance"
+                        } else {
+                            "Dark appearance"
+                        })
+                        .variant(if selected {
+                            Variant::Primary
+                        } else {
+                            Variant::Secondary
+                        })
+                        .on_click(move |_, _, cx| set_appearance(appearance, cx))
+                    }),
+                )),
+        )
+        .child(self.banners.clone())
+        .child(badges::panel(&theme))
+        .child(self.links.clone())
+        .child(self.cards.clone())
+        .child(loaders::panel(&theme))
+        .child(texts::panel(&theme))
+        .child(self.popovers.clone())
+        .child(self.inputs.clone())
+        .child(buttons::interaction_panel(self, &theme, cx))
+        .child(buttons::variant_panel(&theme))
+        .child(buttons::size_panel(&theme))
+        .child(
+            div().flex().gap(px(24.)).child(color_panel(&theme)).child(
                 div()
-                    .text_color(theme.text.subtle)
-                    .text_size(theme.typography.xs.size)
-                    .child(
-                        "System font · ⌘L switches appearance · Text · Button · Input · Popover",
-                    ),
-            )
+                    .flex()
+                    .flex_col()
+                    .gap(px(24.))
+                    .flex_1()
+                    .child(typography_panel(&theme))
+                    .child(effects_panel(&theme)),
+            ),
+        )
+        .child(
+            div()
+                .text_color(theme.text.subtle)
+                .text_size(theme.typography.xs.size)
+                .child("System font · ⌘L switches appearance · Text · Button · Input · Popover"),
+        )
     }
 }
 
@@ -321,6 +335,12 @@ fn main() {
                 KeyBinding::new("cmd-q", Quit, None),
                 KeyBinding::new("cmd-l", ToggleAppearance, None),
             ]);
+            #[cfg(feature = "frame-profiler")]
+            cx.bind_keys([
+                KeyBinding::new("cmd-shift-p", performance::Start, None),
+                KeyBinding::new("cmd-shift-o", performance::Stop, None),
+                KeyBinding::new("cmd-shift-m", performance::ToggleMotion, None),
+            ]);
             cx.on_action(|_: &Quit, cx| cx.quit());
             cx.set_menus([Menu::new("Kumo Gallery").items([MenuItem::action("Quit", Quit)])]);
             cx.on_window_closed(|cx, _| {
@@ -357,6 +377,8 @@ fn main() {
                             activations: 0,
                             disabled: false,
                             loading: false,
+                            #[cfg(feature = "frame-profiler")]
+                            measurement: performance::Measurement::default(),
                         }
                     })
                 },

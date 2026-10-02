@@ -5,6 +5,9 @@ edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
 
+[features]
+frame-profiler = ["gpui-kit/profiler"]
+
 [dependencies]
 gpui-kit.workspace = true
 gpui-kumo.workspace = true

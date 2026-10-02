@@ -10,6 +10,10 @@ Banner testing then launched only the registered gallery. The rebuilt screenshot
 
 These observations establish a verification discrepancy, not its cause. Do not label it a GPUI rendering defect, an application notification defect or a computer-use capture defect without evidence. Automated actual-render/input tests currently pass; they do not resolve native presentation/capture consistency.
 
+Follow-up isolated native probes: a direct Button/div counter, then a nested counter entity, then that entity inside a scrolling flex root all showed matching state/pixels. The full gallery twice exposed counter 2 then 5 while pixels remained 0. `apps/gallery/examples/native_frame_probe.rs` now retains the actual Banner panel alone inside a scrolling root; it also exposed counter 2 while pixels remained 0. It is a reduced reproduction, not yet minimal. Gallery SVG assets are omitted in that fixture.
+
+The user's scrolling-lag question prompted [debug/release frame measurements](../performance-validation.md). Debug's matching scroll protocol recorded only one draw and no presentation samples. Release produced 483 presentation intervals at mean 8.33 ms. This narrows the evidence but does not identify the discrepancy's cause. All testing apps were quit and gallery/probe process absence verified.
+
 ## Next investigation and acceptance
 
 - Launch only the registered application and verify exactly one process. Compare the same action's visible screen, accessibility state and subsequent frame without mixing process instances.

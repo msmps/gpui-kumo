@@ -17,6 +17,7 @@ This is the agent entry point for building a design system on GPUI primitives. R
 | Implement activation, focus, availability, identity, or accessibility | [Interaction](gpui-interaction.md) |
 | Design a component API or decide where its state lives | [Component construction](design-system-components.md) |
 | Verify a component or diagnose a visual discrepancy | [Verification](gpui-verification.md), [Popover results](popover-validation.md) |
+| Investigate scrolling lag, animation cost or debug/release runtime differences | [Performance measurements](performance-validation.md) |
 | Review remaining component work | [Local issue tracker](issues/README.md) |
 | Resume the full port and select the next milestone | [Port progress and backlog](port-progress.md) |
 | Use or verify supported Text styles and composition | [Text contract and results](text-validation.md) |
