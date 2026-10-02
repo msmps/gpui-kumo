@@ -62,6 +62,7 @@ pub struct Button {
     disabled: bool,
     loading: bool,
     input_group_action: bool,
+    input_group_zone: Option<Box<crate::input_group::Zone>>,
     open: bool,
     popover_expanded: Option<bool>,
     focus_handle: Option<FocusHandle>,
@@ -86,6 +87,7 @@ impl Button {
             disabled: false,
             loading: false,
             input_group_action: false,
+            input_group_zone: None,
             open: false,
             popover_expanded: None,
             focus_handle: None,
@@ -114,6 +116,21 @@ impl Button {
         self.disabled |= disabled;
         self.input_group_action = true;
         self
+    }
+    pub(crate) fn input_group_zone(
+        mut self,
+        disabled: bool,
+        zone: crate::input_group::Zone,
+    ) -> Self {
+        self.disabled |= disabled;
+        self.input_group_zone = Some(Box::new(zone));
+        self
+    }
+    pub(crate) fn provided_focus(&self) -> Option<FocusHandle> {
+        self.focus_handle.clone()
+    }
+    pub(crate) fn is_ghost(&self) -> bool {
+        self.variant == Variant::Ghost
     }
     pub(crate) fn group_join(
         mut self,
@@ -427,8 +444,12 @@ impl RenderOnce for Button {
             || self.variant.paint(theme, unavailable, self.open, false),
             |recipe| recipe.paint(false, unavailable),
         );
-        if self.join.is_some() || self.input_group_action {
+        if self.join.is_some() || self.input_group_action || self.input_group_zone.is_some() {
             rest.drop_shadow = false;
+        }
+        if self.disabled && self.input_group_zone.is_some() {
+            rest.background = theme.colors.overlay.into();
+            rest.foreground = theme.text.inactive;
         }
         let hovered = self.accent.as_ref().map_or_else(
             || self.variant.paint(theme, unavailable, self.open, true),
@@ -525,6 +546,22 @@ impl RenderOnce for Button {
                 button.style().corner_radii.bottom_right = Some(px(0.).into());
             }
         }
+        let zone = self.input_group_zone;
+        if let Some(zone) = &zone {
+            button = button
+                .h(zone.height)
+                .border_1()
+                .border_color(theme.colors.line.alpha(0.));
+            button.style().corner_radii.top_left = Some(px(0.).into());
+            button.style().corner_radii.bottom_left = Some(px(0.).into());
+            button.style().corner_radii.top_right =
+                Some(if zone.last { zone.radius } else { px(0.) }.into());
+            button.style().corner_radii.bottom_right =
+                Some(if zone.last { zone.radius } else { px(0.) }.into());
+            if self.shape != Shape::Standard {
+                button = button.w(zone.height);
+            }
+        }
         let radii =
             Corners::<AbsoluteLength>::default().refined(button.style().corner_radii.clone());
         let borders =
@@ -568,6 +605,25 @@ impl RenderOnce for Button {
             |bounds, window, _| window.insert_hitbox(bounds, HitboxBehavior::Normal),
             move |bounds, hitbox, window, cx| {
                 let focused = !unavailable && ring_focus.is_focused(window);
+                if let Some(zone) = &zone {
+                    let color = if focused && window.last_input_was_keyboard() {
+                        theme.colors.focus.opacity(0.5)
+                    } else {
+                        theme.colors.line
+                    };
+                    let border = quad(
+                        bounds.dilate(px(1.)),
+                        radii.to_pixels(window.rem_size()),
+                        color.alpha(0.),
+                        px(1.),
+                        color.opacity(ring_opacity),
+                        Default::default(),
+                    );
+                    zone.borders
+                        .borrow_mut()
+                        .push((focused, border, window.content_mask()));
+                    return;
+                }
                 let (color, width) = if focused && window.last_input_was_keyboard() {
                     (Some(keyboard_color), keyboard_width)
                 } else if focused && input_group_action {

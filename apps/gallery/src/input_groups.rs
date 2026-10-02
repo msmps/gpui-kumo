@@ -11,13 +11,14 @@ impl InputGroups {
         Self {
             actions: 0,
             _theme: cx.observe_global::<Theme>(|_, cx| cx.notify()),
-            inputs: (0..10)
+            inputs: (0..13)
                  .map(|i| cx.new(|cx| {
                     let mut state = InputState::new(if i == 7 { "Search query" } else { "API endpoint" }, window, cx);
                     if i == 6 { state.set_value("a-long-domain-name-for-testing-horizontal-scrolling-and-suffix-clipping", window, cx); }
                     if i == 7 { state.set_value("café 🦀", window, cx); }
                     if i == 8 { state.set_value("/api/packages", window, cx); }
-                    if i == 9 { state.set_disabled(true, cx); }
+                    if i == 9 || i == 12 { state.set_disabled(true, cx); }
+                    if i == 10 || i == 11 { state.set_value("packages", window, cx); }
                     state
                 }))
                 .collect(),
@@ -28,10 +29,76 @@ impl Render for InputGroups {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let clear_owner = cx.entity().downgrade();
         let copy_owner = clear_owner.clone();
+        let submit_owner = clear_owner.clone();
+        let hybrid_owner = clear_owner.clone();
         super::panel(
             theme(cx),
             "InputGroup · shared container and retained editing",
         )
+        .child(
+            InputGroup::new("joined-search", &self.inputs[10])
+                .button(
+                    "joined-submit",
+                    "Search",
+                    gpui_kumo::button::Variant::Secondary,
+                    move |button, _, _| {
+                        let owner = submit_owner.clone();
+                        button.on_click(move |_, _, cx| {
+                            let _ = owner.update(cx, |this, cx| {
+                                this.actions += 1;
+                                cx.notify();
+                            });
+                        })
+                    },
+                )
+                .button(
+                    "joined-disabled",
+                    "Reset",
+                    gpui_kumo::button::Variant::Secondary,
+                    |button, _, _| button.disabled(true),
+                )
+                .button(
+                    "joined-more",
+                    "More",
+                    gpui_kumo::button::Variant::Secondary,
+                    |button, _, _| button,
+                ),
+        )
+        .child(
+            InputGroup::new("hybrid-search", &self.inputs[11])
+                .start(InputGroupAddon::text("/api/"))
+                .end(InputGroupAddon::button(
+                    "hybrid-clear",
+                    "Clear",
+                    move |button, _, _| {
+                        let owner = hybrid_owner.clone();
+                        button.on_click(move |_, window, cx| {
+                            let _ = owner.update(cx, |this, cx| {
+                                this.inputs[11]
+                                    .update(cx, |state, cx| state.set_value("", window, cx));
+                                cx.notify();
+                            });
+                        })
+                    },
+                ))
+                .button(
+                    "hybrid-submit",
+                    "Search",
+                    gpui_kumo::button::Variant::Primary,
+                    |button, _, _| button,
+                ),
+        )
+        .child(
+            InputGroup::new("disabled-search", &self.inputs[12])
+                .start(InputGroupAddon::text("/api/"))
+                .button(
+                    "disabled-submit",
+                    "Search",
+                    gpui_kumo::button::Variant::Secondary,
+                    |button, _, _| button.disabled(false),
+                ),
+        )
+        .child(format!("Joined actions: {}", self.actions))
         .children(
             [Size::Xs, Size::Sm, Size::Base, Size::Lg]
                 .into_iter()

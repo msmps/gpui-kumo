@@ -41,6 +41,8 @@ pub struct InputState {
     presentation: Presentation,
     accessibility: accessibility::Bridge,
     group_focus: Option<FocusHandle>,
+    group_zone_focus: Option<FocusHandle>,
+    group_button_focus: std::collections::HashMap<ElementId, FocusHandle>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -77,6 +79,8 @@ impl InputState {
             presentation: Presentation::default(),
             accessibility: accessibility::Bridge::default(),
             group_focus: None,
+            group_zone_focus: None,
+            group_button_focus: std::collections::HashMap::new(),
             _subscriptions: vec![events, theme, editor_observer],
         }
     }
@@ -247,13 +251,76 @@ impl Render for InputState {
         }
         let group = self.presentation.group.as_ref();
         let group_focus = group.and(self.group_focus.clone());
+        let buttons: Vec<_> = group
+            .into_iter()
+            .flat_map(|g| &g.buttons)
+            .map(|render| render(self.presentation.size, window, cx))
+            .collect();
+        for (index, button) in buttons.iter().enumerate() {
+            assert!(
+                !buttons[..index]
+                    .iter()
+                    .any(|previous| previous.id() == button.id()),
+                "InputGroup direct button IDs must be unique"
+            );
+        }
+        self.group_button_focus
+            .retain(|id, _| buttons.iter().any(|button| button.id() == id));
+        let joined = buttons.iter().any(|button| !button.is_ghost());
+        if joined && self.group_zone_focus.is_none() {
+            let handle = cx.focus_handle().tab_stop(false);
+            self._subscriptions
+                .push(cx.on_focus_in(&handle, window, |_, _, cx| cx.notify()));
+            self._subscriptions
+                .push(cx.on_focus_out(&handle, window, |_, _, _, cx| cx.notify()));
+            self.group_zone_focus = Some(handle);
+        }
+        let zone_focus = joined.then(|| self.group_zone_focus.clone()).flatten();
+        let borders = crate::button::JoinedRingQueue::default();
+        let input_borders = borders.clone();
+        let count = buttons.len();
+        let direct_buttons: Vec<_> = buttons
+            .into_iter()
+            .enumerate()
+            .map(|(index, button)| {
+                let focus = button.provided_focus().unwrap_or_else(|| {
+                    self.group_button_focus
+                        .entry(button.id().clone())
+                        .or_insert_with(|| cx.focus_handle())
+                        .clone()
+                });
+                let button = button.track_focus(&focus);
+                let button = if joined {
+                    button
+                        .size(crate::input_group::button_size(self.presentation.size))
+                        .input_group_zone(
+                            self.disabled,
+                            crate::input_group::Zone {
+                                height: crate::input_group::height(self.presentation.size),
+                                radius,
+                                last: index + 1 == count,
+                                borders: borders.clone(),
+                            },
+                        )
+                } else {
+                    button
+                        .size(crate::input_group::compact_size(self.presentation.size))
+                        .input_group_action(self.disabled)
+                };
+                div()
+                    .flex()
+                    .flex_shrink_0()
+                    .when(joined, |this| this.ml(px(-1.)))
+                    .on_mouse_down(gpui_kit::MouseButton::Left, |_, _, cx| {
+                        cx.stop_propagation()
+                    })
+                    .child(button)
+                    .into_any_element()
+            })
+            .collect();
+
         if group.is_some() {
-            height = match self.presentation.size {
-                Size::Xs => 24.,
-                Size::Sm => 28.,
-                Size::Base => 36.,
-                Size::Lg => 44.,
-            };
+            height = f32::from(crate::input_group::height(self.presentation.size));
         }
         let seam = match self.presentation.size {
             Size::Xs => 4.,
@@ -348,19 +415,24 @@ impl Render for InputState {
         };
         let focus = self.focus_handle(cx);
         let focused = !self.disabled
-            && group_focus.as_ref().map_or_else(
+            && (if joined {
+                zone_focus.as_ref()
+            } else {
+                group_focus.as_ref()
+            })
+            .map_or_else(
                 || focus.is_focused(window),
                 |scope| scope.contains_focused(window, cx),
             );
         let invalid = self.presentation.error.is_some();
-        let ring_color = if invalid {
+        let ring_color = if invalid && !joined {
             theme.colors.danger
         } else if focused {
             theme.colors.focus.opacity(0.5)
         } else {
             theme.colors.line
         };
-        let ring_width = if focused {
+        let ring_width = if focused && !joined {
             theme.effects.input_focus_ring_width
         } else {
             theme.effects.control_ring_width
@@ -483,6 +555,143 @@ impl Render for InputState {
                 this.flex_initial().w(width).max_w_full()
             })
             .child(editor_semantics);
+        let (container_buttons, joined_buttons) = if joined {
+            (Vec::new(), direct_buttons)
+        } else {
+            (direct_buttons, Vec::new())
+        };
+        let surface = div()
+            .id("surface")
+            .test_support()
+            .w_full()
+            .min_w_0()
+            .h(px(height))
+            .px(px(0.))
+            .flex()
+            .items_center()
+            .rounded(radius)
+            .relative()
+            .bg(theme.colors.control)
+            .text_color(foreground)
+            .font_family(theme.typography.font_family.clone())
+            .text_size(text.size)
+            .line_height(text.line_height)
+            .font_weight(FontWeight::NORMAL)
+            .when(group.is_some() && !joined, |this| {
+                this.opacity(if disabled { 0.5 } else { 1. })
+            })
+            .when(joined, |this| {
+                this.flex_1()
+                    .border_1()
+                    .border_color(theme.colors.line.alpha(0.))
+                    .rounded_tr(px(0.))
+                    .rounded_br(px(0.))
+            })
+            .when_some(zone_focus, |this, focus| this.track_focus(&focus))
+            .on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
+                if !disabled {
+                    target.focus(window, cx);
+                }
+                window.prevent_default();
+            })
+            .child(
+                div()
+                    .id("content-row")
+                    .test_support()
+                    .flex()
+                    .items_center()
+                    .w_full()
+                    .min_w_0()
+                    .h_full()
+                    .when(group.is_some(), |this| this.overflow_hidden())
+                    .when_some(start, |this, addon| this.child(addon))
+                    .child(editor_element)
+                    .when_some(suffix, |this, suffix| {
+                        this.child(
+                            div()
+                                .id("suffix")
+                                .test_support()
+                                .ml(-crate::input_group::SUFFIX_OVERLAP)
+                                .flex()
+                                .items_center()
+                                .flex_auto()
+                                .min_w_0()
+                                .pr(padding)
+                                .text_color(theme.text.subtle)
+                                .child(div().min_w_0().truncate().child(suffix)),
+                        )
+                    })
+                    .when_some(end, |this, addon| this.child(addon))
+                    .children(container_buttons),
+            )
+            .child(
+                canvas(
+                    |_, _, _| (),
+                    move |bounds, _, window, cx| {
+                        // Base publishes range geometry during paint. Retain
+                        // that complete snapshot and refresh the tree next frame.
+                        if window.is_a11y_active()
+                            && let Some(editor) = text_editor.upgrade()
+                            && text_prepaint.capture(editor.read(cx))
+                        {
+                            let _ = paint_state.update(cx, |_, cx| cx.notify());
+                        }
+                        if joined {
+                            let radii = gpui_kit::Corners {
+                                top_left: radius,
+                                bottom_left: radius,
+                                top_right: px(0.),
+                                bottom_right: px(0.),
+                            };
+                            input_borders.borrow_mut().push((
+                                focused,
+                                quad(
+                                    bounds.dilate(px(1.)),
+                                    radii,
+                                    ring_color.alpha(0.),
+                                    px(1.),
+                                    ring_color,
+                                    Default::default(),
+                                ),
+                                window.content_mask(),
+                            ));
+                            return;
+                        }
+                        window.paint_quad(quad(
+                            bounds.dilate(ring_width),
+                            radius + ring_width,
+                            ring_color.alpha(0.),
+                            ring_width,
+                            ring_color,
+                            Default::default(),
+                        ));
+                    },
+                )
+                .absolute()
+                .top_0()
+                .left_0()
+                .size_full(),
+            );
+        let content = if joined {
+            div()
+                .w_full()
+                .min_w_0()
+                .opacity(if disabled { 0.5 } else { 1. })
+                .child(crate::input_group::Zoned {
+                    body: div()
+                        .flex()
+                        .w_full()
+                        .min_w_0()
+                        .h(px(height))
+                        .child(surface)
+                        .children(joined_buttons)
+                        .into_any_element(),
+                    borders,
+                })
+                .into_any_element()
+        } else {
+            surface.into_any_element()
+        };
         div()
             .id("field-root")
             .test_support()
@@ -508,90 +717,7 @@ impl Render for InputState {
                         .disabled(disabled),
                 )
             })
-            .child(
-                div()
-                    .id("surface")
-                    .test_support()
-                    .w_full()
-                    .min_w_0()
-                    .h(px(height))
-                    .px(px(0.))
-                    .flex()
-                    .items_center()
-                    .rounded(radius)
-                    .relative()
-                    .bg(theme.colors.control)
-                    .text_color(foreground)
-                    .font_family(theme.typography.font_family.clone())
-                    .text_size(text.size)
-                    .line_height(text.line_height)
-                    .font_weight(FontWeight::NORMAL)
-                    .when(group.is_some(), |this| {
-                        this.opacity(if disabled { 0.5 } else { 1. })
-                    })
-                    .on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
-                        if !disabled {
-                            target.focus(window, cx);
-                        }
-                        window.prevent_default();
-                    })
-                    .child(
-                        div()
-                            .id("content-row")
-                            .test_support()
-                            .flex()
-                            .items_center()
-                            .w_full()
-                            .min_w_0()
-                            .h_full()
-                            .when(group.is_some(), |this| this.overflow_hidden())
-                            .when_some(start, |this, addon| this.child(addon))
-                            .child(editor_element)
-                            .when_some(suffix, |this, suffix| {
-                                this.child(
-                                    div()
-                                        .id("suffix")
-                                        .test_support()
-                                        .ml(-crate::input_group::SUFFIX_OVERLAP)
-                                        .flex()
-                                        .items_center()
-                                        .flex_auto()
-                                        .min_w_0()
-                                        .pr(padding)
-                                        .text_color(theme.text.subtle)
-                                        .child(div().min_w_0().truncate().child(suffix)),
-                                )
-                            })
-                            .when_some(end, |this, addon| this.child(addon)),
-                    )
-                    .child(
-                        canvas(
-                            |_, _, _| (),
-                            move |bounds, _, window, cx| {
-                                // Base publishes range geometry during paint. Retain
-                                // that complete snapshot and refresh the tree next frame.
-                                if window.is_a11y_active()
-                                    && let Some(editor) = text_editor.upgrade()
-                                    && text_prepaint.capture(editor.read(cx))
-                                {
-                                    let _ = paint_state.update(cx, |_, cx| cx.notify());
-                                }
-                                window.paint_quad(quad(
-                                    bounds.dilate(ring_width),
-                                    radius + ring_width,
-                                    ring_color.alpha(0.),
-                                    ring_width,
-                                    ring_color,
-                                    Default::default(),
-                                ));
-                            },
-                        )
-                        .absolute()
-                        .top_0()
-                        .left_0()
-                        .size_full(),
-                    ),
-            )
+            .child(content)
             .when_some(description, |this, description| {
                 this.child(crate::field::message_element(&theme, description, invalid))
             })

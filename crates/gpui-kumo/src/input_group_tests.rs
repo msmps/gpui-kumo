@@ -456,3 +456,184 @@ fn addon_reordering_preserves_default_base_action_focus(cx: &mut TestAppContext)
         );
     });
 }
+
+struct Zones {
+    state: Entity<InputState>,
+    size: Size,
+    hybrid: bool,
+    narrow: bool,
+    calls: usize,
+    ghost: bool,
+}
+impl Render for Zones {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let owner = cx.entity().downgrade();
+        let mut group = InputGroup::new("zones", &self.state).size(self.size);
+        if self.hybrid {
+            group = group
+                .start(InputGroupAddon::text("/api/"))
+                .end(InputGroupAddon::button(
+                    "zone-clear",
+                    "Clear",
+                    |button, _, _| button,
+                ));
+        }
+        div()
+            .tab_group()
+            .w(px(if self.narrow { 180. } else { 360. }))
+            .child(
+                group
+                    .button(
+                        "submit",
+                        "Submit",
+                        if self.ghost {
+                            crate::button::Variant::Ghost
+                        } else {
+                            crate::button::Variant::Secondary
+                        },
+                        move |button, _, _| {
+                            let owner = owner.clone();
+                            button.disabled(false).on_click(move |_, _, cx| {
+                                let _ = owner.update(cx, |view, cx| {
+                                    view.calls += 1;
+                                    cx.notify();
+                                });
+                            })
+                        },
+                    )
+                    .button(
+                        "zone-more",
+                        "More",
+                        if self.ghost {
+                            crate::button::Variant::Ghost
+                        } else {
+                            crate::button::Variant::Secondary
+                        },
+                        |button, _, _| button,
+                    ),
+            )
+    }
+}
+#[gpui_kit::test]
+fn joined_zones_keep_source_geometry_focus_and_base_activation(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| Zones {
+        state: cx.new(|cx| InputState::new("Query", window, cx)),
+        size: Size::Base,
+        hybrid: false,
+        narrow: false,
+        calls: 0,
+        ghost: false,
+    });
+    let state = cx.read(|cx| view.read(cx).state.clone());
+    cx.update(|window, cx| {
+        window.activate_window();
+        window.render_frame(cx);
+        window.render_frame(cx);
+        for hybrid in [false, true] {
+            view.update(cx, |view, cx| {
+                view.hybrid = hybrid;
+                cx.notify();
+            });
+            for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+                crate::set_appearance(appearance, cx);
+                for size in [Size::Xs, Size::Sm, Size::Base, Size::Lg] {
+                    view.update(cx, |view, cx| {
+                        view.size = size;
+                        cx.notify();
+                    });
+                    window.render_frame(cx);
+                    let surface = window.find("surface").bounds();
+                    let submit = window.find("submit").bounds();
+                    let more = window.find("zone-more").bounds();
+                    assert_eq!(surface.size.height, height(size));
+                    assert_eq!(submit.size.height, height(size));
+                    assert_eq!(more.size.height, height(size));
+                    assert_eq!(surface.right() - submit.left(), px(1.));
+                    assert_eq!(submit.right() - more.left(), px(1.));
+                    assert_eq!(surface.center().y, submit.center().y);
+                    state.read(cx).focus_handle(cx).focus(window, cx);
+                    window.render_frame(cx);
+                    assert_zone_focus_border(
+                        window,
+                        surface,
+                        crate::theme(cx).colors.focus.opacity(0.5),
+                    );
+                    if hybrid {
+                        window.focus_next(cx);
+                        window.render_frame(cx);
+                        assert_eq!(window.find("zone-clear").focused(), Some(true));
+                        assert_zone_focus_border(
+                            window,
+                            surface,
+                            crate::theme(cx).colors.focus.opacity(0.5),
+                        );
+                        window.focus_next(cx);
+                        window.render_frame(cx);
+                        assert_eq!(window.find("submit").focused(), Some(true));
+                    }
+                    let calls = view.read(cx).calls;
+                    window.click("submit", cx);
+                    window.render_frame(cx);
+                    assert_eq!(view.read(cx).calls, calls + 1, "pointer activates once");
+                    assert_eq!(window.find("submit").focused(), Some(true));
+                    assert!(!state.read(cx).focus_handle(cx).is_focused(window));
+                    assert_zone_focus_border(window, surface, crate::theme(cx).colors.line);
+                    window.press("space", cx);
+                    window.render_frame(cx);
+                    assert_eq!(view.read(cx).calls, calls + 2, "Space activates once");
+                    assert_zone_focus_border(
+                        window,
+                        submit,
+                        crate::theme(cx).colors.focus.opacity(0.5),
+                    );
+                }
+            }
+        }
+        for ghost in [true, false] {
+            view.update(cx, |view, cx| {
+                view.ghost = ghost;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            assert_eq!(
+                window.find("submit").focused(),
+                Some(true),
+                "mode changes preserve direct action focus"
+            );
+        }
+        let calls = view.read(cx).calls;
+        window.press("enter", cx);
+        assert_eq!(view.read(cx).calls, calls + 1);
+        view.update(cx, |view, cx| {
+            view.narrow = true;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        assert!(window.find("zone-more").bounds().right() <= px(180.));
+        state.update(cx, |state, cx| state.set_disabled(true, cx));
+        window.render_frame(cx);
+        window.click("submit", cx);
+        window.press("space", cx);
+        window.press("enter", cx);
+        assert_eq!(
+            view.read(cx).calls,
+            calls + 1,
+            "root availability is atomic"
+        );
+    });
+}
+fn assert_zone_focus_border(
+    window: &mut gpui_kit::Window,
+    bounds: gpui_kit::Bounds<gpui_kit::Pixels>,
+    color: gpui_kit::Hsla,
+) {
+    assert!(
+        window
+            .painted_quads()
+            .iter()
+            .any(|quad| quad.bounds == bounds.scale(window.scale_factor())
+                && quad.border_color == color),
+        "zone must paint its own 1px border with expected focus color"
+    );
+}

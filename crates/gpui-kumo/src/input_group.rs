@@ -193,11 +193,13 @@ pub(crate) struct Container {
     pub start: Option<InputGroupAddon>,
     pub end: Option<InputGroupAddon>,
     pub suffix: Option<SharedString>,
+    pub buttons: Vec<std::rc::Rc<ActionFactory>>,
 }
 /// Initial shared-container slice. The retained InputState owns editing and availability.
 /// Passive addons use source padding and icon sizes; suffixes follow displayed text.
 /// Compact actions retain Base activation and shared focus-within.
-/// Individual/hybrid zones remain pending.
+/// Direct non-ghost actions use individual or hybrid joined borders.
+/// This builder currently places the retained editor before direct actions.
 #[derive(IntoElement)]
 #[must_use]
 pub struct InputGroup {
@@ -236,6 +238,31 @@ impl InputGroup {
         self.container.suffix = Some(text.into());
         self
     }
+    /// Append a direct action. Non-ghost variants select joined border zones.
+    /// The group controls sizing; use addon buttons for compact ghost actions.
+    /// Factories are retained: capture weak handles for the editor or its owner.
+    pub fn button(
+        mut self,
+        id: impl Into<ElementId>,
+        label: impl Into<SharedString>,
+        variant: crate::button::Variant,
+        configure: impl Fn(crate::Button, &mut Window, &mut App) -> crate::Button + 'static,
+    ) -> Self {
+        let id = id.into();
+        let label = label.into();
+        self.container
+            .buttons
+            .push(std::rc::Rc::new(move |size, window, cx| {
+                configure(
+                    crate::Button::new(id.clone(), label.clone())
+                        .variant(variant)
+                        .size(button_size(size)),
+                    window,
+                    cx,
+                )
+            }));
+        self
+    }
     pub fn end(mut self, addon: InputGroupAddon) -> Self {
         self.container.end = Some(addon);
         self
@@ -261,10 +288,115 @@ pub(crate) const SUFFIX_OVERLAP: gpui_kit::Pixels = px(8.);
 #[cfg(target_os = "macos")]
 pub(crate) const SUFFIX_OVERLAP: gpui_kit::Pixels = px(8.5);
 
-fn compact_size(size: Size) -> crate::button::Size {
+pub(crate) fn compact_size(size: Size) -> crate::button::Size {
     match size {
         Size::Xs | Size::Sm => crate::button::Size::Xs,
         Size::Base => crate::button::Size::Sm,
         Size::Lg => crate::button::Size::Base,
+    }
+}
+
+pub(crate) fn height(size: Size) -> gpui_kit::Pixels {
+    px(match size {
+        Size::Xs => 24.,
+        Size::Sm => 28.,
+        Size::Base => 36.,
+        Size::Lg => 44.,
+    })
+}
+pub(crate) fn button_size(size: Size) -> crate::button::Size {
+    match size {
+        Size::Xs => crate::button::Size::Xs,
+        Size::Sm => crate::button::Size::Sm,
+        Size::Base => crate::button::Size::Base,
+        Size::Lg => crate::button::Size::Lg,
+    }
+}
+#[derive(Clone)]
+pub(crate) struct Zone {
+    pub height: gpui_kit::Pixels,
+    pub radius: gpui_kit::Pixels,
+    pub last: bool,
+    pub borders: crate::button::JoinedRingQueue,
+}
+// Preserve native layout/prepaint/Tab order; paint each inside border and one
+// seam after sibling surfaces. No global deferred paint escapes a popup.
+pub(crate) struct Zoned {
+    pub body: gpui_kit::AnyElement,
+    pub borders: crate::button::JoinedRingQueue,
+}
+impl IntoElement for Zoned {
+    type Element = Self;
+    fn into_element(self) -> Self {
+        self
+    }
+}
+impl gpui_kit::Element for Zoned {
+    type RequestLayoutState = ();
+    type PrepaintState = ();
+    fn id(&self) -> Option<ElementId> {
+        None
+    }
+    fn source_location(&self) -> Option<&'static std::panic::Location<'static>> {
+        None
+    }
+    fn request_layout(
+        &mut self,
+        _: Option<&gpui_kit::GlobalElementId>,
+        _: Option<&gpui_kit::InspectorElementId>,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> (gpui_kit::LayoutId, ()) {
+        (self.body.request_layout(window, cx), ())
+    }
+    fn prepaint(
+        &mut self,
+        _: Option<&gpui_kit::GlobalElementId>,
+        _: Option<&gpui_kit::InspectorElementId>,
+        _: gpui_kit::Bounds<gpui_kit::Pixels>,
+        _: &mut (),
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        self.body.prepaint(window, cx);
+    }
+    fn paint(
+        &mut self,
+        _: Option<&gpui_kit::GlobalElementId>,
+        _: Option<&gpui_kit::InspectorElementId>,
+        _: gpui_kit::Bounds<gpui_kit::Pixels>,
+        _: &mut (),
+        _: &mut (),
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        self.body.paint(window, cx);
+        let mut borders = std::mem::take(&mut *self.borders.borrow_mut());
+        borders.sort_by(|a, b| a.1.bounds.left().partial_cmp(&b.1.bounds.left()).unwrap());
+        for (index, (_, quad, mask)) in borders.iter().enumerate() {
+            let mut quad = quad.clone();
+            if index > 0 {
+                quad.border_widths.left = px(0.);
+            }
+            if index + 1 < borders.len() {
+                quad.border_widths.right = px(0.);
+            }
+            window.with_content_mask(Some(*mask), |window| window.paint_quad(quad));
+        }
+        for pair in borders.windows(2) {
+            let chosen = if pair[0].0 { &pair[0] } else { &pair[1] };
+            let seam = gpui_kit::quad(
+                gpui_kit::Bounds::new(
+                    pair[1].1.bounds.origin,
+                    gpui_kit::size(px(1.), pair[1].1.bounds.size.height),
+                ),
+                px(0.),
+                chosen.1.border_color,
+                px(0.),
+                chosen.1.border_color.alpha(0.),
+                Default::default(),
+            );
+            window.with_content_mask(Some(chosen.2), |window| window.paint_quad(seam));
+        }
     }
 }
