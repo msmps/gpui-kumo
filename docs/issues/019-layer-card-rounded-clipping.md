@@ -1,6 +1,8 @@
-# KUMO-019: preserve rounded card clipping for arbitrary content
+# KUMO-019: LayerCard: preserve rounded clipping for arbitrary descendants
 
 Status: Open
+
+GitHub issue: https://github.com/msmps/gpui-kumo/issues/5
 
 ## Problem and evidence
 
@@ -22,3 +24,5 @@ The original top-corner regression passes, as does a header/footer regression in
 - Add a rendered regression that observes the fixed paint boundary; confirm native pixels before marking parity complete.
 
 LayerCard's composition, sizing, text recipes, rectangular overflow and nested controls have separate passing evidence in [LayerCard validation](../layer-card-validation.md). Keep those results distinct from this unresolved rounded clipping branch.
+
+Baseline: Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, GPUI Kit/Base0.7.0 and GPUI snapshot family0.3.7. Current checkpoint `d07646f8d24acf72248f954a03c8da056d84848d`.

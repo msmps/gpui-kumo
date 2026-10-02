@@ -26,6 +26,28 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 | KUMO-018 | Components | [record the Base dependency decision after the first slice](018-base-foundation-decision.md) | Resolved |
 | KUMO-019 | LayerCard | [preserve rounded clipping for arbitrary content](019-layer-card-rounded-clipping.md) | Open |
 | KUMO-020 | Components | [reconcile native frames with updated state](020-native-frame-consistency.md) | In progress |
+| KUMO-021 | Tooltip | [match Kumo motion and grouped instant switching](021-tooltip-motion-provider.md) | Open |
+| KUMO-022 | Tooltip | [support rich content and native trigger composition](022-tooltip-rich-content-triggers.md) | Open |
+| KUMO-023 | Checkbox/Switch | [complete contextual help and Checkbox.Item mixed presentation](023-checkbox-switch-help-item-indeterminate.md) | Open |
+| KUMO-024 | InputGroup | [support leading actions, multiple editors and rich parts](024-input-group-composition.md) | Open |
+| KUMO-025 | Components | [complete pinned browser comparisons for the implemented catalog](025-implemented-catalog-browser-parity.md) | Open |
+
+## Published GitHub issues
+
+The following fidelity gaps are published on 2026-10-02. GitHub numbers differ from local KUMO IDs; other historical local issues remain unpublished. No implementation or platform-validation gap is resolved by publication.
+
+| Local ID | GitHub issue | Category |
+| --- | --- | --- |
+| KUMO-007 | [#1 — Input: validate composition through operating-system IMEs](https://github.com/msmps/gpui-kumo/issues/1) | Outstanding validation |
+| KUMO-014 | [#2 — Components: validate spoken screen-reader workflows on Linux](https://github.com/msmps/gpui-kumo/issues/2) | Outstanding validation |
+| KUMO-015 | [#3 — Components: validate implemented controls with VoiceOver](https://github.com/msmps/gpui-kumo/issues/3) | Outstanding validation |
+| KUMO-016 | [#4 — Components: validate implemented controls with a Windows screen reader](https://github.com/msmps/gpui-kumo/issues/4) | Outstanding validation |
+| KUMO-019 | [#5 — LayerCard: preserve rounded clipping for arbitrary descendants](https://github.com/msmps/gpui-kumo/issues/5) | Dependency limitation |
+| KUMO-021 | [#6 — Tooltip: match Kumo motion and grouped instant switching](https://github.com/msmps/gpui-kumo/issues/6) | Missing implementation |
+| KUMO-022 | [#7 — Tooltip: support rich content and native trigger composition](https://github.com/msmps/gpui-kumo/issues/7) | Missing implementation |
+| KUMO-023 | [#8 — Checkbox/Switch: complete contextual help and Checkbox.Item mixed presentation](https://github.com/msmps/gpui-kumo/issues/8) | Missing implementation |
+| KUMO-024 | [#9 — InputGroup: support leading actions, multiple editors and rich parts](https://github.com/msmps/gpui-kumo/issues/9) | Missing implementation |
+| KUMO-025 | [#10 — Components: complete pinned browser comparisons for the implemented catalog](https://github.com/msmps/gpui-kumo/issues/10) | Outstanding validation |
 
 ## Maintaining the tracker
 
