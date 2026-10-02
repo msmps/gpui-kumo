@@ -50,9 +50,11 @@ impl InputGroupAddon {
 pub(crate) struct Container {
     pub start: Option<InputGroupAddon>,
     pub end: Option<InputGroupAddon>,
+    pub suffix: Option<SharedString>,
 }
 /// Initial shared-container slice. The retained InputState owns editing and availability.
-/// Passive addons use source padding and icon sizes. Suffix and action zones are pending.
+/// Passive addons use source padding and icon sizes; suffixes follow displayed text.
+/// Compact action buttons and individual/hybrid zones remain pending.
 #[derive(IntoElement)]
 #[must_use]
 pub struct InputGroup {
@@ -86,6 +88,11 @@ impl InputGroup {
         self.container.start = Some(addon);
         self
     }
+    /// Text immediately follows the displayed value; long suffixes truncate.
+    pub fn suffix(mut self, text: impl Into<SharedString>) -> Self {
+        self.container.suffix = Some(text.into());
+        self
+    }
     pub fn end(mut self, addon: InputGroupAddon) -> Self {
         self.container.end = Some(addon);
         self
@@ -100,3 +107,13 @@ impl RenderOnce for InputGroup {
 #[cfg(test)]
 #[path = "input_group_tests.rs"]
 mod tests;
+
+// Installed Base 0.7.0 reserves this right-side caret-scroll margin.
+// Glyph/hitbox clipping excludes the overlap; reserve the platform caret width
+// as a small native gap so an End caret remains visible.
+pub(crate) const EDITOR_CARET_MARGIN: gpui_kit::Pixels = px(10.);
+
+#[cfg(not(target_os = "macos"))]
+pub(crate) const SUFFIX_OVERLAP: gpui_kit::Pixels = px(8.);
+#[cfg(target_os = "macos")]
+pub(crate) const SUFFIX_OVERLAP: gpui_kit::Pixels = px(8.5);

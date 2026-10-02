@@ -267,6 +267,59 @@ impl Render for InputState {
         let end = group
             .and_then(|g| g.end.as_ref())
             .map(|a| a.render("addon-end", outer, icon_size, false, &theme));
+        let suffix = group.and_then(|g| g.suffix.clone());
+        let editor_content_width = suffix.as_ref().map(|_| {
+            let editor = self.editor.read(cx);
+            let displayed = if editor.value().is_empty() {
+                editor.presentation().placeholder().clone()
+            } else {
+                editor.value()
+            };
+            // shape_line requires one line; sanitize programmatic placeholder
+            // line breaks for measurement without changing editor-owned text.
+            let displayed: SharedString = displayed.replace(['\n', '\r'], " ").into();
+            let run = gpui_kit::TextRun {
+                len: displayed.len(),
+                font: gpui_kit::font(theme.typography.font_family.clone()),
+                color: theme.text.default,
+                background_color: None,
+                underline: None,
+                strikethrough: None,
+            };
+            let line = window
+                .text_system()
+                .shape_line(displayed, text.size, &[run], None);
+            line.width.max(px(1.))
+                + crate::input_group::EDITOR_CARET_MARGIN
+                + if start.is_some() { px(seam) } else { padding }
+        });
+        let editor_body = if suffix.is_some() {
+            // Base needs its scroll safety width, but glyphs and pointer selection
+            // must stop before the suffix even when Home exposes the text start.
+            div()
+                .id("editor-clip")
+                .test_support()
+                .relative()
+                .flex_1()
+                .min_w_0()
+                .h_full()
+                .mr(crate::input_group::SUFFIX_OVERLAP)
+                .overflow_hidden()
+                .child(
+                    div()
+                        .absolute()
+                        .left_0()
+                        .right(-crate::input_group::SUFFIX_OVERLAP)
+                        .top_0()
+                        .h_full()
+                        .flex()
+                        .items_center()
+                        .child(base::input::Input::new(&self.editor)),
+                )
+                .into_any_element()
+        } else {
+            base::input::Input::new(&self.editor).into_any_element()
+        };
         let editor_element = div()
             .id("editor-zone")
             .test_support()
@@ -276,8 +329,17 @@ impl Render for InputState {
             .min_w_0()
             .h_full()
             .pl(if start.is_some() { px(seam) } else { padding })
-            .pr(if end.is_some() { px(seam) } else { padding })
-            .child(base::input::Input::new(&self.editor));
+            .pr(if suffix.is_some() {
+                px(0.)
+            } else if end.is_some() {
+                px(seam)
+            } else {
+                padding
+            })
+            .when_some(editor_content_width, |this, width| {
+                this.flex_initial().w(width).max_w_full()
+            })
+            .child(editor_body);
         let focus = self.focus_handle(cx);
         let focused = !self.disabled && focus.is_focused(window);
         let invalid = self.presentation.error.is_some();
@@ -434,6 +496,21 @@ impl Render for InputState {
                             .when(group.is_some(), |this| this.overflow_hidden())
                             .when_some(start, |this, addon| this.child(addon))
                             .child(editor_element)
+                            .when_some(suffix, |this, suffix| {
+                                this.child(
+                                    div()
+                                        .id("suffix")
+                                        .test_support()
+                                        .ml(-crate::input_group::SUFFIX_OVERLAP)
+                                        .flex()
+                                        .items_center()
+                                        .flex_auto()
+                                        .min_w_0()
+                                        .pr(padding)
+                                        .text_color(theme.text.subtle)
+                                        .child(div().min_w_0().truncate().child(suffix)),
+                                )
+                            })
                             .when_some(end, |this, addon| this.child(addon)),
                     )
                     .child(
