@@ -266,8 +266,8 @@ mod tests {
         });
         cx.update(|window, cx| {
             window.render_frame(cx);
-            cx.background_executor()
-                .advance_clock(Duration::from_millis(250));
+            // Unsynced GPUI animations use Instant::now, not the executor clock.
+            std::thread::sleep(Duration::from_millis(250));
             assert!(window.simulate_next_frame(cx) > 0);
             window.render_frame(cx);
             let caps: Vec<_> = window
@@ -276,8 +276,8 @@ mod tests {
                 .map(|quad| quad.bounds)
                 .collect();
             assert!(!caps.is_empty());
-            cx.background_executor()
-                .advance_clock(Duration::from_millis(250));
+            // Unsynced GPUI animations use Instant::now, not the executor clock.
+            std::thread::sleep(Duration::from_millis(250));
             window.simulate_next_frame(cx);
             window.render_frame(cx);
             let moved: Vec<_> = window

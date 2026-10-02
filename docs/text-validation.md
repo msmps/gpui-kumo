@@ -29,3 +29,5 @@ On 2026-10-02, rebuilt macOS gallery inspection showed modern headings, all copy
 Text is implemented with automated coverage, awaiting the native dark/accessibility and pinned-browser comparison checks above. Do not infer complete platform parity from compilation or the render probe.
 
 During the subsequent Loader gallery check, the native tree exposed all Text names and the semantic Heading node, including full truncated Unicode names. This improves role/name evidence; the tree still did not expose a heading level, and appearance input still left light rendering unchanged.
+
+The final LayerCard gallery check successfully switched to dark using cmd-l and captured the visible heading/copy/inline composition in dark appearance. Native light/dark presentation is now observed; heading-level/spoken semantics and pinned browser comparisons remain pending.

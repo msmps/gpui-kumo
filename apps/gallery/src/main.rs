@@ -11,6 +11,7 @@ use gpui_kumo::{
 };
 
 mod buttons;
+mod cards;
 mod inputs;
 mod loaders;
 mod popovers;
@@ -41,6 +42,7 @@ struct Gallery {
     focus_handle: FocusHandle,
     _theme_subscription: Subscription,
     inputs: gpui_kit::Entity<inputs::Inputs>,
+    cards: gpui_kit::Entity<cards::Cards>,
     popovers: gpui_kit::Entity<popovers::Popovers>,
     activations: usize,
     disabled: bool,
@@ -132,6 +134,7 @@ impl Render for Gallery {
                         }),
                     )),
             )
+            .child(self.cards.clone())
             .child(loaders::panel(&theme))
             .child(texts::panel(&theme))
             .child(self.popovers.clone())
@@ -339,6 +342,7 @@ fn main() {
                             focus_handle,
                             _theme_subscription: subscription,
                             inputs: cx.new(|cx| inputs::Inputs::new(window, cx)),
+                            cards: cx.new(|cx| cards::Cards::new(window, cx)),
                             popovers: cx.new(|cx| popovers::Popovers::new(window, cx)),
                             activations: 0,
                             disabled: false,

@@ -1,6 +1,6 @@
 # Component issues
 
-This is the local issue tracker for Button, Input, Popover and their shared foundation. It contains 18 follow-ups identified at commit `38c2ea8`. GitHub issue publication is pending API access; none of these local IDs is a GitHub issue number.
+This is the local issue tracker for component fidelity and the shared foundation. The first 18 follow-ups were identified at commit `38c2ea8`; later findings extend that baseline. None of these local IDs is a GitHub issue number.
 
 Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and acceptance criteria. Known implementation gaps, native policy tradeoffs and unverified acceptance work are distinguished in the issue descriptions. The individual file is the source of truth for its status.
 
@@ -24,6 +24,7 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 | KUMO-016 | Components | [validate Button, Input and Popover with a Windows screen reader](016-windows-screen-reader.md) | Open |
 | KUMO-017 | Components | [validate the native gallery and interactions on Windows](017-windows-native-components.md) | Open |
 | KUMO-018 | Components | [record the Base dependency decision after the first slice](018-base-foundation-decision.md) | Resolved |
+| KUMO-019 | LayerCard | [preserve rounded clipping for arbitrary content](019-layer-card-rounded-clipping.md) | Open |
 
 ## Maintaining the tracker
 

@@ -21,12 +21,14 @@ Standalone Loader and Button now share one GPUI canvas renderer. Radius/stroke s
 
 Two actual-render tests verify dimensions, roles/names, invalid custom dimensions, empty names, moving painted endpoints, inherited foreground updates in both themes, and absence of further frame requests after reduced motion. Existing Button input/availability regressions remain part of the workspace gate. The paint tests observe caps and scheduling; they do not independently prove the entire SVG path or dash timing formula.
 
-Native macOS inspection on 2026-10-02 showed the four sizes, faint tracks and rounded active segments in light appearance. Accessibility exposed named containers Loading/Chargement, so native spoken Status announcements are not claimed. Pointer Dark and keyboard appearance actions left the captured appearance unchanged; dark rendering, continuous native motion and browser comparison remain pending. Quit succeeded and pgrep confirmed the test process stopped.
+Native macOS inspection on 2026-10-02 showed the four sizes, faint tracks and rounded active segments. A later rebuilt gallery check successfully switched to dark with cmd-l; light/dark captures show advancing native arcs. Accessibility exposed named containers Loading/Chargement, so spoken Status announcements are not claimed. Quit completed and pgrep confirmed the test process stopped. Pinned browser comparison remains pending.
 
 Review: replaced the fixed Button polyline rather than reusing its divergent recipe; retained its parent availability and metadata behavior. Closed the track path to avoid a seam and prevented zero-size indicators from scheduling frames. No independent state engine or external dependency was added. Still review zero-length dash caps and exact SVG path endpoints against the pinned browser before claiming visual parity.
 
-Status: implemented with automated coverage, awaiting the native/browser checks above. Native Text dark input remains unresolved separately; do not claim it passed from Loader work.
+Status: implemented with automated coverage and native light/dark presentation evidence, awaiting browser comparison and spoken status checks.
 
 Checkpoint gate: 43 workspace tests and one doctest pass; formatting, workspace/all-target/all-feature locked Clippy with warnings denied and gallery/example builds pass. The inherited-color assertions exercise actual painted caps in both themes. The upstream block 0.1.6 future-compatibility notice remains separate from successful current checks.
 
 The [deterministic SVG fixture](fixtures/loader-reference.html) reproduces the pinned circle/animation markup and samples chosen times in light/dark contexts. It isolates the recipe rather than mounting the React package. Computer-use attempts reported both Chrome and the in-app browser unavailable, so the fixture has not been executed here. Do not treat its authored markup as comparison evidence.
+
+Timing-test repair during the LayerCard gate: the installed unsynced AnimationElement uses Instant::now/start.elapsed, while repeat_synced uses the executor clock. The test previously advanced only the executor and could compare unchanged paint. It now waits two actual 250ms intervals before checking endpoint movement, preserving the production animation policy. Workspace and isolated regression checks pass.
