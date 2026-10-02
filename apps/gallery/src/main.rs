@@ -314,7 +314,7 @@ fn main() {
             .detach();
 
             let bounds = Bounds::centered(None, size(px(1040.), px(800.)), cx);
-            gpui_kit::open_window(
+            if let Err(error) = gpui_kit::open_window(
                 WindowOptions {
                     titlebar: Some(TitlebarOptions {
                         title: Some("GPUI Kumo".into()),
@@ -340,8 +340,11 @@ fn main() {
                         }
                     })
                 },
-            )
-            .expect("failed to open the Kumo gallery window");
+            ) {
+                eprintln!("Failed to open the Kumo gallery window: {error:#}");
+                cx.quit();
+                return;
+            }
             cx.activate(true);
         });
 }

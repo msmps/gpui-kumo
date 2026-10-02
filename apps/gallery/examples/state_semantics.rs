@@ -3,9 +3,12 @@
 //! Run with KUMO_A11Y_DUMP=/tmp/kumo-states.json and an accessibility client connected.
 
 use gpui_kit::{
-    App, AppContext, Context, Entity, IntoElement, ParentElement, Render, Styled, Window, div, px,
+    App, AppContext, Context, Entity, IntoElement, KeyBinding, Menu, MenuItem, ParentElement,
+    Render, Styled, Window, div, px,
 };
 use gpui_kumo::{Button, Input, InputState};
+
+gpui_kit::actions!(state_semantics, [Quit]);
 
 struct States {
     mode: usize,
@@ -21,8 +24,10 @@ impl Render for States {
         });
         if let Ok(path) = std::env::var("KUMO_A11Y_DUMP") {
             window.on_next_frame(move |window, _| {
-                if let Some(tree) = window.debug_a11y_tree_json() {
-                    std::fs::write(&path, tree).expect("write native accessibility evidence");
+                if let Some(tree) = window.debug_a11y_tree_json()
+                    && let Err(error) = std::fs::write(&path, tree)
+                {
+                    eprintln!("Failed to write accessibility evidence to {path}: {error}");
                 }
             });
         }
@@ -60,14 +65,20 @@ impl Render for States {
 fn main() {
     gpui_kit::application().run(|cx: &mut App| {
         gpui_kumo::init(cx);
+        cx.bind_keys([KeyBinding::new("cmd-q", Quit, None)]);
+        cx.on_action(|_: &Quit, cx| cx.quit());
+        cx.set_menus([Menu::new("State Semantics").items([MenuItem::action("Quit", Quit)])]);
         cx.on_window_closed(|cx, _| cx.quit()).detach();
-        gpui_kit::open_window(Default::default(), cx, |window, cx| {
+        if let Err(error) = gpui_kit::open_window(Default::default(), cx, |window, cx| {
             cx.new(|cx| States {
                 mode: 0,
                 input: cx.new(|cx| InputState::new("State input", window, cx)),
             })
-        })
-        .expect("open accessibility fixture");
+        }) {
+            eprintln!("Failed to open accessibility fixture: {error:#}");
+            cx.quit();
+            return;
+        }
         cx.activate(true);
     });
 }

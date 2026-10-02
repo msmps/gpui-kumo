@@ -469,9 +469,12 @@ impl Render for PopoverState {
         };
         root.child(
             deferred(
-                base::Positioner::side(self.trigger_bounds.get())
+                // Base 0.7.0 chooses a side before accounting for its offset.
+                // Include the gap in the exclusion bounds so fitting and origin
+                // agree. Center alignment stays unchanged; arrows use the real trigger.
+                base::Positioner::side(self.trigger_bounds.get().dilate(self.presentation.offset))
                     .placement(placement)
-                    .offset(self.presentation.offset)
+                    .offset(px(0.))
                     .margin(px(8.))
                     .occlude()
                     .on_position(move |position| resolved.set(Some(position)))

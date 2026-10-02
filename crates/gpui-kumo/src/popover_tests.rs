@@ -550,6 +550,190 @@ fn opening_fade_settles_and_reduced_motion_opens_opaque(cx: &mut TestAppContext)
     });
 }
 
+struct StressHarness {
+    popup: Entity<PopoverState>,
+    activated: Rc<Cell<usize>>,
+}
+
+#[gpui_kit::test]
+fn collision_fitting_includes_the_requested_gap(cx: &mut TestAppContext) {
+    struct NearFit(Entity<PopoverState>);
+    impl Render for NearFit {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            div().size_full().child(
+                div().absolute().left(px(120.)).top(px(220.)).child(
+                    Popover::new("near-fit", &self.0, "Open")
+                        .width(px(200.))
+                        .content(|_, _, _| div().h(px(108.)).child("Near-fit content")),
+                ),
+            )
+        }
+    }
+    cx.update(crate::init);
+    let (view, cx) =
+        cx.add_window_view(|_, cx| NearFit(cx.new(|cx| PopoverState::new("Near-fit dialog", cx))));
+    cx.simulate_resize(gpui_kit::size(px(400.), px(400.)));
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.render_frame(cx);
+        window.click("trigger", cx);
+        let surface = window.find("surface").bounds();
+        let trigger = window.find("trigger").bounds();
+        assert_eq!(surface.size.height, px(132.));
+        assert_eq!(
+            view.read(cx)
+                .0
+                .read(cx)
+                .resolved_position
+                .get()
+                .unwrap()
+                .placement,
+            Some(base::Placement::Top)
+        );
+        assert_eq!(surface.bottom(), trigger.top() - px(8.));
+    });
+}
+
+#[gpui_kit::test]
+fn open_popup_follows_trigger_after_real_ancestor_scrolling(cx: &mut TestAppContext) {
+    struct Scrolling(Entity<PopoverState>);
+    impl Render for Scrolling {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            div()
+                .id("ancestor")
+                .w(px(400.))
+                .h(px(180.))
+                .flex()
+                .flex_col()
+                .overflow_y_scroll()
+                .child(div().h(px(80.)).flex_shrink_0())
+                .child(
+                    Popover::new("scrolled", &self.0, "Open")
+                        .content(|_, _, _| div().h(px(40.)).child("Scrolling trigger")),
+                )
+                .child(div().h(px(400.)).flex_shrink_0())
+        }
+    }
+    cx.update(crate::init);
+    let (view, cx) = cx
+        .add_window_view(|_, cx| Scrolling(cx.new(|cx| PopoverState::new("Scrolling popup", cx))));
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.render_frame(cx);
+        window.click("trigger", cx);
+        let before = window.find("trigger").bounds();
+        use gpui_kit::InputEvent;
+        window.dispatch_event(
+            gpui_kit::ScrollWheelEvent {
+                position: gpui_kit::point(px(20.), px(20.)),
+                delta: gpui_kit::ScrollDelta::Pixels(gpui_kit::point(px(0.), -px(40.))),
+                ..Default::default()
+            }
+            .to_platform_input(),
+            cx,
+        );
+        window.render_frame(cx);
+        window.render_frame(cx);
+        let trigger = window.find("trigger").bounds();
+        assert_eq!(trigger.top(), before.top() - px(40.));
+        assert_eq!(
+            window.find("surface").bounds().top(),
+            trigger.bottom() + px(8.)
+        );
+        assert!(view.read(cx).0.read(cx).is_open());
+        window.click("trigger", cx);
+        assert!(!view.read(cx).0.read(cx).is_open());
+    });
+}
+
+impl Render for StressHarness {
+    fn render(&mut self, window: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        let viewport = window.viewport_size();
+        let activated = self.activated.clone();
+        div().size_full().child(
+            div()
+                .absolute()
+                .left(viewport.width / 2. - px(40.))
+                .top(viewport.height / 2. - px(18.))
+                .child(
+                    Popover::new("stress", &self.popup, "Open")
+                        .width(px(600.))
+                        .arrow(true)
+                        .content(move |_, _, _| {
+                            let activated = activated.clone();
+                            div()
+                                .flex()
+                                .flex_col()
+                                .gap(px(8.))
+                                .children((0..30).map(|index| {
+                                    div()
+                                        .h(px(36.))
+                                        .flex_shrink_0()
+                                        .child(format!("Content row {index}"))
+                                }))
+                                .child(
+                                    Button::new("last", "Last action").on_click(move |_, _, _| {
+                                        activated.set(activated.get() + 1)
+                                    }),
+                                )
+                        }),
+                ),
+        )
+    }
+}
+
+#[gpui_kit::test]
+fn resizing_open_oversized_content_preserves_fitting_and_scroll_reachability(
+    cx: &mut TestAppContext,
+) {
+    cx.update(|cx| {
+        crate::init(cx);
+        cx.set_reduce_motion(true);
+    });
+    let (view, cx) = cx.add_window_view(|_, cx| StressHarness {
+        popup: cx.new(|cx| PopoverState::new("Stress dialog", cx)),
+        activated: Rc::new(Cell::new(0)),
+    });
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.render_frame(cx);
+        window.click("trigger", cx);
+    });
+    for (width, height) in [(640., 480.), (320., 240.), (160., 120.), (800., 600.)] {
+        cx.simulate_resize(gpui_kit::size(px(width), px(height)));
+        cx.update(|window, cx| {
+            window.render_frame(cx);
+            window.render_frame(cx);
+            let bounds = window.find("surface").bounds();
+            assert!(view.read(cx).popup.read(cx).is_open());
+            assert!(bounds.left() >= px(8.) && bounds.top() >= px(8.));
+            assert!(bounds.right() <= px(width - 8.), "{bounds:?}");
+            assert!(bounds.bottom() <= px(height - 8.), "{bounds:?}");
+            let before = window.find("last").bounds();
+            use gpui_kit::InputEvent;
+            window.dispatch_event(
+                gpui_kit::ScrollWheelEvent {
+                    position: bounds.center(),
+                    delta: gpui_kit::ScrollDelta::Pixels(gpui_kit::point(px(0.), -px(2000.))),
+                    ..Default::default()
+                }
+                .to_platform_input(),
+                cx,
+            );
+            window.render_frame(cx);
+            let last = window.find("last").bounds();
+            assert!(last.top() < before.top() || bounds.contains(&last.center()));
+            assert!(
+                bounds.contains(&last.center()),
+                "last action is unreachable: {last:?}, {bounds:?}"
+            );
+            window.click("last", cx);
+            assert!(view.read(cx).popup.read(cx).is_open());
+        });
+    }
+    cx.read(|cx| assert_eq!(view.read(cx).activated.get(), 4));
+}
+
 struct Reparenting {
     parents: [Entity<PopoverState>; 2],
     child: Entity<PopoverState>,

@@ -1,9 +1,12 @@
 //! Run with bottom/top/left/right to inspect collisions at that window edge.
 use gpui_kit::{
-    App, AppContext, Bounds, Context, Entity, IntoElement, ParentElement, Render, Styled,
-    TitlebarOptions, Window, WindowBounds, WindowOptions, div, px, size,
+    App, AppContext, Bounds, Context, Entity, IntoElement, KeyBinding, Menu, MenuItem,
+    ParentElement, Render, Styled, TitlebarOptions, Window, WindowBounds, WindowOptions, div, px,
+    size,
 };
 use gpui_kumo::{Popover, PopoverState, popover::Placement, theme};
+
+gpui_kit::actions!(popover_edges, [Quit]);
 
 struct EdgeDemo {
     state: Entity<PopoverState>,
@@ -73,13 +76,16 @@ fn main() {
     };
     gpui_kit::application().run(move |cx: &mut App| {
         gpui_kumo::init(cx);
+        cx.bind_keys([KeyBinding::new("cmd-q", Quit, None)]);
+        cx.on_action(|_: &Quit, cx| cx.quit());
+        cx.set_menus([Menu::new("Popover Edges").items([MenuItem::action("Quit", Quit)])]);
         cx.on_window_closed(|cx, _| {
             if cx.windows().is_empty() {
                 cx.quit();
             }
         })
         .detach();
-        gpui_kit::open_window(
+        if let Err(error) = gpui_kit::open_window(
             WindowOptions {
                 titlebar: Some(TitlebarOptions {
                     title: Some(format!("Popover collision: {side}").into()),
@@ -100,8 +106,11 @@ fn main() {
                     side,
                 })
             },
-        )
-        .expect("failed to open the edge demonstration");
+        ) {
+            eprintln!("Failed to open the edge demonstration: {error:#}");
+            cx.quit();
+            return;
+        }
         cx.activate(true);
     });
 }
