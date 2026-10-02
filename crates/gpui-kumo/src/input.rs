@@ -320,26 +320,6 @@ impl Render for InputState {
         } else {
             base::input::Input::new(&self.editor).into_any_element()
         };
-        let editor_element = div()
-            .id("editor-zone")
-            .test_support()
-            .flex()
-            .items_center()
-            .flex_1()
-            .min_w_0()
-            .h_full()
-            .pl(if start.is_some() { px(seam) } else { padding })
-            .pr(if suffix.is_some() {
-                px(0.)
-            } else if end.is_some() {
-                px(seam)
-            } else {
-                padding
-            })
-            .when_some(editor_content_width, |this, width| {
-                this.flex_initial().w(width).max_w_full()
-            })
-            .child(editor_body);
         let focus = self.focus_handle(cx);
         let focused = !self.disabled && focus.is_focused(window);
         let invalid = self.presentation.error.is_some();
@@ -397,6 +377,82 @@ impl Render for InputState {
         let value_state = selection_state.clone();
         let replace_state = selection_state.clone();
         let paint_state = selection_state.clone();
+        let target = focus.clone();
+        let editor_semantics = base::input::InputBase::new("control")
+            .accessibility_label(self.name.clone())
+            .aria_value(value)
+            .aria_placeholder(placeholder)
+            .aria_description(semantic_description)
+            .a11y_synthetic_children(move |builder| {
+                let node = builder.parent_node();
+                if disabled {
+                    node.set_disabled();
+                }
+                if read_only {
+                    node.set_read_only();
+                }
+                if invalid {
+                    node.set_invalid(gpui_kit::accesskit::Invalid::True);
+                }
+                accessibility.build(builder);
+            })
+            .when(!disabled, |this| {
+                let run_id = text_prepaint.run_id.clone();
+                this.on_a11y_action(
+                    gpui_kit::AccessibleAction::SetTextSelection,
+                    move |data, window, cx| {
+                        let _ = selection_state.update(cx, |state, cx| {
+                            state.accessibility_action(run_id.get(), data, window, cx);
+                        });
+                    },
+                )
+            })
+            .when(!disabled && !self.read_only, |this| {
+                this.on_a11y_action(
+                    gpui_kit::AccessibleAction::SetValue,
+                    move |data, window, cx| {
+                        let _ = value_state.update(cx, |state, cx| {
+                            state.accessibility_action(None, data, window, cx);
+                        });
+                    },
+                )
+                .on_a11y_action(
+                    gpui_kit::AccessibleAction::ReplaceSelectedText,
+                    move |data, window, cx| {
+                        let _ = replace_state.update(cx, |state, cx| {
+                            state.accessibility_replace_selection(data, window, cx);
+                        });
+                    },
+                )
+            })
+            .track_focus(&focus)
+            .w_full()
+            .min_w_0()
+            .h_full()
+            .flex()
+            .items_center()
+            .child(editor_body);
+
+        let editor_element = div()
+            .id("editor-zone")
+            .test_support()
+            .flex()
+            .items_center()
+            .flex_1()
+            .min_w_0()
+            .h_full()
+            .pl(if start.is_some() { px(seam) } else { padding })
+            .pr(if suffix.is_some() {
+                px(0.)
+            } else if end.is_some() {
+                px(seam)
+            } else {
+                padding
+            })
+            .when_some(editor_content_width, |this, width| {
+                this.flex_initial().w(width).max_w_full()
+            })
+            .child(editor_semantics);
         div()
             .flex()
             .flex_col()
@@ -411,54 +467,9 @@ impl Render for InputState {
                 )
             })
             .child(
-                base::input::InputBase::new("control")
-                    .accessibility_label(self.name.clone())
-                    .aria_value(value)
-                    .aria_placeholder(placeholder)
-                    .aria_description(semantic_description)
-                    .a11y_synthetic_children(move |builder| {
-                        let node = builder.parent_node();
-                        if disabled {
-                            node.set_disabled();
-                        }
-                        if read_only {
-                            node.set_read_only();
-                        }
-                        if invalid {
-                            node.set_invalid(gpui_kit::accesskit::Invalid::True);
-                        }
-                        accessibility.build(builder);
-                    })
-                    .when(!disabled, |this| {
-                        let run_id = text_prepaint.run_id.clone();
-                        this.on_a11y_action(
-                            gpui_kit::AccessibleAction::SetTextSelection,
-                            move |data, window, cx| {
-                                let _ = selection_state.update(cx, |state, cx| {
-                                    state.accessibility_action(run_id.get(), data, window, cx);
-                                });
-                            },
-                        )
-                    })
-                    .when(!disabled && !self.read_only, |this| {
-                        this.on_a11y_action(
-                            gpui_kit::AccessibleAction::SetValue,
-                            move |data, window, cx| {
-                                let _ = value_state.update(cx, |state, cx| {
-                                    state.accessibility_action(None, data, window, cx);
-                                });
-                            },
-                        )
-                        .on_a11y_action(
-                            gpui_kit::AccessibleAction::ReplaceSelectedText,
-                            move |data, window, cx| {
-                                let _ = replace_state.update(cx, |state, cx| {
-                                    state.accessibility_replace_selection(data, window, cx);
-                                });
-                            },
-                        )
-                    })
-                    .track_focus(&focus)
+                div()
+                    .id("surface")
+                    .test_support()
                     .w_full()
                     .min_w_0()
                     .h(px(height))
@@ -474,15 +485,12 @@ impl Render for InputState {
                     .line_height(text.line_height)
                     .font_weight(FontWeight::NORMAL)
                     .when(group.is_some(), |this| {
-                        let target = focus.clone();
-                        this.opacity(if disabled { 0.5 } else { 1. }).on_mouse_down(
-                            gpui_kit::MouseButton::Left,
-                            move |_, window, cx| {
-                                if !disabled {
-                                    target.focus(window, cx);
-                                }
-                            },
-                        )
+                        this.opacity(if disabled { 0.5 } else { 1. })
+                    })
+                    .on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
+                        if !disabled {
+                            target.focus(window, cx);
+                        }
                     })
                     .child(
                         div()

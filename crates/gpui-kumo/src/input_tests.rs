@@ -208,9 +208,13 @@ fn sizes_fill_the_parent_without_changing_recipe_heights(cx: &mut TestAppContext
     cx.update(|window, cx| {
         window.render_frame(cx);
         for (index, height) in [20., 26., 36., 40.].into_iter().enumerate() {
-            let bounds = window.within(("sized", index)).find("control").bounds();
+            let bounds = window.within(("sized", index)).find("surface").bounds();
             assert_eq!(bounds.size.height, px(height));
             assert_eq!(bounds.size.width, px(240.));
+            let editor = window.within(("sized", index)).find("control");
+            assert_eq!(editor.role(), Some(gpui_kit::Role::TextInput));
+            assert!(editor.bounds().left() >= bounds.left());
+            assert!(editor.bounds().right() <= bounds.right());
         }
     });
 }
@@ -486,4 +490,24 @@ fn unmounting_accessible_input_releases_its_entities(cx: &mut TestAppContext) {
     });
     assert!(state.upgrade().is_none());
     assert!(editor.upgrade().is_none());
+}
+
+#[gpui_kit::test]
+fn surface_padding_focuses_editor_without_changing_value_and_disabled_rejects(
+    cx: &mut TestAppContext,
+) {
+    let (input, cx) = harness(cx);
+    cx.update(|window, cx| {
+        window.click("before", cx);
+        assert!(!input.read(cx).focus_handle(cx).is_focused(window));
+        window.click_at("surface", gpui_kit::point(px(2.), px(18.)), cx);
+        assert!(input.read(cx).focus_handle(cx).is_focused(window));
+        assert_eq!(input.read(cx).value(cx).as_ref(), "");
+        input.update(cx, |input, cx| input.set_disabled(true, cx));
+        window.render_frame(cx);
+        window.click("before", cx);
+        window.click_at("surface", gpui_kit::point(px(2.), px(18.)), cx);
+        assert!(!input.read(cx).focus_handle(cx).is_focused(window));
+        assert_eq!(window.find("before").focused(), Some(true));
+    });
 }

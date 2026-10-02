@@ -68,7 +68,7 @@ fn suffix_follows_value_width_without_owning_selection_or_overflow(cx: &mut Test
         for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
             crate::set_appearance(appearance, cx);
             window.render_frame(cx);
-            let control = window.find("control").bounds();
+            let control = window.find("surface").bounds();
             let editor = window.find("editor-zone").bounds();
             let suffix = window.find("suffix").bounds();
             assert!(editor.right() <= control.right());
@@ -152,7 +152,7 @@ fn container_addons_preserve_editor_selection_and_source_geometry(cx: &mut TestA
                     cx.notify();
                 });
                 window.render_frame(cx);
-                let control = window.find("control").bounds();
+                let control = window.find("surface").bounds();
                 assert_eq!(control.size.height, px(height));
                 assert_eq!(control.size.width, px(220.));
                 assert!(window.find("editor-zone").bounds().size.width > px(0.));
@@ -165,7 +165,7 @@ fn container_addons_preserve_editor_selection_and_source_geometry(cx: &mut TestA
             cx.notify();
         });
         window.render_frame(cx);
-        assert_eq!(window.find("control").bounds().size.width, px(52.));
+        assert_eq!(window.find("surface").bounds().size.width, px(52.));
         assert_eq!(window.find("content-row").bounds().size.width, px(52.));
         assert!(window.find("editor-zone").bounds().size.width >= px(0.));
         window.press("backspace", cx);
