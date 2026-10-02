@@ -1038,3 +1038,73 @@ fn ancestry_cycle_is_rejected_before_mutation_or_dismissal_borrowing(cx: &mut Te
         assert!(window.within("child").try_find("surface").is_none());
     });
 }
+
+#[gpui_kit::test]
+fn clicking_nested_content_preserves_ancestors(cx: &mut TestAppContext) {
+    struct Nested {
+        parent: Entity<PopoverState>,
+        child: Entity<PopoverState>,
+        clicks: Rc<Cell<usize>>,
+    }
+    impl Render for Nested {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            let child = self.child.clone();
+            let clicks = self.clicks.clone();
+            div()
+                .p(px(32.))
+                .child(Popover::new("parent", &self.parent, "Parent").content(
+                    move |parent, _, _| {
+                        let clicks = clicks.clone();
+                        Popover::new("child", &child, "Child")
+                            .parent(&parent)
+                            .placement(Placement::Right)
+                            .content(move |_, _, _| {
+                                let clicks = clicks.clone();
+                                div().ml(px(160.)).child(
+                                    Button::new("nested-action", "Act")
+                                        .on_click(move |_, _, _| clicks.set(clicks.get() + 1)),
+                                )
+                            })
+                    },
+                ))
+        }
+    }
+    cx.update(|cx| {
+        crate::init(cx);
+        cx.set_reduce_motion(true);
+    });
+    let (view, cx) = cx.add_window_view(|_, cx| Nested {
+        parent: cx.new(|cx| PopoverState::new("Parent dialog", cx)),
+        child: cx.new(|cx| PopoverState::new("Child dialog", cx)),
+        clicks: Rc::new(Cell::new(0)),
+    });
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.render_frame(cx);
+        window.within("parent").click("trigger", cx);
+        window.within("child").click("trigger", cx);
+        window.render_frame(cx);
+        window.render_frame(cx);
+        let parent_bounds = view
+            .read(cx)
+            .parent
+            .read(cx)
+            .resolved_position
+            .get()
+            .unwrap()
+            .bounds;
+        let target = window.within("child").find("nested-action").bounds();
+        assert!(
+            !parent_bounds.contains(&target.center()),
+            "parent={parent_bounds:?} target={target:?} child={:?}",
+            view.read(cx).child.read(cx).resolved_position.get()
+        );
+        window.within("child").click("nested-action", cx);
+        assert!(view.read(cx).parent.read(cx).is_open());
+        assert!(view.read(cx).child.read(cx).is_open());
+        assert_eq!(view.read(cx).clicks.get(), 1);
+        window.press("escape", cx);
+        assert!(view.read(cx).parent.read(cx).is_open());
+        assert!(!view.read(cx).child.read(cx).is_open());
+    });
+}

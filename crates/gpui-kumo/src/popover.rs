@@ -171,6 +171,23 @@ impl PopoverState {
         cx.notify();
     }
 
+    // Deferred children paint beyond their ancestor's hitbox. Treat every open
+    // descendant surface as inside the same dismissal boundary.
+    fn contains_descendant(&self, point: &gpui_kit::Point<Pixels>, cx: &App) -> bool {
+        self.children
+            .iter()
+            .filter_map(|child| child.upgrade())
+            .any(|child| {
+                let child = child.read(cx);
+                child.open
+                    && (child
+                        .resolved_position
+                        .get()
+                        .is_some_and(|position| position.bounds.contains(point))
+                        || child.contains_descendant(point, cx))
+            })
+    }
+
     pub fn dismiss(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.set_open(false, window, cx);
     }
@@ -400,7 +417,9 @@ impl Render for PopoverState {
             }))
             .on_mouse_down_out(cx.listener(
                 |state, event: &gpui_kit::MouseDownEvent, window, cx| {
-                    if !state.trigger_bounds.get().contains(&event.position) {
+                    if !state.trigger_bounds.get().contains(&event.position)
+                        && !state.contains_descendant(&event.position, cx)
+                    {
                         state.dismiss(window, cx);
                     }
                 },
