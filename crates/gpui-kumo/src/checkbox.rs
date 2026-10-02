@@ -1,7 +1,7 @@
 //! Kumo Checkbox presentation over Base's controlled toggle and focus behavior.
 use crate::{Label, theme};
 use gpui_kit::{
-    App, ClickEvent, ElementId, FocusHandle, FontWeight, HitboxBehavior, IntoElement,
+    AnyElement, App, ClickEvent, ElementId, FocusHandle, FontWeight, HitboxBehavior, IntoElement,
     ParentElement, RenderOnce, SharedString, StatefulInteractiveElement, Styled, Window, base,
     canvas, div, prelude::FluentBuilder, px, quad, svg,
 };
@@ -49,6 +49,7 @@ pub struct Checkbox {
     show_label: bool,
     control_first: bool,
     optional: bool,
+    content: Option<AnyElement>,
     focus: Option<FocusHandle>,
     group_item: bool,
     on_change: Option<ChangeHandler>,
@@ -66,6 +67,7 @@ impl Checkbox {
             show_label: true,
             control_first: true,
             optional: false,
+            content: None,
             focus: None,
             group_item: false,
             on_change: None,
@@ -99,6 +101,12 @@ impl Checkbox {
     /// Explicit false displays “(optional)”; validation remains caller-owned.
     pub fn required(mut self, required: bool) -> Self {
         self.optional = !required;
+        self
+    }
+    /// Decorative rich label; the constructor's string remains its complete
+    /// accessible name. Keep interactive accessories outside the control.
+    pub fn content(mut self, content: impl IntoElement) -> Self {
+        self.content = Some(content.into_any_element());
         self
     }
     pub fn track_focus(mut self, focus: &FocusHandle) -> Self {
@@ -241,7 +249,8 @@ impl RenderOnce for Checkbox {
                 this.child(
                     Label::new("label", self.name)
                         .as_content()
-                        .optional(self.optional),
+                        .optional(self.optional)
+                        .when_some(self.content, |label, content| label.content(content)),
                 )
             });
         if let Some(handler) = self.on_change {

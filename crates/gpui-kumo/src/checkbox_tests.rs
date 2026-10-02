@@ -136,3 +136,112 @@ fn bare_square_and_labels_have_source_geometry_in_both_themes(cx: &mut TestAppCo
         }
     });
 }
+
+struct RichLabels {
+    state: State,
+    changes: usize,
+    disabled: bool,
+    first: bool,
+    width: f32,
+}
+impl Render for RichLabels {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        use gpui_kit::base::TestSupportExt;
+        let owner = cx.entity().downgrade();
+        div().w(px(self.width)).child(
+            Checkbox::new(
+                "rich-control",
+                "Accept terms for café 🦀 and international notifications",
+            )
+            .content(
+                div().id("rich-copy").test_support().min_w_0().child(
+                    gpui_kit::StyledText::new(
+                        "Accept terms for café 🦀 and international notifications",
+                    )
+                    .with_highlights([(
+                        7..12,
+                        gpui_kit::HighlightStyle {
+                            font_weight: Some(FontWeight::BOLD),
+                            ..Default::default()
+                        },
+                    )]),
+                ),
+            )
+            .state(self.state)
+            .disabled(self.disabled)
+            .control_first(self.first)
+            .required(false)
+            .on_change(move |state, _, _, cx| {
+                let _ = owner.update(cx, |v, cx| {
+                    v.state = state;
+                    v.changes += 1;
+                    cx.notify();
+                });
+            }),
+        )
+    }
+}
+#[gpui_kit::test]
+fn rich_checkbox_label_preserves_name_wrapping_and_single_activation(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|_, _| RichLabels {
+        state: State::Indeterminate,
+        changes: 0,
+        disabled: false,
+        first: true,
+        width: 180.,
+    });
+    cx.update(|window, cx| {
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            for first in [true, false] {
+                view.update(cx, |v, cx| {
+                    v.first = first;
+                    v.disabled = false;
+                    v.state = State::Indeterminate;
+                    cx.notify();
+                });
+                window.activate_window();
+                window.render_frame(cx);
+                assert_eq!(window.find("rich-control").role(), Some(Role::CheckBox));
+                assert_eq!(
+                    window.find("rich-control").label(),
+                    Some("Accept terms for café 🦀 and international notifications (optional)")
+                );
+                let root = window.find("rich-control").bounds();
+                let copy = window.find("rich-copy").bounds();
+                assert!(root.size.width <= px(180.));
+                assert!(copy.size.height > px(21.), "rich text wraps");
+                assert!(
+                    copy.left() >= root.left() && copy.right() <= root.right(),
+                    "rich glyph container stays inside control"
+                );
+                assert_eq!(copy.top(), root.top());
+                let before = view.read(cx).changes;
+                window.click("rich-copy", cx);
+                window.render_frame(cx);
+                assert_eq!(view.read(cx).changes, before + 1);
+                assert_eq!(view.read(cx).state, State::Checked);
+                window.press("space", cx);
+                window.render_frame(cx);
+                window.press("enter", cx);
+                window.render_frame(cx);
+                assert_eq!(view.read(cx).changes, before + 3);
+                view.update(cx, |v, cx| {
+                    v.disabled = true;
+                    cx.notify();
+                });
+                window.render_frame(cx);
+                window.click("rich-copy", cx);
+                window.press("space", cx);
+                window.press("enter", cx);
+                window.render_frame(cx);
+                assert_eq!(
+                    view.read(cx).changes,
+                    before + 3,
+                    "disabled rich label cannot activate"
+                );
+            }
+        }
+    });
+}

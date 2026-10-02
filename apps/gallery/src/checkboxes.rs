@@ -39,7 +39,9 @@ impl Render for Checkboxes {
                 .flex_col()
                 .gap_4()
                 .child(
-                    Checkbox::new("terms", "Accept terms and conditions")
+                    Checkbox::new("terms", "Accept terms and conditions for café 🦀 and international notifications")
+                        .content(gpui_kit::StyledText::new("Accept terms and conditions for café 🦀 and international notifications")
+                            .with_highlights([(7..12, gpui_kit::HighlightStyle { font_weight: Some(gpui_kit::FontWeight::BOLD), ..Default::default() })]))
                         .state(self.state)
                         .on_change(move |state, _, _, cx| {
                             let _ = owner.update(cx, |this, cx| {
@@ -76,6 +78,7 @@ impl Render for Checkboxes {
                 .child(format!("Email events: {} · SMS canceled: {}", self.item_changes, self.rejected))
                 .child(
                     Checkbox::new("optional", "Email updates")
+                        .content(gpui_kit::StyledText::new("Email updates").with_highlights([(6..13, gpui_kit::HighlightStyle { font_style: Some(gpui_kit::FontStyle::Italic), ..Default::default() })]))
                         .required(false)
                         .control_first(false),
                 )
