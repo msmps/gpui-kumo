@@ -14,7 +14,7 @@ Continue the component library beyond the first Button/Input/Popover evaluation.
 | --- | --- | --- |
 | 0 | Foundation decision; locally repairable accessibility and nested-overlay defects | Repair checkpoint complete; platform export gaps remain |
 | 1 | Button/Input browser comparison; Popover geometry stress; transparent shadows and outline motion | First-slice fidelity work, tracked individually |
-| 2 | Text, Label/Field, Loader, LayerCard, Badge, Banner, Empty, Code, Link | Text/Loader implemented with documented platform/comparison gaps; LayerCard implemented with rounded subtree/platform gaps; Badge next; Field portions currently inside Input |
+| 2 | Text, Label/Field, Loader, LayerCard, Badge, Banner, Empty, Code, Link | Text/Loader/LayerCard/Badge/Link implemented with documented comparison/platform gaps; Banner next; Field portions currently inside Input |
 | 3 | Checkbox, Radio, Switch; ButtonGroup, InputGroup, SensitiveInput, ClipboardText, InlineCopyText | Common form/composition controls; typed values, availability and labels |
 | 4 | Tooltip, Collapsible, Tabs, Meter, Pagination | Focus, motion, selection or presentation foundations |
 | 5 | Dialog, LayerDialog, Dropdown, Menubar, Toolbar, Select | Overlay and composite navigation; Button/Popover/focus foundations |
@@ -35,13 +35,11 @@ On macOS 26.6.2 / aarch64-apple-darwin, MacBookPro18,1, 10 CPUs, 16 GiB RAM, Rus
 
 ## Current checkpoint
 
-Latest pushed checkpoint: `ea86f71` (LayerCard and default rounded secondary fill repair). Badge is implemented in the working tree with typed filled/dot composition, supported variants, semantic/status token expansion and a complete gallery matrix. Three rendered tests and positive/compile-fail API doctests pass. Native light/dark output and ancestor-hover ring were inspected; labels were exposed without decorative nodes. [Badge validation](badge-validation.md) records source gaps, native adaptations and remaining comparison work.
+Link checkpoint (this commit), following pushed Badge `895432d` and LayerCard repair `ea86f71`. Link is implemented with application-owned navigation, supported variants, one-em external icon, typed Badge composition and private Base focus/activation. Five rendered regressions cover actual input, theme/underline paint, wrapping and scoped hover. [Link validation](link-validation.md) records native evidence and explicit remaining limits.
 
-Skeptical review caught a filled shadow masquerading as a transparent dot ring. The correction uses a border-only quad; a regression fails against the prior implementation and passes after correction. Custom paint requires explicit pill-radius clamping; Badge and LayerCard now clamp against actual quad sizes. Caller oversized radii and hovered bordered badge bounds are covered.
+Skeptical review repaired mismatched keyed focus namespaces and constrained-label overflow. Native pointer/Return/Space yielded three navigation requests; complete labels and destinations were exposed. Rebuilt wrapping is captured in light, while dark wrapping has rendered coverage and awaits a reliable final native capture. Underline offset, spoken disabled-state export and pinned browser comparison remain pending.
 
-Source inspection excludes deprecated Surface, Badge destructive and its legacy type alias. LayerCard supplies the supported simple surface. Apply the repository’s deprecated-feature policy before accepting each new API. KUMO-019 remains open for general arbitrary-descendant rounded clipping; the reported default card top-corner defect is fixed and inspected in both themes.
-
-No CI configuration/workflow runs were found at `ea86f71`. Close testing apps and verify process termination before checkpointing.
+Source inspection excludes deprecated Surface, Badge destructive/legacy alias, Link to alias and Banner legacy children/text/enum. KUMO-019 remains open for general descendant rounded clipping; the reported default card top-corner defect is fixed and inspected in both themes. No gallery process remains: registered-app Quit and session-owned raw-process termination were followed by an empty pgrep. Future native checks launch only the registered app to avoid duplicate instances.
 
 ## Validation and review evidence
 
@@ -51,12 +49,12 @@ No CI configuration/workflow runs were found at `ea86f71`. Close testing apps an
 - [Loader](loader-validation.md) is shared with Button and has size/name, light/dark foreground, animated endpoint and reduced-motion regressions. Native light/dark captures show advancing arcs. Deterministic pinned SVG comparison is prepared; browser surfaces were unavailable. Exact browser motion/path and spoken status checks remain pending.
 - [LayerCard](layer-card-validation.md) records the complete acceptance matrix and measured results. Skeptical review repaired inherited layered line-height and the default secondary fill defect. Follow-up geometry coverage caught padded absolute canvases shifting the mask; explicit zero insets fixed it. Nested controls retain their tested input paths.
 
-Current automated gate: 52 workspace tests and four doctests pass. Formatting, all-target/all-feature locked Clippy with warnings denied and gallery/example builds pass. The Loader timing regression failed during the gate because its executor clock did not drive GPUI’s unsynced animation; its test now advances the actual wall time, and both workspace and isolated checks pass. The upstream block 0.1.6 future-compatibility notice remains separate from current check results.
+Current automated gate: 57 workspace tests and five doctests pass. Formatting, all-target/all-feature locked Clippy with warnings denied and gallery/example builds pass. The Loader timing regression failed during the gate because its executor clock did not drive GPUI’s unsynced animation; its test now advances the actual wall time, and both workspace and isolated checks pass. The upstream block 0.1.6 future-compatibility notice remains separate from current check results.
 
 Final rebuilt captures show smooth corners in light/dark after cmd-l theme switching. The Save counter updated once; Unicode value changes reached the native tree, but Input pixels lagged the exposed value. Native input/frame consistency remains pending. The gallery was quit and its process absence verified.
 
 ## Next exact action
 
-Finish Badge documentation/cleanup, commit and push the validated checkpoint on `work`. Then inspect supported Banner source/styles/examples and define its acceptance matrix. Banner can reuse the semantic status tints and Button/Loader foundations; inspect its closable/actions/slot contracts before choosing retained state or callbacks. Preserve existing clipping, native input/frame, browser comparison and spoken accessibility gaps as open branches.
+Implement Banner’s supported structured title/description/action APIs. Link now unlocks compact inline actions; existing Button supplies Base interaction for Banner.Action. Define its acceptance matrix and extend Button’s private recipe boundary with the source’s three accent-aware treatments and banner-derived sizing. Inspect exact accent mixing against the pinned source; omit deprecated children/text and legacy enum.
 
 Close every testing application and verify process termination. Apply Apollo Rust best practices and preserve explicit state ownership/private Base boundaries at each milestone.

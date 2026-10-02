@@ -14,6 +14,7 @@ mod badges;
 mod buttons;
 mod cards;
 mod inputs;
+mod links;
 mod loaders;
 mod popovers;
 mod texts;
@@ -44,6 +45,7 @@ struct Gallery {
     _theme_subscription: Subscription,
     inputs: gpui_kit::Entity<inputs::Inputs>,
     cards: gpui_kit::Entity<cards::Cards>,
+    links: gpui_kit::Entity<links::Links>,
     popovers: gpui_kit::Entity<popovers::Popovers>,
     activations: usize,
     disabled: bool,
@@ -136,6 +138,7 @@ impl Render for Gallery {
                     )),
             )
             .child(badges::panel(&theme))
+            .child(self.links.clone())
             .child(self.cards.clone())
             .child(loaders::panel(&theme))
             .child(texts::panel(&theme))
@@ -345,6 +348,7 @@ fn main() {
                             _theme_subscription: subscription,
                             inputs: cx.new(|cx| inputs::Inputs::new(window, cx)),
                             cards: cx.new(|cx| cards::Cards::new(window, cx)),
+                            links: cx.new(links::Links::new),
                             popovers: cx.new(|cx| popovers::Popovers::new(window, cx)),
                             activations: 0,
                             disabled: false,
