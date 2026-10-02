@@ -22,6 +22,7 @@ mod links;
 mod loaders;
 mod popovers;
 mod radios;
+mod switches;
 mod texts;
 
 #[cfg(feature = "frame-profiler")]
@@ -59,6 +60,7 @@ struct Gallery {
     banners: gpui_kit::Entity<banners::Banners>,
     popovers: gpui_kit::Entity<popovers::Popovers>,
     radios: gpui_kit::Entity<radios::Radios>,
+    switches: gpui_kit::Entity<switches::Switches>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -164,6 +166,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.switches.clone())
         .child(self.radios.clone())
         .child(self.checkboxes.clone())
         .child(self.fields.clone())
@@ -390,6 +393,7 @@ fn main() {
                             banners: cx.new(banners::Banners::new),
                             popovers: cx.new(|cx| popovers::Popovers::new(window, cx)),
                             radios: cx.new(radios::Radios::new),
+                            switches: cx.new(switches::Switches::new),
                             activations: 0,
                             disabled: false,
                             loading: false,

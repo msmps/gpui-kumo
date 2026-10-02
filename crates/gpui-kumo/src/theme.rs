@@ -95,6 +95,21 @@ pub struct BadgeColors {
     pub orange_foreground: Hsla,
 }
 
+/// Appearance-specific colors for Kumo Switch tracks and thumbs.
+#[derive(Clone, Debug)]
+pub struct SwitchColors {
+    pub off_track: Hsla,
+    pub off_ring: Hsla,
+    pub on_track: Hsla,
+    pub on_ring: Hsla,
+    pub off_thumb: Hsla,
+    pub on_thumb: Hsla,
+    pub neutral_off_track: Hsla,
+    pub neutral_on_track: Hsla,
+    pub neutral_on_ring: Hsla,
+    pub neutral_on_thumb: Hsla,
+}
+
 /// Native policies filling gaps in the web recipes, kept distinct from upstream.
 #[derive(Clone, Debug)]
 pub struct NativeColors {
@@ -232,6 +247,7 @@ pub struct Theme {
     pub colors: Colors,
     pub native: NativeColors,
     pub badge: BadgeColors,
+    pub switch: SwitchColors,
     pub banner: BannerAccents,
     pub typography: Typography,
     pub spacing: Spacing,
@@ -368,6 +384,38 @@ impl Theme {
         };
         Self {
             appearance,
+            switch: SwitchColors {
+                off_track: neutral(0.922, 0.371),
+                off_ring: neutral(0.87, 0.439),
+                on_track: choose(info, Oklch::new(0.546, 0.245, 262.881)).paint(),
+                on_ring: choose(Oklch::new(0.546, 0.245, 262.881), info).paint(),
+                off_thumb: if dark {
+                    Oklch::gray(0.24).paint()
+                } else {
+                    colors.base
+                },
+                on_thumb: if dark {
+                    Oklch::new(0.809, 0.105, 251.813).paint()
+                } else {
+                    colors.base
+                },
+                neutral_off_track: if dark {
+                    colors.base
+                } else {
+                    Oklch::gray(0.935).paint()
+                },
+                neutral_on_track: if dark {
+                    colors.base
+                } else {
+                    Oklch::gray(0.556).paint()
+                },
+                neutral_on_ring: neutral(0.439, 0.371),
+                neutral_on_thumb: if dark {
+                    Oklch::gray(0.708).paint()
+                } else {
+                    colors.base
+                },
+            },
             badge: BadgeColors {
                 inverted: if dark {
                     white

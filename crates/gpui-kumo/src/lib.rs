@@ -51,3 +51,6 @@ pub use checkbox_group::{CheckboxGroup, CheckboxItem};
 
 pub mod radio;
 pub use radio::{RadioGroup, RadioItem};
+
+pub mod switch;
+pub use switch::{Switch, SwitchGroup};
