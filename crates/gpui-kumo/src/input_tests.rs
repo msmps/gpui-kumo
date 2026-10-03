@@ -714,3 +714,50 @@ fn input_help_preserves_editing_and_excludes_label_from_group_focus(cx: &mut Tes
         }
     }
 }
+
+struct ScrolledInput {
+    input: Entity<InputState>,
+}
+impl Render for ScrolledInput {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        div().w(px(100.)).child(
+            crate::InputGroup::new("scrolled-group", &self.input)
+                .editor_width(px(50.))
+                .text_align(gpui_kit::TextAlign::Center)
+                .button(
+                    "next",
+                    "Next",
+                    crate::button::Variant::Secondary,
+                    |b, _, _| b,
+                ),
+        )
+    }
+}
+#[gpui_kit::test]
+fn accessible_text_remains_complete_when_centred_input_scrolls(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| ScrolledInput {
+        input: cx.new(|cx| InputState::new("Page number", window, cx)),
+    });
+    let input = cx.read(|cx| view.read(cx).input.clone());
+    cx.update(|window, cx| {
+        window.activate_window();
+        window.render_frame(cx);
+        input.read(cx).focus_handle(cx).focus(window, cx);
+    });
+    cx.run_until_parked();
+    for length in 1..=24 {
+        cx.simulate_input("9");
+        cx.run_until_parked();
+        cx.update(|window, cx| {
+            window.render_frame(cx);
+            let editor = input.read(cx).editor.read(cx);
+            let (run, selection) = accessibility::Snapshot::new(editor)
+                .expect("a scrolled single-line editor must expose its full text")
+                .nodes(gpui_kit::accesskit::NodeId(42));
+            assert_eq!(run.value(), Some("9".repeat(length).as_str()));
+            assert_eq!(selection.focus.character_index, length);
+            assert_eq!(run.character_positions().unwrap().len(), length);
+        });
+    }
+}

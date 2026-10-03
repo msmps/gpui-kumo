@@ -95,3 +95,9 @@ pub use select::{
     Select, SelectEvent, SelectGroup, SelectOption, SelectPart, SelectState, SelectValue,
     SelectValueContent,
 };
+
+pub mod pagination;
+pub use pagination::{
+    Pagination, PaginationEvent, PaginationInfo, PaginationInfoValue, PaginationLabels,
+    PaginationParts, PaginationSeparator, PaginationState, PaginationTotal,
+};

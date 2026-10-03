@@ -46,7 +46,7 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 | KUMO-038 | InputArea | [port InputArea](038-input-area-port.md) ([#23](https://github.com/msmps/gpui-kumo/issues/23)) | Open |
 | KUMO-039 | LayerDialog | [port LayerDialog](039-layer-dialog-port.md) ([#24](https://github.com/msmps/gpui-kumo/issues/24)) | Open |
 | KUMO-040 | Meter | [port Meter](040-meter-port.md) ([#25](https://github.com/msmps/gpui-kumo/issues/25)) | In progress |
-| KUMO-041 | Pagination | [port Pagination](041-pagination-port.md) ([#26](https://github.com/msmps/gpui-kumo/issues/26)) | Open |
+| KUMO-041 | Pagination | [port Pagination](041-pagination-port.md) ([#26](https://github.com/msmps/gpui-kumo/issues/26)) | In progress |
 | KUMO-042 | Select | [port Select](042-select-port.md) ([#27](https://github.com/msmps/gpui-kumo/issues/27)) | Core implemented; parts in progress |
 | KUMO-043 | SensitiveInput | [port SensitiveInput](043-sensitive-input-port.md) ([#28](https://github.com/msmps/gpui-kumo/issues/28)) | Open |
 | KUMO-044 | SkeletonLine | [port SkeletonLine](044-skeleton-line-port.md) ([#29](https://github.com/msmps/gpui-kumo/issues/29)) | Open |
@@ -79,6 +79,10 @@ The following fidelity gaps are published on 2026-10-02. GitHub numbers differ f
 All 25 unported families have one confirmed GitHub issue each (#11–#35), linked above and in [coverage](../component-coverage.md). Local IDs KUMO-026–050 distinguish these family ports from earlier fidelity follow-ups. Issues describe the pinned Base primitives, dependency order, limitations and acceptance gates: 11 direct counterparts, 7 partial compositions and 7 without a dedicated Base counterpart. A direct name does not establish complete behavior; Tabs keyboard navigation, Dropdown menu semantics and Meter range semantics require particular care. Publication does not change implementation coverage.
 
 ## Maintaining the tracker
+
+Shared follow-up: [KUMO-051 — disabled Buttons export Enabled/Sensitive on Linux](051-linux-disabled-button-state.md) ([#36](https://github.com/msmps/gpui-kumo/issues/36)), In progress. Found through Pagination's actual AT-SPI gate; applies to all Buttons.
+
+Selected first: [KUMO-052 — readable values on Label nodes](052-readable-label-values.md) ([#37](https://github.com/msmps/gpui-kumo/issues/37)), In progress. Same native gate exposed the distinction between authored aria_label and platform names; affects Text/Label/Badge/Banner/BreadcrumbCurrent.
 
 - Keep IDs and filenames stable. Add new issues using the next unused ID.
 - Update the issue's status and this index together. Use Open, In progress, Blocked or Resolved; record the reason when blocked.

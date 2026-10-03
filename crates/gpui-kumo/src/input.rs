@@ -118,6 +118,12 @@ impl InputState {
         }
     }
 
+    pub(crate) fn set_name(&mut self, name: SharedString, cx: &mut Context<Self>) {
+        assert!(!name.trim().is_empty(), "Input requires an accessible name");
+        self.name = name;
+        cx.notify();
+    }
+
     pub fn value(&self, cx: &App) -> SharedString {
         self.editor.read(cx).value()
     }

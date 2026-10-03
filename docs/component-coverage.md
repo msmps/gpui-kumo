@@ -2,7 +2,7 @@
 
 Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-02. This is a count of catalog component families, not subparts or fidelity acceptance checkboxes. Checkbox.Group/Item, Radio.Item, TooltipProvider and Button subsidiary APIs count inside their families. InputArea, SkeletonLine and recommended CodeHighlighted have separate catalog pages and count separately even though some share source directories.
 
-43 in-scope families:26 with working implementations,17 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
+43 in-scope families:27 with working implementations,16 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
 
 | Catalog component | State |
 | --- | --- |
@@ -34,7 +34,7 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-02. This
 | link | Implemented; see component acceptance/gaps |
 | loader | Implemented; see component acceptance/gaps |
 | meter | Implemented; [acceptance/gaps](meter-validation.md), [#25](https://github.com/msmps/gpui-kumo/issues/25) remains open |
-| pagination | Unported — [#26](https://github.com/msmps/gpui-kumo/issues/26) |
+| pagination | Core input/simple implemented; dropdown/PageSize and platform fidelity in progress, [acceptance/gaps](pagination-validation.md) — [#26](https://github.com/msmps/gpui-kumo/issues/26) |
 | popover | Implemented; see component acceptance/gaps |
 | radio | Implemented; see component acceptance/gaps |
 | select | Core implemented; composition in progress, [acceptance/gaps](select-validation.md) — [#27](https://github.com/msmps/gpui-kumo/issues/27) |

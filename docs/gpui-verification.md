@@ -29,6 +29,8 @@ For native screenshot checks, verify platform presentation visibility as well as
 
 Test externally observable outcomes: operation counts, focus targets, values, geometry, and accessible meaning. Use state combinations that expose precedence problems, such as focused + hovered and selected + disabled. Screenshots establish appearance; input tests establish behavior.
 
+For actual AccessKit Label nodes, check the full readable value as well as the authored label: the selected consumer derives their platform name from value. Verify exported names through the native adapter; a headless `.label()` assertion alone can pass while a Label is unnamed. Await the exact expected native draft before committing a long synthesized key burst, rather than comparing accessibility and clipboard samples taken at different processing times. Record disabled Button Enabled/Sensitive export separately from absent Click actions and guarded activation (#36).
+
 ## Troubleshooting map
 
 | Symptom | Inspect |

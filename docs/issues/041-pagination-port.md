@@ -6,15 +6,15 @@ GitHub issue: https://github.com/msmps/gpui-kumo/issues/26
 
 ## Goal and status
 
-Port the supported **Pagination** Kumo family to Rust/GPUI. This family is currently unported; source inspection and dependency implementation are in progress; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Pagination** Kumo family to Rust/GPUI. Input/simple controls, Info/Separator and controlled native editing are implemented; dropdown/PageSize and fidelity acceptance are in progress; the issue covers its supported parts and public API, not just a static default-state demo.
 
 ## GPUI Kit/Base foundation
 
 **Match: Direct counterpart.**
 
-Use/evaluate: Pagination/PaginationState/PaginationItem + Button/Link for source destinations.
+Use: Base Pagination/PaginationState guards and Navigation; Kumo Button/InputGroup/Select for actual source controls.
 
-Limits: Base clamps page counts and owns visible-page generation/proposals. Check Kumo's page/window/ellipsis policy and public value conventions before reuse; do not silently change source behavior to match Base defaults.
+Limits: reuse controlled request guards/clamping, not visible-page items. Pinned Kumo has no numbered-page/ellipsis strip. Full/simple controls use first/previous/input or dropdown/next/last, and explicit known/unknown totals.
 
 - [gpui-base 0.7.0: pagination.rs](https://docs.rs/crate/gpui-base/0.7.0/source/src/pagination.rs)
 - [gpui-base 0.7.0: button.rs](https://docs.rs/crate/gpui-base/0.7.0/source/src/button.rs)
@@ -22,7 +22,7 @@ Limits: Base clamps page counts and owns visible-page generation/proposals. Chec
 
 ## Dependencies and scope
 
-Build on: Button, Link. These are dependencies, not a claim that every dependency is already complete. Preserve the existing project and API patterns.
+Build on: Button, InputGroup, Input and Select. These are dependencies, not a claim that every dependency is already complete. Preserve the existing project and API patterns.
 
 [Full coverage/backlog](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md); [progress and selected milestone](https://github.com/msmps/gpui-kumo/blob/work/docs/port-progress.md).
 
@@ -48,3 +48,8 @@ Build on: Button, Link. These are dependencies, not a claim that every dependenc
 ## Source inspection and selected dependency
 
 Pinned source has no numbered-page/ellipsis strip. Compound API is recommended; legacy root/text API is deprecated and excluded. Controls use InputGroup and Select; PageSize defaults25/50/100/250. Known totals govern next/last; unknown totals use sequential controls. Base guarded controlled requests/Navigation apply, visible-items strip does not. Leading InputGroup/fixed centred editor foundation is the next coherent checkpoint under#9, then retained controlled page/draft handling and parts under#26. [Plan](../port-progress.md).
+
+
+## Core checkpoint
+
+165 workspace tests/nine doctests and required Rust gates pass. Controlled input/full and simple controls, known/unknown/empty bounds, Info/Separator/custom content, observable edit/owner-race/once-only/disabled/focus/geometry regressions and retained gallery implemented. Native glyph review fixed explicit tint; platform Button disabled-state export remains#36. [Acceptance/results](../pagination-validation.md). Dropdown/PageSize, browser/OS IME/spoken acceptance remain open. Next selected shared readable-Label repair#37, then disabled-Button repair#36 before resuming retained dropdown/PageSize; do not close this family from core coverage.
