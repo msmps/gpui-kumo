@@ -12,18 +12,40 @@ pub struct ToolbarEditors {
     short: bool,
     disabled: bool,
     changes: usize,
+    clears: usize,
     submits: usize,
     _subscription: Subscription,
 }
-fn items(inputs: &[Entity<InputState>], short: bool, mode: usize) -> Vec<ToolbarItem> {
+fn items(
+    inputs: &[Entity<InputState>],
+    short: bool,
+    mode: usize,
+    owner: gpui_kit::WeakEntity<ToolbarEditors>,
+) -> Vec<ToolbarItem> {
     let mut group = ToolbarItem::input_group("filter-query", &inputs[3], gpui_kit::px(220.)).start(
         InputGroupAddon::parts([
             InputGroupAddon::icon("toolbar-settings.svg"),
             InputGroupAddon::text("Filter"),
         ]),
     );
+    let target = inputs[3].downgrade();
+    group = group.end(InputGroupAddon::button(
+        "clear-filter",
+        "Clear",
+        move |button, _, _| {
+            let target = target.clone();
+            let owner = owner.clone();
+            button.on_click(move |_, window, cx| {
+                let _ = target.update(cx, |state, cx| state.set_value("", window, cx));
+                let _ = owner.update(cx, |s, cx| {
+                    s.clears += 1;
+                    cx.notify();
+                });
+            })
+        },
+    ));
     if mode == 1 {
-        group = group.end(InputGroupAddon::text("units"));
+        group = group.suffix("units");
     }
     if mode == 2 {
         group = group.suffix("ms");
@@ -67,11 +89,15 @@ impl ToolbarEditors {
                 .collect()
             })
             .collect();
+        let owner = cx.entity().downgrade();
         let rows = inputs
             .iter()
             .enumerate()
             .map(|(index, inputs)| {
-                cx.new(|cx| ToolbarState::new(items(inputs, false, index), cx).disabled(index == 2))
+                cx.new(|cx| {
+                    ToolbarState::new(items(inputs, false, index, owner.clone()), cx)
+                        .disabled(index == 2)
+                })
             })
             .collect();
         let subscription =
@@ -89,20 +115,26 @@ impl ToolbarEditors {
             short: false,
             disabled: false,
             changes: 0,
+            clears: 0,
             submits: 0,
             _subscription: subscription,
         }
     }
     pub fn toggle_items(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.short = !self.short;
+        let owner = cx.entity().downgrade();
         self.rows[0].update(cx, |s, cx| {
-            s.set_items(items(&self.inputs[0], self.short, 0), window, cx)
+            s.set_items(items(&self.inputs[0], self.short, 0, owner), window, cx)
         });
         cx.notify();
     }
     pub fn toggle_disabled(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.disabled = !self.disabled;
         self.rows[0].update(cx, |s, cx| s.set_disabled(self.disabled, window, cx));
+        cx.notify();
+    }
+    pub fn toggle_group_disabled(&mut self, cx: &mut Context<Self>) {
+        self.inputs[0][3].update(cx, |s, cx| s.set_disabled(!s.is_disabled(), cx));
         cx.notify();
     }
     pub fn toggle_readonly(&mut self, cx: &mut Context<Self>) {
@@ -115,6 +147,7 @@ impl Render for ToolbarEditors {
         let owner = cx.entity().downgrade();
         let disable = owner.clone();
         let readonly = owner.clone();
+        let group_disabled = owner.clone();
         crate::panel(theme(cx), "Toolbar · retained editors")
             .child(Toolbar::new("editing", "Editing toolbar", &self.rows[0]))
             .child(
@@ -151,6 +184,17 @@ impl Render for ToolbarEditors {
                     },
                 ),
             )
+            .child(
+                Button::new("toggle-group-disabled", "Toggle InputGroup availability").on_click(
+                    move |_, _, cx| {
+                        let _ = group_disabled.update(cx, |s, cx| s.toggle_group_disabled(cx));
+                    },
+                ),
+            )
+            .child(Text::new(
+                "clear-events",
+                format!("{} filter clears", self.clears),
+            ))
             .child(Text::new(
                 "editor-events",
                 format!(

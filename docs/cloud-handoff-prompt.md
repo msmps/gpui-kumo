@@ -1,3 +1,9 @@
+## Toolbar compact addon actions checkpoint — 2026-10-03
+
+Toolbar InputGroup now hosts independently tabbable compact actions over existing retained Base controls. Root disabled guards the editor while leaving addon actions enabled; group-owner disabled gates both and skips its editor. Navigation uses the remembered composite entry, with hosted focus reveal/reorder/whole-group removal recovery. Native pointer Clear exposed stale synthetic text after programmatic updates; a deferred weak-owner post-paint notification repairs it. The gallery reports once-only pointer/Space/Enter counts. [Contract](toolbar-validation.md), [browser/native evidence](evidence/toolbar/addon-actions/README.md). Coverage remains29/43 working families,14 unported; #35 remains open.
+
+Next bounded slice: independent addon removal within a retained editor, then direct joined actions and popup/replacement composition. Source explicit-false disabled overrides, focus-visible modality fidelity, RTL, full-gallery/platform/speech acceptance remain explicit gaps. Preserve exact pins and the existing validation loop; publish coherent implementation/evidence checkpoints with normal pushes. Earlier entries below are historical.
+
 # Continue the GPUI Kumo migration from the pushed handoff checkpoint
 
 ## Toolbar retained editor continuation — 2026-10-03

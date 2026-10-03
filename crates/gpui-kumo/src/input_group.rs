@@ -161,9 +161,6 @@ impl InputGroupAddon {
             .children(items.into_iter().enumerate().map(|(index, item)| {
                 let child = div().flex().items_center().child(match item {
                     Self::Action(render) => div()
-                        .on_mouse_down(gpui_kit::MouseButton::Left, |_, _, cx| {
-                            cx.stop_propagation()
-                        })
                         .child(render(size, window, cx).input_group_action(disabled))
                         .into_any_element(),
                     Self::Text(text) => div().child(text.clone()).into_any_element(),

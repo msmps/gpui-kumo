@@ -1,12 +1,16 @@
 # KUMO-050: Port Toolbar with Kumo fidelity over GPUI Base
 
-Status: Open — action/link and retained editor core implemented; richer composition remains
+Status: Open — action/link, retained editors and compact addon actions implemented; richer composition remains
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/35
 
 ## Goal and status
 
-Port the supported **Toolbar** Kumo family to Rust/GPUI. The action/link core is implemented and validated; plain Input/passive InputGroup are also implemented; embedded actions, popup/richer composition, RTL and full-gallery/platform/speech acceptance remain.
+Port the supported **Toolbar** Kumo family to Rust/GPUI. The action/link core is implemented and validated; Input/InputGroup compact addon actions are also implemented; direct actions, independent addon removal and popup/richer composition, RTL and full-gallery/platform/speech acceptance remain.
+
+## Compact addon action continuation — 2026-10-03
+
+Independent action Tab stops, remembered-entry arrow navigation, root/editor versus group availability, hosted focus containment/reorder/removal recovery, and native deferred text snapshot updates are implemented. [Source/native evidence](../evidence/toolbar/addon-actions/README.md). Exact pins and29/43 working-family coverage remain; #35 stays open.
 
 ## Toolbar retained editor continuation — 2026-10-03
 

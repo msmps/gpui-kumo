@@ -737,3 +737,110 @@ fn toolbar_disabled_clipboard_guard_reads_current_owner_before_rerender(cx: &mut
         assert_eq!(cx.read_from_clipboard().unwrap().text().unwrap(), "status");
     });
 }
+
+fn addon_items(inputs: &[Entity<InputState>]) -> Vec<ToolbarItem> {
+    let target = inputs[3].downgrade();
+    vec![
+        ToolbarItem::button("first", "Before"),
+        ToolbarItem::input_group("filter", &inputs[3], px(220.))
+            .start(InputGroupAddon::text("Filter"))
+            .end(InputGroupAddon::button(
+                "clear",
+                "Clear",
+                move |button, _, _| {
+                    let target = target.clone();
+                    button.on_click(move |_, window, cx| {
+                        let _ = target.update(cx, |s, cx| {
+                            let value = format!("{}!", s.value(cx));
+                            s.set_value(value, window, cx);
+                        });
+                    })
+                },
+            )),
+        ToolbarItem::button("last", "After"),
+    ]
+}
+#[gpui_kit::test]
+fn embedded_actions_keep_independent_tab_activation_and_root_availability(cx: &mut TestAppContext) {
+    let (view, cx) = editors(cx);
+    cx.update(|window, cx| {
+        let toolbar = view.read(cx).toolbar.clone();
+        let inputs = view.read(cx).inputs.clone();
+        toolbar.update(cx, |s, cx| s.set_items(addon_items(&inputs), window, cx));
+        window.render_frame(cx);
+        window.within("filter").click("clear", cx);
+        window.render_frame(cx);
+        assert_eq!(window.within("filter").find("clear").focused(), Some(true));
+        assert_eq!(inputs[3].read(cx).value(cx).as_ref(), "status!");
+        window.press("space", cx);
+        window.press("enter", cx);
+        window.render_frame(cx);
+        assert_eq!(inputs[3].read(cx).value(cx).as_ref(), "status!!!");
+        window.press("right", cx);
+        window.render_frame(cx);
+        assert!(
+            focused_editor(&view, 3, window, cx),
+            "fresh addon uses the initial Toolbar entry"
+        );
+        window.within("editors").click("first", cx);
+        window.press("right", cx);
+        window.render_frame(cx);
+        assert!(focused_editor(&view, 3, window, cx));
+        window.focus_next(cx);
+        window.render_frame(cx);
+        assert_eq!(window.within("filter").find("clear").focused(), Some(true));
+        window.press("right", cx);
+        window.render_frame(cx);
+        assert!(toolbar.read(cx).items[2].focus.is_focused(window));
+        toolbar.update(cx, |s, cx| s.set_disabled(true, window, cx));
+        window.render_frame(cx);
+        window.within("filter").click("clear", cx);
+        window.render_frame(cx);
+        assert_eq!(window.within("filter").find("clear").focused(), Some(true));
+        window.press("space", cx);
+        window.press("enter", cx);
+        window.render_frame(cx);
+        assert_eq!(inputs[3].read(cx).value(cx).as_ref(), "status!!!!!!");
+        assert!(!inputs[3].read(cx).is_disabled());
+        inputs[3].update(cx, |s, cx| s.set_disabled(true, cx));
+        window.render_frame(cx);
+        window.within("filter").click("clear", cx);
+        window.press("space", cx);
+        window.render_frame(cx);
+        assert_eq!(inputs[3].read(cx).value(cx).as_ref(), "status!!!!!!");
+        assert!(
+            !window
+                .within("filter")
+                .find("clear")
+                .focused()
+                .unwrap_or(false)
+        );
+    });
+}
+#[gpui_kit::test]
+fn embedded_action_reorder_and_focused_group_removal_recover_then_exit(cx: &mut TestAppContext) {
+    let (view, cx) = editors(cx);
+    cx.update(|window, cx| {
+        let toolbar = view.read(cx).toolbar.clone();
+        let inputs = view.read(cx).inputs.clone();
+        toolbar.update(cx, |s, cx| s.set_items(addon_items(&inputs), window, cx));
+        window.render_frame(cx);
+        window.within("filter").click("clear", cx);
+        window.render_frame(cx);
+        toolbar.update(cx, |s, cx| {
+            let mut items = addon_items(&inputs);
+            items.swap(0, 2);
+            s.set_items(items, window, cx);
+        });
+        window.render_frame(cx);
+        assert_eq!(window.within("filter").find("clear").focused(), Some(true));
+        toolbar.update(cx, |s, cx| {
+            s.set_items(vec![ToolbarItem::button("first", "Before")], window, cx);
+        });
+        window.render_frame(cx);
+        assert!(toolbar.read(cx).items[0].focus.is_focused(window));
+        window.focus_next(cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("outside-after").focused(), Some(true));
+    });
+}

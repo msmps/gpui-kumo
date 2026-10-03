@@ -11,7 +11,14 @@ use gpui_kit::{
 use gpui_kumo::{Appearance, set_appearance};
 gpui_kit::actions!(
     toolbar_review,
-    [Next, Previous, ToggleItems, ToggleDisabled, ToggleReadonly]
+    [
+        Next,
+        Previous,
+        ToggleItems,
+        ToggleDisabled,
+        ToggleReadonly,
+        ToggleGroupDisabled
+    ]
 );
 struct Review {
     focus: gpui_kit::FocusHandle,
@@ -36,6 +43,9 @@ impl Render for Review {
             }))
             .on_action(cx.listener(|this, _: &ToggleReadonly, _, cx| {
                 this.toolbar.update(cx, |s, cx| s.toggle_readonly(cx));
+            }))
+            .on_action(cx.listener(|this, _: &ToggleGroupDisabled, _, cx| {
+                this.toolbar.update(cx, |s, cx| s.toggle_group_disabled(cx));
             }))
             .flex()
             .flex_col()
@@ -83,6 +93,7 @@ fn main() {
                 gpui_kit::KeyBinding::new("alt-t", ToggleItems, None),
                 gpui_kit::KeyBinding::new("alt-d", ToggleDisabled, None),
                 gpui_kit::KeyBinding::new("alt-r", ToggleReadonly, None),
+                gpui_kit::KeyBinding::new("alt-g", ToggleGroupDisabled, None),
             ]);
             set_appearance(
                 if dark {

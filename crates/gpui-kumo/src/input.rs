@@ -206,6 +206,11 @@ impl InputState {
     pub(super) fn effectively_disabled(&self) -> bool {
         self.disabled || self.toolbar_disabled
     }
+    pub(crate) fn toolbar_group_contains_focus(&self, window: &Window, cx: &App) -> bool {
+        self.group_focus
+            .as_ref()
+            .is_some_and(|scope| scope.contains_focused(window, cx))
+    }
     pub(crate) fn toolbar_arrow_at_boundary(
         &mut self,
         forward: bool,
@@ -359,6 +364,12 @@ impl Render for InputState {
             self.set_toolbar_disabled(false, cx);
         }
         let disabled = self.effectively_disabled();
+        let group_disabled = self.disabled;
+        let surface_disabled = if self.presentation.group.is_some() {
+            group_disabled
+        } else {
+            disabled
+        };
         let toolbar = self.presentation.toolbar.as_ref();
         let focus = self.focus_handle(cx);
         if let Some(hooks) = toolbar {
@@ -715,6 +726,12 @@ impl Render for InputState {
             .when_some(editor_content_width, |this, width| {
                 this.flex_initial().w(width).max_w_full()
             })
+            .capture_any_mouse_down(move |_, window, cx| {
+                if disabled {
+                    window.prevent_default();
+                    cx.stop_propagation();
+                }
+            })
             .child(editor_semantics);
         let (container_buttons, joined_buttons) = if joined {
             (Vec::new(), direct_buttons)
@@ -753,7 +770,7 @@ impl Render for InputState {
             .line_height(text.line_height)
             .font_weight(FontWeight::NORMAL)
             .when(group.is_some() && !joined, |this| {
-                this.opacity(if disabled && toolbar.is_none() {
+                this.opacity(if surface_disabled {
                     0.5
                 } else {
                     1.
@@ -777,13 +794,13 @@ impl Render for InputState {
             .when_some(toolbar, |this, hooks| {
                 let on_focus = hooks.on_focus.clone();
                 this.on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
-                    if !disabled {
+                    if !disabled && !window.default_prevented() {
                         on_focus(window, cx);
                     }
                 })
             })
             .capture_any_mouse_down(move |_, window, cx| {
-                if disabled {
+                if surface_disabled {
                     window.prevent_default();
                     cx.stop_propagation();
                 }
@@ -794,8 +811,8 @@ impl Render for InputState {
                 macro_rules! guard {
                     ($($action:ty),* $(,)?) => { $( {
                         let owner = cx.entity().downgrade();
-                        this = this.capture_action(move |_: &$action, _, cx| {
-                            if owner.upgrade().is_some_and(|state| !state.read(cx).effectively_disabled()) { cx.propagate(); } else { cx.stop_propagation(); }
+                        this = this.capture_action(move |_: &$action, window, cx| {
+                            if owner.upgrade().is_some_and(|state| { let state = state.read(cx); !state.focus_handle(cx).is_focused(window) || !state.effectively_disabled() }) { cx.propagate(); } else { cx.stop_propagation(); }
                         });
                     } )* };
                 }
@@ -819,14 +836,17 @@ impl Render for InputState {
                 );
                 this
             })
-            .capture_key_down(move |event, window, cx| {
-                if disabled && event.keystroke.key != "tab" {
-                    window.prevent_default();
-                    cx.stop_propagation();
+            .capture_key_down({
+                let focus = focus.clone();
+                move |event, window, cx| {
+                    if disabled && focus.is_focused(window) && event.keystroke.key != "tab" {
+                        window.prevent_default();
+                        cx.stop_propagation();
+                    }
                 }
             })
             .on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
-                if !disabled {
+                if !disabled && !window.default_prevented() {
                     target.focus(window, cx);
                 }
                 window.prevent_default();
@@ -872,7 +892,10 @@ impl Render for InputState {
                             && let Some(editor) = text_editor.upgrade()
                             && text_prepaint.capture(editor.read(cx))
                         {
-                            let _ = paint_state.update(cx, |_, cx| cx.notify());
+                            let owner = paint_state.clone();
+                            window.defer(cx, move |_, cx| {
+                                let _ = owner.update(cx, |_, cx| cx.notify());
+                            });
                         }
                         if let Some((first, last, rings)) = &toolbar_ring {
                             if focused {
@@ -984,7 +1007,7 @@ impl Render for InputState {
                     .role(gpui_kit::Role::Group)
                     .aria_label(self.name.clone())
                     .a11y_synthetic_children(move |builder| {
-                        if disabled {
+                        if group_disabled {
                             builder.parent_node().set_disabled();
                         }
                     })

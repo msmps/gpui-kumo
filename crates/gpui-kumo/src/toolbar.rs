@@ -92,7 +92,7 @@ impl ToolbarItem {
         });
         item
     }
-    /// A shared editor with passive addons. Embedded actions/popup replacement follow separately.
+    /// A shared editor with passive addons and independently tabbable compact actions.
     pub fn input_group(
         id: impl Into<ElementId>,
         state: &Entity<InputState>,
@@ -113,15 +113,13 @@ impl ToolbarItem {
             .as_mut()
             .expect("addons require Toolbar InputGroup")
     }
-    /// Passive text/icon addons; nested parts are supported. Embedded actions are a separate slice.
+    /// Text, icon or compact action addons; nested parts are supported.
     pub fn start(mut self, addon: InputGroupAddon) -> Self {
-        Self::passive(&addon);
         self.group_mut().start = Some(addon);
         self
     }
-    /// Passive trailing addons under the same InputGroup contract as `start`.
+    /// Trailing addons under the same InputGroup contract as `start`.
     pub fn end(mut self, addon: InputGroupAddon) -> Self {
-        Self::passive(&addon);
         self.group_mut().end = Some(addon);
         self
     }
@@ -129,15 +127,6 @@ impl ToolbarItem {
     pub fn suffix(mut self, text: impl Into<SharedString>) -> Self {
         self.group_mut().suffix = Some(text.into());
         self
-    }
-    fn passive(addon: &InputGroupAddon) {
-        match addon {
-            InputGroupAddon::Action(_) => {
-                panic!("Toolbar embedded addon actions require the later composition slice")
-            }
-            InputGroupAddon::Parts(parts) => parts.iter().for_each(Self::passive),
-            _ => {}
-        }
     }
     /// Decorative SVG using the application's AssetSource. Icon-only controls keep `name`.
     pub fn icon(mut self, path: impl Into<SharedString>, icon_only: bool) -> Self {
@@ -287,6 +276,10 @@ impl ToolbarState {
             || matches!(&item.kind, Kind::Input(editor) if editor.state.read(cx).is_disabled())
     }
     fn eligible(&self, item: &ToolbarItem, cx: &App) -> bool {
+        if matches!(&item.kind, Kind::Input(editor) if editor.group.is_some() && editor.state.read(cx).is_disabled())
+        {
+            return false;
+        }
         !self.unavailable(item, cx)
             || (!matches!(item.kind, Kind::Link(_)) && item.focusable_when_disabled)
     }
@@ -305,6 +298,10 @@ impl ToolbarState {
                     .position(|i| self.eligible(&i.control, cx))
             })
     }
+    fn owns_focus(item: &Item, window: &Window, cx: &App) -> bool {
+        item.focus.is_focused(window)
+            || matches!(&item.control.kind, Kind::Input(editor) if editor.group.is_some() && editor.state.read(cx).toolbar_group_contains_focus(window, cx))
+    }
     fn leave(&self, window: &mut Window, cx: &mut Context<Self>, removed: &[Item]) {
         for _ in 0..self.items.len() + removed.len() + 2 {
             window.focus_next(cx);
@@ -312,7 +309,7 @@ impl ToolbarState {
                 .items
                 .iter()
                 .chain(removed)
-                .any(|i| i.focus.is_focused(window))
+                .any(|i| Self::owns_focus(i, window, cx))
             {
                 return;
             }
@@ -323,7 +320,7 @@ impl ToolbarState {
         if self
             .items
             .iter()
-            .any(|i| i.focus.is_focused(window) && !self.eligible(&i.control, cx))
+            .any(|i| Self::owns_focus(i, window, cx) && !self.eligible(&i.control, cx))
         {
             if let Some(index) = self.entry(window, cx) {
                 self.focus_item(&self.items[index].control.id.clone(), window, cx);
@@ -350,7 +347,7 @@ impl ToolbarState {
         let focused = self
             .items
             .iter()
-            .find(|i| i.focus.is_focused(window))
+            .find(|i| Self::owns_focus(i, window, cx))
             .map(|i| i.control.id.clone());
         for item in &self.items {
             if let Kind::Input(editor) = &item.control.kind {
@@ -386,7 +383,9 @@ impl ToolbarState {
             .collect();
         if let Some(id) = focused
             && !self.items.iter().any(|i| {
-                i.control.id == id && self.eligible(&i.control, cx) && i.focus.is_focused(window)
+                i.control.id == id
+                    && self.eligible(&i.control, cx)
+                    && Self::owns_focus(i, window, cx)
             })
         {
             if let Some(index) = self
@@ -404,7 +403,7 @@ impl ToolbarState {
         cx.notify();
     }
     fn reveal_focused(&self, window: &Window, cx: &mut Context<Self>) {
-        let Some(item) = self.items.iter().find(|i| i.focus.is_focused(window)) else {
+        let Some(item) = self.items.iter().find(|i| Self::owns_focus(i, window, cx)) else {
             return;
         };
         let Some(mut bounds) = item.bounds.get() else {
@@ -505,7 +504,22 @@ impl ToolbarState {
             .iter()
             .filter(|i| self.eligible(&i.control, cx))
             .collect();
-        let Some(current) = eligible.iter().position(|i| i.focus.is_focused(window)) else {
+        let current = eligible
+            .iter()
+            .position(|i| i.focus.is_focused(window))
+            .or_else(|| {
+                self.items
+                    .iter()
+                    .any(|i| Self::owns_focus(i, window, cx))
+                    .then(|| {
+                        eligible
+                            .iter()
+                            .position(|i| Some(&i.control.id) == self.active.as_ref())
+                            .or_else(|| (!eligible.is_empty()).then_some(0))
+                    })
+                    .flatten()
+            });
+        let Some(current) = current else {
             return false;
         };
         let next = if forward {
