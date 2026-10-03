@@ -40,7 +40,7 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 | KUMO-032 | CommandPalette | [port CommandPalette](032-command-palette-port.md) ([#17](https://github.com/msmps/gpui-kumo/issues/17)) | Open |
 | KUMO-033 | DatePicker | [port DatePicker](033-date-picker-port.md) ([#18](https://github.com/msmps/gpui-kumo/issues/18)) | Open |
 | KUMO-034 | Dialog | [port Dialog](034-dialog-port.md) ([#19](https://github.com/msmps/gpui-kumo/issues/19)) | Open |
-| KUMO-035 | Dropdown | [port Dropdown](035-dropdown-port.md) ([#20](https://github.com/msmps/gpui-kumo/issues/20)) | Open |
+| KUMO-035 | Dropdown | [port Dropdown](035-dropdown-port.md) ([#20](https://github.com/msmps/gpui-kumo/issues/20)) | Core implemented; parts in progress |
 | KUMO-036 | Grid | [port Grid](036-grid-port.md) ([#21](https://github.com/msmps/gpui-kumo/issues/21)) | Open |
 | KUMO-037 | InlineCopyText | [port InlineCopyText](037-inline-copy-text-port.md) ([#22](https://github.com/msmps/gpui-kumo/issues/22)) | In progress |
 | KUMO-038 | InputArea | [port InputArea](038-input-area-port.md) ([#23](https://github.com/msmps/gpui-kumo/issues/23)) | In progress |
@@ -76,7 +76,7 @@ The following fidelity gaps are published on 2026-10-02. GitHub numbers differ f
 
 ## Remaining component family ports
 
-The original 25-family queue has one confirmed GitHub issue per family;14 remain unported. Family issues each (#11–#35), linked above and in [coverage](../component-coverage.md). Local IDs KUMO-026–050 distinguish these family ports from earlier fidelity follow-ups. Issues describe the pinned Base primitives, dependency order, limitations and acceptance gates: 11 direct counterparts, 7 partial compositions and 7 without a dedicated Base counterpart. A direct name does not establish complete behavior; Tabs keyboard navigation, Dropdown menu semantics and Meter range semantics require particular care. Publication does not change implementation coverage.
+The original 25-family queue has one confirmed GitHub issue per family;13 remain unported. Family issues each (#11–#35), linked above and in [coverage](../component-coverage.md). Local IDs KUMO-026–050 distinguish these family ports from earlier fidelity follow-ups. Issues describe the pinned Base primitives, dependency order, limitations and acceptance gates: 11 direct counterparts, 7 partial compositions and 7 without a dedicated Base counterpart. A direct name does not establish complete behavior; Tabs keyboard navigation, Dropdown menu semantics and Meter range semantics require particular care. Publication does not change implementation coverage.
 
 ## Maintaining the tracker
 

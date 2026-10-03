@@ -1,0 +1,266 @@
+[
+  {
+    "name": "light-1040",
+    "result": "PASS",
+    "geometry": {
+      "x": 5,
+      "y": 186,
+      "width": 220,
+      "height": 219,
+      "items": [
+        {
+          "name": "Save\u2318S",
+          "x": 11,
+          "y": 225,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Save as draft",
+          "x": 11,
+          "y": 258,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Publish (unavailable)",
+          "x": 11,
+          "y": 291,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Duplicate",
+          "x": 11,
+          "y": 333,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Delete",
+          "x": 11,
+          "y": 366,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        }
+      ]
+    },
+    "checks": [
+      "arrows focus disabled and wrap; disabled activation guarded",
+      "End",
+      "Space and pointer activate once",
+      "repeated typeahead",
+      "Escape restores trigger",
+      "Tab/reverse Tab exits",
+      "outside dismissal"
+    ]
+  },
+  {
+    "name": "light-520",
+    "result": "PASS",
+    "geometry": {
+      "x": 5,
+      "y": 186,
+      "width": 220,
+      "height": 219,
+      "items": [
+        {
+          "name": "Save\u2318S",
+          "x": 11,
+          "y": 225,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Save as draft",
+          "x": 11,
+          "y": 258,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Publish (unavailable)",
+          "x": 11,
+          "y": 291,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Duplicate",
+          "x": 11,
+          "y": 333,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Delete",
+          "x": 11,
+          "y": 366,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        }
+      ]
+    },
+    "checks": [
+      "arrows focus disabled and wrap; disabled activation guarded",
+      "End",
+      "Space and pointer activate once",
+      "repeated typeahead",
+      "Escape restores trigger",
+      "Tab/reverse Tab exits",
+      "outside dismissal"
+    ]
+  },
+  {
+    "name": "dark-1040",
+    "result": "PASS",
+    "geometry": {
+      "x": 5,
+      "y": 186,
+      "width": 220,
+      "height": 219,
+      "items": [
+        {
+          "name": "Save\u2318S",
+          "x": 11,
+          "y": 225,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Save as draft",
+          "x": 11,
+          "y": 258,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Publish (unavailable)",
+          "x": 11,
+          "y": 291,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Duplicate",
+          "x": 11,
+          "y": 333,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Delete",
+          "x": 11,
+          "y": 366,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        }
+      ]
+    },
+    "checks": [
+      "arrows focus disabled and wrap; disabled activation guarded",
+      "End",
+      "Space and pointer activate once",
+      "repeated typeahead",
+      "Escape restores trigger",
+      "Tab/reverse Tab exits",
+      "outside dismissal"
+    ]
+  },
+  {
+    "name": "dark-520",
+    "result": "PASS",
+    "geometry": {
+      "x": 5,
+      "y": 186,
+      "width": 220,
+      "height": 219,
+      "items": [
+        {
+          "name": "Save\u2318S",
+          "x": 11,
+          "y": 225,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Save as draft",
+          "x": 11,
+          "y": 258,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Publish (unavailable)",
+          "x": 11,
+          "y": 291,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Duplicate",
+          "x": 11,
+          "y": 333,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        },
+        {
+          "name": "Delete",
+          "x": 11,
+          "y": 366,
+          "width": 208,
+          "height": 33,
+          "font": "14px",
+          "lineHeight": "21px"
+        }
+      ]
+    },
+    "checks": [
+      "arrows focus disabled and wrap; disabled activation guarded",
+      "End",
+      "Space and pointer activate once",
+      "repeated typeahead",
+      "Escape restores trigger",
+      "Tab/reverse Tab exits",
+      "outside dismissal"
+    ]
+  }
+]

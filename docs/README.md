@@ -80,3 +80,5 @@ Cloud continuation: [self-contained handoff prompt](cloud-handoff-prompt.md), [r
 Tabs: [core contract, native acceptance and remaining overflow/motion work](tabs-validation.md).
 
 Toolbar: [retained actions/links/editors, source/native evidence and remaining composition](toolbar-validation.md).
+
+Dropdown: [retained action-menu contract, evidence and remaining composition](dropdown-validation.md).

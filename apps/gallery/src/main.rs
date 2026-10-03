@@ -22,6 +22,7 @@ mod empties;
 mod fields;
 mod foundations;
 use foundations::panel;
+mod dropdowns;
 mod inline_copies;
 mod input_areas;
 mod input_groups;
@@ -106,6 +107,7 @@ struct Gallery {
     tabs: gpui_kit::Entity<tabs::TabExamples>,
     toolbars: gpui_kit::Entity<toolbars::Toolbars>,
     toolbar_editors: gpui_kit::Entity<toolbar_editors::ToolbarEditors>,
+    dropdowns: gpui_kit::Entity<dropdowns::Dropdowns>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -217,6 +219,7 @@ impl Render for Gallery {
         .child(self.tabs.clone())
         .child(self.toolbars.clone())
         .child(self.toolbar_editors.clone())
+        .child(self.dropdowns.clone())
         .child(self.input_groups.clone())
         .child(self.selects.clone())
         .child(self.breadcrumbs.clone())
@@ -333,6 +336,7 @@ fn main() {
                             toolbars: cx.new(toolbars::Toolbars::new),
                             toolbar_editors: cx
                                 .new(|cx| toolbar_editors::ToolbarEditors::new(window, cx)),
+                            dropdowns: cx.new(dropdowns::Dropdowns::new),
                             activations: 0,
                             disabled: false,
                             loading: false,

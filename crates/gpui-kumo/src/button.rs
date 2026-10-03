@@ -66,6 +66,7 @@ pub struct Button {
     tooltip_trigger: Option<Box<crate::tooltip::TriggerHooks>>,
     open: bool,
     expanded: Option<(bool, Option<&'static str>)>,
+    menu_trigger: bool,
     focus_handle: Option<FocusHandle>,
     on_click: Option<ActivationHandler>,
     accent: Option<Box<AccentRecipe>>,
@@ -93,6 +94,7 @@ impl Button {
             tooltip_trigger: None,
             open: false,
             expanded: None,
+            menu_trigger: false,
             focus_handle: None,
             on_click: None,
             accent: None,
@@ -215,6 +217,19 @@ impl Button {
                 "Expanded nonmodal dialog"
             } else {
                 "Collapsed nonmodal dialog"
+            }),
+        ));
+        self
+    }
+
+    pub(crate) fn menu_expanded(mut self, expanded: bool) -> Self {
+        self.menu_trigger = true;
+        self.expanded = Some((
+            expanded,
+            Some(if expanded {
+                "Expanded menu"
+            } else {
+                "Collapsed menu"
             }),
         ));
         self
@@ -565,6 +580,9 @@ impl RenderOnce for Button {
                 }
                 if self.loading {
                     node.set_busy();
+                }
+                if self.menu_trigger {
+                    node.set_has_popup(gpui_kit::accesskit::HasPopup::Menu);
                 }
             })
             .when_some(self.expanded, |this, (expanded, description)| {

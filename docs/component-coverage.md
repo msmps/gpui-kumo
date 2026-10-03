@@ -2,7 +2,7 @@
 
 Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-03. This is a count of catalog component families, not subparts or fidelity acceptance checkboxes. Checkbox.Group/Item, Radio.Item, TooltipProvider and Button subsidiary APIs count inside their families. InputArea, SkeletonLine and recommended CodeHighlighted have separate catalog pages and count separately even though some share source directories.
 
-43 in-scope families:29 with working implementations,14 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
+43 in-scope families:30 with working implementations,13 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
 
 | Catalog component | State |
 | --- | --- |
@@ -20,7 +20,7 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-03. This
 | command-palette | Unported — [#17](https://github.com/msmps/gpui-kumo/issues/17) |
 | date-picker | Unported — [#18](https://github.com/msmps/gpui-kumo/issues/18) |
 | dialog | Unported — [#19](https://github.com/msmps/gpui-kumo/issues/19) |
-| dropdown | Unported — [#20](https://github.com/msmps/gpui-kumo/issues/20) |
+| dropdown | Flat action-menu core implemented; [contract and remaining composition](dropdown-validation.md) — [#20](https://github.com/msmps/gpui-kumo/issues/20) |
 | empty | Implemented; see component acceptance/gaps |
 | field | Implemented; see component acceptance/gaps |
 | grid | Unported — [#21](https://github.com/msmps/gpui-kumo/issues/21) |

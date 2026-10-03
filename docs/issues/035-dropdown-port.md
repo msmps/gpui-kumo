@@ -1,12 +1,16 @@
 # KUMO-035: Port Dropdown with Kumo fidelity over GPUI Base
 
-Status: Open
+Status: Action core implemented; full family open
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/20
 
 ## Goal and status
 
-Port the supported **Dropdown** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Dropdown** Kumo family to Rust/GPUI. The flat action-menu core is implemented; the issue remains open for checkbox/radio/link/submenu/group/joined and rich trigger composition, motion/RTL and full platform/speech acceptance.
+
+## Action core checkpoint — 2026-10-03
+
+Retained DropdownState/typed action parts/operation events, source keyboard-focusable disabled rows, arrow/Home/End/typeahead, once-only activation, Escape/Tab/outside lifecycle, reorder/removal/unmount recovery and bounded scrolling are implemented over Base Popup. Shared gallery Save actions and focused native preview are integrated. Six rendered regressions and browser/native Light/Dark1040/520 evidence cover the flat action core. [Contract/adaptations](../dropdown-validation.md), [evidence](../evidence/dropdown/README.md). Coverage30/43 working,13 unported is not full fidelity; #20 remains open. No version/vendor changes.
 
 ## GPUI Kit/Base foundation
 
@@ -32,7 +36,7 @@ Build on: Button, Popover, Checkbox, Radio. These are dependencies, not a claim 
 ## Family acceptance criteria
 
 - [ ] Inspect and port actual supported menu parts, separators, selection/check states and nested-menu capabilities; retain action contracts and closed/open controlled ownership.
-- [ ] Implement menu keyboard traversal/typeahead, unavailable-item skipping, activation once, submenu opening/dismissal where supported, Escape/outside boundaries and focus restoration.
+- [ ] Implement menu keyboard traversal/typeahead, pinned unavailable-item focus/activation policy, activation once, submenu opening/dismissal where supported, Escape/outside boundaries and focus restoration.
 - [ ] Integrate a real Save dropdown and joined trigger appearance with ButtonGroup; do not present the existing arrow callback as a completed menu.
 
 ## Shared fidelity and validation gate
