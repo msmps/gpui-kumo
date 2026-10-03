@@ -100,6 +100,6 @@ Necessary example repair: [KUMO-055 — Button gallery narrow composition](055-b
 
 [KUMO-057 — narrow foundation gallery](057-foundation-gallery-narrow-layout.md) ([#42](https://github.com/msmps/gpui-kumo/issues/42)), Open. Actual swatch-column overflow below Button panels remains a separate gallery repair.
 
-[KUMO-058 — reproducible CI](058-reproducible-ci.md) ([#43](https://github.com/msmps/gpui-kumo/issues/43)), In progress.
+[KUMO-058 — reproducible CI](058-reproducible-ci.md) ([#43](https://github.com/msmps/gpui-kumo/issues/43)), Resolved — remote run 37114390570 passed at c7fd554.
 
 [KUMO-059 — native InputArea test shortcuts](059-input-area-platform-shortcuts.md) ([#44](https://github.com/msmps/gpui-kumo/issues/44)), Resolved in744354a.

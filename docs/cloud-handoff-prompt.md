@@ -6,7 +6,13 @@ Read the actual latest `origin/work` before acting. This handoff is a partial, r
 
 Use the managed-cloud runtime skill at startup. Establish the environment's network policy, toolchain, native rendering/input and accessibility tools. Preserve pinned versions: Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, Kit/Base `0.7.0`, GPUI family `0.3.7`, Rust `1.99.0`. Preserve exact workspace GPUI/Base/AccessKit patches, their provenance, boundaries, regression coverage, removal conditions and downstream Cargo-root obligations. Keep styled Component excluded.
 
-## Actual handoff state
+## Cloud continuation update — 2026-10-03
+
+Actual remote `work` inspected at `c7fd5541cf8627303936eaae07c4e94165c5c870`. #43 is resolved: [successor CI run37114390570](https://github.com/msmps/gpui-kumo/actions/runs/37114390570) passed the full locked macOS script, confirmed in job111178292212 logs. First run37114282490 was cancelled, not a measured failing test gate. [Evidence](evidence/cloud-continuation-2026-10-03/README.md). #42/#26/#38 remain open.
+
+This cloud workspace initially contained an older clean work checkout at31d2c54. Rust1.99 and native dependencies exist under `/workspace/.kumo-setup/activate.sh`. A separate snapshot of all636 source/configuration/document blobs (excluding existing evidence files) was reconstructed through the connector and individually checked against actual remote Git blob hashes. Workspace and adapter formatting pass; Linux tests cannot resolve missing cached hdrhistogram metadata and adapter endi1.1.0. The managed proxy is unreachable for ordinary Git/Cargo downloads. Restore proxy connectivity, fetch current work without resetting it, activate the setup and complete the shared Rust gate before native work. No new native acceptance or Pagination candidate is claimed.
+
+## Earlier handoff state (historical)
 
 The session started with clean local and remote `work` at `33ab7668f71ec36359164dc34ceed0e6ce8233b2`. No extra worktrees, stashes, remote candidate branch or running validation were found. Published code checkpoint: `744354a1f4c222920f6bc74dfd4cc70202623c73`. A subsequent documentation-only handoff commit reconciles the published SHA and issue states. The checkpoint adds the following work over that baseline; inspect latest HEAD and diff rather than assuming that baseline remains current:
 
@@ -30,7 +36,7 @@ Acceptance for recreation: typed Input/Dropdown controls; one authoritative reta
 
 ## First actions and priority
 
-1. Inspect actual branch/tree and latest issues/CI; finish or repair#43 remote gate. Run `bash scripts/check-rust.sh` on the selected host, distinguishing measured failures from platform limits. Linux CI/native prerequisites may need cloud-specific setup; do not weaken pinned versions or assertions.
+1. Inspect actual branch/tree and latest issues/CI; #43 remote gate passed at c7fd554 and is resolved. Restore this cloud workspace’s managed proxy and fetch current work; do not use the stale checkout as the implementation baseline. Run `bash scripts/check-rust.sh` on the selected host, distinguishing measured failures from platform limits. Linux CI/native prerequisites may need cloud-specific setup; do not weaken pinned versions or assertions.
 2. Finish#42 candidate's native visual gate and repair findings, preserving published source recipes. The rendered regression checks panels and effect-column rectangles, not painted labels/shadows. Explicitly inspect both themes, wide/narrow, corners/fills/borders/shadows, swatch/text alignment, label offsets/gaps/padding and resize transitions. Commit/push and close only after acceptance.
 3. Recover/recreate and finish#26 as above. This remains the primary library milestone;#42/#43 cleanup can proceed independently.
 4. Address#38 rich highlighted Text font discrepancy. Inspect pinned Kumo Text and installed StyledText highlight/run/font resolution, available faces and actual painted glyphs. Preserve caller-owned rich content, inherited custom fonts and source weights. Distinguish font fallback/environment from library defects. Both-theme1040/520 visual and meaningful rendered regression gate required.

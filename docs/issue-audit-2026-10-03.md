@@ -32,9 +32,11 @@ Audited `work` at33ab7668f71ec36359164dc34ceed0e6ce8233b2. GitHub REST inventory
 | #39–#40 | KUMO-054–055 | Complete recorded Busy/narrow Button repairs e1c38b8; native owner/action and containment evidence present |
 | #41 | KUMO-056 | Complete recorded authored expansion repair33ab766; optional state and exact events plus native transitions present |
 | #42 | KUMO-057 | Narrow foundation overflow, local repair/visual gate in progress |
-| #43 | KUMO-058 | Newly created bounded CI issue/milestone; workflow and exact gates in progress |
-| #44 | KUMO-059 | Newly reproduced macOS InputArea test shortcut defect; test-only repair and review pass, push pending |
+| #43 | KUMO-058 | Complete: workflow/script published744354a; full successor CI run37114390570 passed at c7fd554. See continuation evidence |
+| #44 | KUMO-059 | Complete: test-only native shortcut repair published744354a; local and successor CI regressions pass |
 
 No family closure justified from rendering/count alone. No audit-supported reopening or duplicate closure found. Existing five resolution checklists reconciled against their published evidence, without claiming new platform measurements. GitHub remains the queue; local acceptance documents retain detailed contracts.
 
 Independently reproduced: baseline169 library tests with three failures; repaired native shortcuts pass169 plus foundation gallery regression and nine doctests. Workspace formatting/Clippy/build/default-gallery gate passed; exact adapter12default/14all-feature tests and warning-denied lint passed after approved locked dependency download. Native foundation final matrix remains incomplete; code checkpoint744354a is published, #44 closed, first remote CI run37114282490 is in progress. No CI runs existed at audit baseline.
+
+Cloud continuation subsequently inventoried all 44 issues with `state=all&per_page=100` (one full result set, below the page limit) at c7fd554. #43 now has successful remote acceptance in run37114390570, including its actual job log; the earlier run was cancelled. No other new closure is justified by that CI result. [Continuation evidence](evidence/cloud-continuation-2026-10-03/README.md) separates the remote pass from the measured Linux dependency/network blocker.
