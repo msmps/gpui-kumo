@@ -1086,3 +1086,68 @@ fn select_actual_base_node_enrichment_and_message_precedence(cx: &mut TestAppCon
         assert!(node.is_disabled());
     });
 }
+
+#[gpui_kit::test]
+fn compact_numeric_popup_reserves_check_space_only_for_selected_options(cx: &mut TestAppContext) {
+    struct Numeric(Entity<SelectState<u32>>);
+    impl Render for Numeric {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            div().w(px(40.)).child(Select::new("numeric", &self.0))
+        }
+    }
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|_, cx| {
+        Numeric(cx.new(|cx| {
+            SelectState::new(
+                "Page",
+                SelectValue::Single(Some(3)),
+                (1..=10)
+                    .map(|n| SelectOption::new(format!("number-{n}"), n, n.to_string()))
+                    .collect(),
+                cx,
+            )
+        }))
+    });
+    let state = view.read_with(cx, |v, _| v.0.clone());
+    cx.update(|window, cx| {
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            let mut widths = Vec::new();
+            for selected in [3, 10, 3] {
+                state.update(cx, |s, cx| {
+                    s.set_value(SelectValue::Single(Some(selected)), cx);
+                    s.set_open(true, window, cx);
+                });
+                window.render_frame(cx);
+                window.render_frame(cx);
+                let surface = window.find("surface").bounds();
+                let text: SharedString = selected.to_string().into();
+                let run = gpui_kit::TextRun {
+                    len: text.len(),
+                    font: gpui_kit::font(theme(cx).typography.font_family.clone()),
+                    color: theme(cx).text.default,
+                    background_color: None,
+                    underline: None,
+                    strikethrough: None,
+                };
+                let expected = window
+                    .text_system()
+                    .shape_line(text, px(14.), &[run], None)
+                    .width
+                    + px(52.);
+                assert!(
+                    (surface.size.width - expected).abs() <= px(1.),
+                    "selected {selected}: {:?} vs {expected:?}",
+                    surface.size.width
+                );
+                widths.push(surface.size.width);
+                let row = window.find(format!("number-{selected}")).bounds();
+                assert!(row.right() <= surface.right());
+                assert_eq!(row.size.height, px(33.));
+                state.update(cx, |s, cx| s.set_open(false, window, cx));
+            }
+            assert!(widths[1] > widths[0]);
+            assert_eq!(widths[0], widths[2]);
+        }
+    });
+}

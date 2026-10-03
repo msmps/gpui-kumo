@@ -14,7 +14,7 @@ Audited at `c1026fe042c133929eea2ef15da6e6a05b57c617`: 32/43 working families, 1
 
 ## Remaining acceptance
 
-- [ ] Repair measured numbered popup width/check-slot discrepancy (70px native versus about 60.92px source for selected 3).
+- [x] Repair numbered popup width/check-slot discrepancy: selected-only indicators and source-derived per-option sizing now pass rendered regressions and native Light/Dark1040/520 captures. See [quick-win evidence](../evidence/quick-wins/README.md).
 - [ ] Complete remaining source trigger/placement/rich-help/replacement capabilities.
 - [ ] Finish narrow collision/moving-anchor and native/browser composition acceptance.
 

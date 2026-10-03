@@ -88,3 +88,11 @@ Live Linux AT-SPI locates the parent/child and actual Region03 bounds; real poin
 26/43 working;17 unported unchanged. Select #27 remains in progress for remaining source/API/platform fidelity. Next selected: Pagination #26, a common composition now unlocked by retained Select and existing Button. Inspect the full pinned source/docs/demos/tests and installed Base Pagination before defining its source-controlled page/page-size/total semantics and acceptance matrix.
 
 PageSize dependency review: source popup uses anchor **minimum**, not a fixed width. Compact numeric anchors exposed vertical digit wrapping. Bounded plain-word intrinsic minimum now includes existing option/check/border chrome; sentences may wrap and rich content retains caller layout. Actual row-height baseline52px failed against32px source, then passed; all21 Select regressions remain valid. Linux Expansion export omission is #41; authored ComboBox string value has no Text/Value interface without native text ranges/numeric value. Earlier rendered metadata results do not establish those platform exports or speech.
+
+## Selected-only numeric popup sizing — 2026-10-03
+
+The pinned source mounts ItemIndicator only for selected items. Native rows now follow that rule; intrinsic popup measurement computes each plain option's word width with the22px check/gap addition only when selected, preserving the anchor minimum, native border and viewport bound. Shaped word widths round upward to prevent fractional-layout wrapping. A production-render regression exercises3→10→3 selection,33px rows, containment and dynamic popup resizing in both themes.
+
+macOS Metal1040/520 Light/Dark captures measure61px for selected3 and68px for selected10; both fit on one line. Earlier DejaVu browser measurements were60.92/69.83px, so these system-font captures establish selected-only layout and native fit, not exact cross-font pixel identity. [Native fixture/results/alignment and corners](evidence/quick-wins/README.md). Full locked gate passes232library/1gallery/9doctests and adapter12/14, formatting, warnings-denied lint and builds.
+
+The confirmed numeric width/check-slot defect is resolved. #27 stays open for trigger/placement/rich-help/replacement capabilities and narrow collision/moving-anchor/native-browser acceptance; #26's remaining native matrix is unchanged.

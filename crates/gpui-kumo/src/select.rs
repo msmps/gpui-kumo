@@ -1259,35 +1259,47 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
         }
         // CSS gives the source popup an anchor minimum, not a fixed anchor
         // width. Plain option words need their intrinsic text space plus the
-        // actual mx6/px8/check14/gap8/border1 recipe. Allow long sentences to
+        // actual mx6/px8 and selected-only check14/gap8 recipe. Allow long sentences to
         // wrap while keeping compact numeric options on one line. Rich option
         // content keeps its existing caller-owned layout contract.
-        let word_width = self
+        let option_width = self
             .options()
             .filter(|option| option.content.is_none())
-            .flat_map(|option| option.label.split_whitespace())
-            .map(|word| {
-                let text: SharedString = word.to_owned().into();
-                let run = gpui_kit::TextRun {
-                    len: text.len(),
-                    font: gpui_kit::font(t.typography.font_family.clone()),
-                    color: t.text.default,
-                    background_color: None,
-                    underline: None,
-                    strikethrough: None,
-                };
-                window
-                    .text_system()
-                    .shape_line(text, px(14.), &[run], None)
-                    .width
-                    .ceil()
+            .map(|option| {
+                let word_width = option
+                    .label
+                    .split_whitespace()
+                    .map(|word| {
+                        let text: SharedString = word.to_owned().into();
+                        let run = gpui_kit::TextRun {
+                            len: text.len(),
+                            font: gpui_kit::font(t.typography.font_family.clone()),
+                            color: t.text.default,
+                            background_color: None,
+                            underline: None,
+                            strikethrough: None,
+                        };
+                        window
+                            .text_system()
+                            .shape_line(text, px(14.), &[run], None)
+                            .width
+                            .ceil()
+                    })
+                    .fold(px(0.), |width, next| width.max(next));
+                word_width
+                    + if self.selected(&option.value) {
+                        px(22.)
+                    } else {
+                        px(0.)
+                    }
             })
             .fold(px(0.), |width, next| width.max(next));
-        let option_chrome = px(2. * 6. + 2. * 8. + 14. + 8. + 2. * 1.);
+        // Include the native border without reserving checks on unselected rows.
+        let option_chrome = px(2. * 6. + 2. * 8. + 2. * 1.);
         let popup_width = trigger_bounds
             .size
             .width
-            .max(word_width + option_chrome)
+            .max(option_width + option_chrome)
             .min((window.viewport_size().width - px(16.)).max(px(1.)));
         let surface = div()
             .id("surface")
@@ -1427,14 +1439,16 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
                         div().child(option.label.clone()).into_any_element()
                     }),
             )
-            .child(div().size(px(14.)).flex_shrink_0().when(selected, |v| {
+            .when(selected, |v| {
                 v.child(
-                    svg()
-                        .data(include_bytes!("../assets/empty-check.svg").as_slice())
-                        .size_full()
-                        .text_color(t.text.default),
+                    div().size(px(14.)).flex_shrink_0().child(
+                        svg()
+                            .data(include_bytes!("../assets/empty-check.svg").as_slice())
+                            .size_full()
+                            .text_color(t.text.default),
+                    ),
                 )
-            }))
+            })
             .when(highlighted, |v| {
                 let brand = t.colors.brand;
                 v.child(

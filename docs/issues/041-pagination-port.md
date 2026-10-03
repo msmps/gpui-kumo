@@ -16,7 +16,7 @@ Audited at `c1026fe042c133929eea2ef15da6e6a05b57c617`: 32/43 working families, 1
 
 - [ ] Finish interrupted native Light/Dark1040/520 Dropdown and PageSize matrices; retain failed setup evidence.
 - [ ] Verify popup collision/scrolling and painted alignment/corners at narrow widths.
-- [ ] Coordinate numbered Select popup width/check-slot discrepancy with #27; avoid duplicating its implementation work.
+- [x] Coordinate numbered Select popup width/check-slot correction with #27; shared sizing repair and bounded native matrix are recorded in [quick-win evidence](../evidence/quick-wins/README.md).
 
 Browser comparison belongs to #10; OS IME to #1 where applicable; spoken Linux/VoiceOver/Windows acceptance to #2–#4. Native tests and metadata do not establish spoken or full platform fidelity. Existing native adaptations and dependency limitations remain in the linked contract.
 
