@@ -2,14 +2,14 @@
 
 Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-02. This is a count of catalog component families, not subparts or fidelity acceptance checkboxes. Checkbox.Group/Item, Radio.Item, TooltipProvider and Button subsidiary APIs count inside their families. InputArea, SkeletonLine and recommended CodeHighlighted have separate catalog pages and count separately even though some share source directories.
 
-43 in-scope families:24 with working implementations,19 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
+43 in-scope families:25 with working implementations,18 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
 
 | Catalog component | State |
 | --- | --- |
 | autocomplete | Unported — [#11](https://github.com/msmps/gpui-kumo/issues/11) |
 | badge | Implemented; see component acceptance/gaps |
 | banner | Implemented; see component acceptance/gaps |
-| breadcrumbs | Unported — [#12](https://github.com/msmps/gpui-kumo/issues/12) |
+| breadcrumbs | Implemented; [acceptance/gaps](breadcrumbs-validation.md), [#12](https://github.com/msmps/gpui-kumo/issues/12) remains open |
 | button | Implemented; see component acceptance/gaps |
 | button-group | Implemented; see component acceptance/gaps |
 | checkbox | Implemented; see component acceptance/gaps |

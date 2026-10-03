@@ -12,6 +12,7 @@ use gpui_kumo::{
 
 mod badges;
 mod banners;
+mod breadcrumbs;
 mod button_groups;
 mod buttons;
 mod cards;
@@ -89,6 +90,7 @@ struct Gallery {
     collapsibles: gpui_kit::Entity<collapsibles::Collapsibles>,
     skeletons: gpui_kit::Entity<skeletons::Skeletons>,
     meters: gpui_kit::Entity<meters::Meters>,
+    breadcrumbs: gpui_kit::Entity<breadcrumbs::Trails>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -196,6 +198,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.breadcrumbs.clone())
         .child(self.meters.clone())
         .child(self.skeletons.clone())
         .child(self.collapsibles.clone())
@@ -445,6 +448,7 @@ fn main() {
                             skeletons: cx.new(|_| skeletons::Skeletons),
                             collapsibles: cx.new(|cx| collapsibles::Collapsibles::new(window, cx)),
                             meters: cx.new(|_| meters::Meters::default()),
+                            breadcrumbs: cx.new(|_| breadcrumbs::Trails::default()),
                             activations: 0,
                             disabled: false,
                             loading: false,

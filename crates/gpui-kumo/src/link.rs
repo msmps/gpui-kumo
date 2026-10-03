@@ -55,6 +55,7 @@ pub struct Link {
     variant: Variant,
     content: Option<AnyElement>,
     badge_content: bool,
+    breadcrumb: bool,
     external_icon: bool,
     disabled: bool,
     on_navigate: Option<NavigateHandler>,
@@ -77,12 +78,29 @@ impl Link {
             variant: Variant::default(),
             content: None,
             badge_content: false,
+            breadcrumb: false,
             external_icon: false,
             disabled: false,
             on_navigate: None,
             on_activate: None,
             style: Default::default(),
         }
+    }
+
+    pub(crate) fn breadcrumb(mut self) -> Self {
+        self.breadcrumb = true;
+        if self.content.is_none() {
+            self.content = Some(
+                div()
+                    .id("label")
+                    .test_support()
+                    .whitespace_nowrap()
+                    .child(self.label.clone())
+                    .into_any_element(),
+            );
+        }
+        self.variant = Variant::Plain;
+        self
     }
 
     /// Select the source's inline, inherited-current or plain treatment.
@@ -213,7 +231,7 @@ impl RenderOnce for Link {
                 });
                 style
             });
-        } else {
+        } else if !self.breadcrumb {
             link = link.hover(move |style| style.text_color(foreground.opacity(0.7)));
         }
         if !disabled {
@@ -240,6 +258,7 @@ impl RenderOnce for Link {
             Edges::<AbsoluteLength>::default().refined(link.style().border_widths.clone());
         let focus_color = theme.colors.focus;
         let focus_width = theme.effects.keyboard_focus_ring_width;
+        let inset_focus = self.breadcrumb;
         link = link
             .child(
                 canvas(
@@ -255,7 +274,13 @@ impl RenderOnce for Link {
                                     bounds.size.height + border.top + border.bottom,
                                 ),
                             );
-                            let outer = root.dilate(focus_width);
+                            // The source breadcrumb root clips overflow. Keep its
+                            // native keyboard ring wholly inside the link bounds.
+                            let outer = if inset_focus {
+                                root
+                            } else {
+                                root.dilate(focus_width)
+                            };
                             window.paint_quad(quad(
                                 outer,
                                 radii

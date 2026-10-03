@@ -82,3 +82,6 @@ pub use skeleton_line::SkeletonLine;
 
 pub mod meter;
 pub use meter::{Meter, MeterValue};
+
+pub mod breadcrumbs;
+pub use breadcrumbs::{BreadcrumbClipboard, BreadcrumbCurrent, Breadcrumbs};

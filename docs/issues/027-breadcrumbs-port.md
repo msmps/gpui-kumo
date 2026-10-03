@@ -1,12 +1,12 @@
 # KUMO-027: Port Breadcrumbs with Kumo fidelity over GPUI Base
 
-Status: Open
+Status: In progress
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/12
 
 ## Goal and status
 
-Port the supported **Breadcrumbs** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Breadcrumbs** Kumo family to Rust/GPUI. Core implemented; source opacity motion and browser/platform acceptance keep this issue open. See [Breadcrumbs validation](../breadcrumbs-validation.md).
 
 ## GPUI Kit/Base foundation
 
@@ -27,8 +27,8 @@ Build on: Link, Button, Text. These are dependencies, not a claim that every dep
 
 ## Family acceptance criteria
 
-- [ ] Match source parts, current item, separators and any supported truncation/overflow contract.
-- [ ] Document native destination/callback handling; test long labels, narrow composition, focus order and disabled/actionable distinctions.
+- [x] Match source parts, current item, separators and any supported truncation/overflow contract.
+- [x] Document native destination/callback handling; test long labels, narrow composition, focus order and disabled/actionable distinctions.
 
 ## Shared fidelity and validation gate
 
@@ -43,3 +43,7 @@ Build on: Link, Button, Text. These are dependencies, not a claim that every dep
 - [Kumo Breadcrumbs source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/breadcrumbs/breadcrumbs.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
 - GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
 - Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+
+## Validated core checkpoint — 2026-10-03
+
+Five rendered regressions, native light/dark1040/520 glyph/alignment/ring/copy/loading captures and actual Linux Unicode clipboard reads;134 tests/nine doctests and required Rust gate pass. Source opacity motion, root style overrides, browser/OS spoken-feedback acceptance remain pending.

@@ -32,7 +32,7 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 | KUMO-024 | InputGroup | [support leading actions, multiple editors and rich parts](024-input-group-composition.md) | Open |
 | KUMO-025 | Components | [complete pinned browser comparisons for the implemented catalog](025-implemented-catalog-browser-parity.md) | Open |
 | KUMO-026 | Autocomplete | [port Autocomplete](026-autocomplete-port.md) ([#11](https://github.com/msmps/gpui-kumo/issues/11)) | Open |
-| KUMO-027 | Breadcrumbs | [port Breadcrumbs](027-breadcrumbs-port.md) ([#12](https://github.com/msmps/gpui-kumo/issues/12)) | Open |
+| KUMO-027 | Breadcrumbs | [port Breadcrumbs](027-breadcrumbs-port.md) ([#12](https://github.com/msmps/gpui-kumo/issues/12)) | In progress |
 | KUMO-028 | ClipboardText | [port ClipboardText](028-clipboard-text-port.md) ([#13](https://github.com/msmps/gpui-kumo/issues/13)) | Open |
 | KUMO-029 | CodeHighlighted | [port CodeHighlighted](029-code-highlighted-port.md) ([#14](https://github.com/msmps/gpui-kumo/issues/14)) | Open |
 | KUMO-030 | Collapsible | [port Collapsible](030-collapsible-port.md) ([#15](https://github.com/msmps/gpui-kumo/issues/15)) | Open |
