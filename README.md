@@ -24,4 +24,4 @@ Choose Light or Dark, or press Command-L, to switch appearance. Close the window
 
 Read the [implementation plan](docs/implementation-plan.md) for milestones and the [docs index](docs/README.md) before implementing components.
 
-The retained Textarea uses a narrow [gpui-base0.7.0 growth patch](docs/gpui-base-textarea-growth-patch.md). Downstream Cargo roots must include both documented patches to reproduce this workspace behavior.
+The retained Textarea uses a narrow [gpui-base0.7.0 growth patch](docs/gpui-base-textarea-growth-patch.md). Base also carries a narrow [Select confirmation focus repair](docs/gpui-base-select-focus-patch.md). Downstream Cargo roots must override both GPUI and Base as documented to reproduce this workspace behavior.

@@ -85,3 +85,6 @@ pub use meter::{Meter, MeterValue};
 
 pub mod breadcrumbs;
 pub use breadcrumbs::{BreadcrumbClipboard, BreadcrumbCurrent, Breadcrumbs};
+
+#[cfg(test)]
+mod select_base_tests;

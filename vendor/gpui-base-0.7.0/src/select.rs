@@ -282,12 +282,13 @@ impl RenderOnce for Select {
                         if let Some(handler) = on_confirm.as_ref() {
                             handler(window, cx);
                         }
-                    } else if let Some(handler) = on_open_change.as_ref() {
-                        handler(true, window, cx);
-                    }
-
-                    if let Some(handle) = content_focus_handle.as_ref() {
-                        handle.focus(window, cx);
+                    } else {
+                        if let Some(handler) = on_open_change.as_ref() {
+                            handler(true, window, cx);
+                        }
+                        if let Some(handle) = content_focus_handle.as_ref() {
+                            handle.focus(window, cx);
+                        }
                     }
                 }
             })

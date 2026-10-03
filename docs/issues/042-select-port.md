@@ -1,6 +1,6 @@
 # KUMO-042: Port Select with Kumo fidelity over GPUI Base
 
-Status: Open
+Status: In progress
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/27
 
@@ -44,3 +44,14 @@ Build on: Button, Popover. These are dependencies, not a claim that every depend
 - [Kumo Select source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/select/select.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
 - GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
 - Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+
+## Active milestone — 2026-10-03
+
+Selected after Breadcrumbs391113a. Complete pinned source/docs/tests/demos inspected; matrix and source/API decisions in [Select acceptance](../select-validation.md). Base Select owns semantic/keyboard disclosure and focus; caller must implement typed option collection/highlight/selection/typeahead/pointer/outside paths. Starting baseline134 tests/nine doctests. Implementation pending, no validation pass yet.
+
+
+## Select foundation checkpoint — 2026-10-03
+
+Complete pinned Select source/docs/demos/tests and installed Base APIs inspected; [acceptance matrix](select-validation.md) established. Actual rendered Base regression exposed confirmation overwriting consumer-restored focus after popup closure. Narrow [Select focus repair](gpui-base-select-focus-patch.md) retains closed-to-open transfer and preserves trigger/outside focus after confirmation. Original fails, patched passes; independent review and135 tests/nine doctests, formatting, warning-denied all-target/all-feature Clippy/build pass. Existing profiler deprecation remains visible. No Select gallery/visual acceptance yet;25/43 implemented,18 unported unchanged. #27 remains active.
+
+Exact next action: implement typed retained option/selection/highlight ownership and Kumo-painted Base Select root/deferred list; validate actual input/callback/focus before extending rich/group/multiple compositions. Keep all source-theme/layout/platform criteria open until measured.
