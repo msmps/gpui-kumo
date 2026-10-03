@@ -6,7 +6,13 @@ Read the actual latest `origin/work` before acting. This handoff is a partial, r
 
 Use the managed-cloud runtime skill at startup. Establish the environment's network policy, toolchain, native rendering/input and accessibility tools. Preserve pinned versions: Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, Kit/Base `0.7.0`, GPUI family `0.3.7`, Rust `1.99.0`. Preserve exact workspace GPUI/Base/AccessKit patches, their provenance, boundaries, regression coverage, removal conditions and downstream Cargo-root obligations. Keep styled Component excluded.
 
-## Latest CI repair candidate — 2026-10-03
+## Current continuation — 2026-10-03
+
+Clock repair9ef600b and chained-test import correction85871b7689f987d3cdb035572e9f4b17687523f9 are published. Full remote run37115645935 passes170 library tests,1gallery,9doctests and the complete workspace/adapter fmt/lint/locked build/test script. [Evidence](evidence/animation-clock/README.md). #45/#43 implementation is verified; final documentation push must repeat the unchanged-source full gate before closing, with that run recorded in the issue resolution comments. Preserve the new narrow duration-animation clock patch alongside the existing Tab/Base/AccessKit patches and downstream-root obligations. No native motion/pixel/speech/IME acceptance inferred.
+
+Managed proxy/cache blocker remains: restore connectivity, fetch latest work, activate setup and run Linux gates, then finish #42 native matrix and recover/recreate #26; #38 next. The stale original checkout is preserved and current source snapshot is separate.
+
+## Earlier CI repair candidate — 2026-10-03 (historical)
 
 Repeat run37115097659 at documentation-onlye06c866 exposed a Switch animation timing failure (168 passes/one failure). #43 is reopened; #45/KUMO-060 tracks a narrow GPUI AnimationElement executor-clock correction, Switch/Loader virtual-clock sampling, and host-stall/chained-rendered-width regressions. Exact versions and the existing Tab/Base/AccessKit patches remain; the additional source boundary and removal conditions are in `docs/gpui-animation-clock-patch.md`. Local formatting passes, remote acceptance is pending. The managed proxy/cache blocker below still prevents Linux tests/native validation. Finish this CI repair before #42/#26/#38.
 
@@ -40,7 +46,7 @@ Acceptance for recreation: typed Input/Dropdown controls; one authoritative reta
 
 ## First actions and priority
 
-1. Inspect actual branch/tree and latest issues/CI; finish #45 clock repair and repeated remote validation before resolving reopened #43. Restore this cloud workspace’s managed proxy and fetch current work; do not use the stale checkout as the implementation baseline. Run `bash scripts/check-rust.sh` on the selected host, distinguishing measured failures from platform limits. Linux CI/native prerequisites may need cloud-specific setup; do not weaken pinned versions or assertions.
+1. Inspect actual branch/tree and latest issues/CI; clock repair85871b7 passes full run37115645935. Confirm the final documentation push repeats the complete gate and reconcile #45/#43 resolution comments/states if not already closed. Restore this cloud workspace’s managed proxy and fetch current work; do not use the stale checkout as the implementation baseline. Run `bash scripts/check-rust.sh` on the selected host, distinguishing measured failures from platform limits. Linux CI/native prerequisites may need cloud-specific setup; do not weaken pinned versions or assertions.
 2. Finish#42 candidate's native visual gate and repair findings, preserving published source recipes. The rendered regression checks panels and effect-column rectangles, not painted labels/shadows. Explicitly inspect both themes, wide/narrow, corners/fills/borders/shadows, swatch/text alignment, label offsets/gaps/padding and resize transitions. Commit/push and close only after acceptance.
 3. Recover/recreate and finish#26 as above. This remains the primary library milestone;#42/#43 cleanup can proceed independently.
 4. Address#38 rich highlighted Text font discrepancy. Inspect pinned Kumo Text and installed StyledText highlight/run/font resolution, available faces and actual painted glyphs. Preserve caller-owned rich content, inherited custom fonts and source weights. Distinguish font fallback/environment from library defects. Both-theme1040/520 visual and meaningful rendered regression gate required.

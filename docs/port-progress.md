@@ -2,6 +2,12 @@
 
 ## Current checkpoint — 2026-10-03
 
+Clock repair published9ef600b plus chained-test import correction85871b7689f987d3cdb035572e9f4b17687523f9. **Full remote gate37115645935 passes:**170 library tests +1 gallery +9 doctests, workspace/exact adapter formatting, warnings-denied Clippy/locked builds/default gallery, adapter12default/14all-feature tests. [Evidence](evidence/animation-clock/README.md). #45/#43 implementation is verified; close after the final documentation commit repeats the full unchanged-source gate, recording its run in the issue resolution comments. No assertion weakened. Native clock remains monotonic; selected dependency versions and earlier patches remain.
+
+The managed proxy remains unreachable for Git/Cargo. Pinned Rust/native tools are present but missing cache dependencies block Linux tests before execution. Original checkout remains clean at31d2c54; verified current-source snapshot is preserved in `/workspace/gpui-kumo-current`. Restore managed connectivity, fetch actual latest work, activate `/workspace/.kumo-setup/activate.sh`, run the script, then finish #42 native acceptance and recover/recreate #26; #38 follows. No new native/speech/IME acceptance claimed.
+
+### Earlier repeat failure and candidate (historical)
+
 Repeat CI run [37115097659](https://github.com/msmps/gpui-kumo/actions/runs/37115097659) at documentation-onlye06c866 failed:168 passes/one Switch animation intermediate-color failure. **#43 reopened; #45/KUMO-060 in progress.** Ordinary pinned GPUI duration animations bypassed the executor clock; a40ms host sleep could resume after the150ms transition. Narrow candidate changes only AnimationElement initialization/elapsed/chained restart to the existing executor clock, retains every Switch/Loader paint assertion, adds host-stall and actual chained-rendered-width regressions, and documents root patch obligations. Local workspace/adapter formatting passes; Linux dependency/proxy blocker remains. Remote Rust acceptance and repeat run are pending. #42/#26/#38 remain open.
 
 ### Earlier CI acceptance (superseded by the repeat failure)
