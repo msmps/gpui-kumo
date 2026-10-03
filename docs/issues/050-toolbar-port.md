@@ -1,68 +1,31 @@
-# KUMO-050: Port Toolbar with Kumo fidelity over GPUI Base
+# KUMO-050: Toolbar: finish popup and joined editor composition
 
-Status: Open — action/link, retained editors and compact addon actions implemented; richer composition remains
+Status: In progress
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/35
 
-## Goal and status
+Local tracker: KUMO-050
 
-Port the supported **Toolbar** Kumo family to Rust/GPUI. The action/link core is implemented and validated; Input/InputGroup compact addon actions are also implemented; direct actions and popup/richer composition, RTL and full-gallery/platform/speech acceptance remain.
+## Current scope — 2026-10-03
 
-## Independent addon lifecycle continuation — 2026-10-03
+**Working native implementation; remaining API/fidelity work.** Action/link core, retained Input/InputGroup editing, compact addon actions and removal/replacement focus recovery are implemented.
 
-Published implementation **6fccb60409a2675bae27a2398c9de51a3c109d8f** passes the [remote macOS Rust gate37134143787](https://github.com/msmps/gpui-kumo/actions/runs/37134143787). Retained scoped action handles, pruning, focused removal/unavailability/caller-handle replacement recovery, cancellation for newer focus/same-handle reinstatement, and retained Unicode selection/value are implemented. The shared gallery exercises removal/reinsertion without changing default action availability. [Evidence](../evidence/toolbar/addon-removal/README.md). Toolbar#35 remains open for direct actions, popup/richer composition and fidelity/platform acceptance.
+Audited at `c1026fe042c133929eea2ef15da6e6a05b57c617`: 32/43 working families, 11 unported. This issue no longer tracks an unstarted port.
 
-## Compact addon action continuation — 2026-10-03
+## Remaining acceptance
 
-Published511efcd1f8884a00a190732e34f2572f2c852426 passes [remote CI37133020509](https://github.com/msmps/gpui-kumo/actions/runs/37133020509), local198-library full gate and browser/native Light/Dark1040/520. Independent action Tab stops, remembered-entry arrow navigation, root/editor versus group availability, hosted focus containment/reorder/removal recovery, and native deferred text snapshot updates are implemented. [Source/native evidence](../evidence/toolbar/addon-actions/README.md). Exact pins and29/43 working-family coverage remain; #35 stays open.
+- [ ] Complete popup trigger replacement and direct joined InputGroup actions.
+- [ ] Complete richer field/descendant composition and source explicit-false disabled overrides.
+- [ ] Verify RTL and full-gallery interaction alongside retained editor selection and focus.
 
-## Toolbar retained editor continuation — 2026-10-03
+Browser comparison belongs to #10; OS IME to #1 where applicable; spoken Linux/VoiceOver/Windows acceptance to #2–#4. Native tests and metadata do not establish spoken or full platform fidelity. Existing native adaptations and dependency limitations remain in the linked contract.
 
-[Remote macOS Rust gate37131870196](https://github.com/msmps/gpui-kumo/actions/runs/37131870196) succeeds for implementation58d1302. Plain Input and passive InputGroup now join the existing Toolbar core using application-retained InputState entities. Source caret-boundary navigation, Unicode selection, unavailable-focus/skip policy, current root/owner edit guards, read-only copying, stable reordered focus, removal/reinsertion and narrow reveal are implemented. Source-opaque disabled Input presentation is preserved. Native action captures fill the action-before-key dispatch boundary without replacing the editing engine. Shared gallery/focused editor host are integrated. [Contract/adaptations](../toolbar-validation.md#retained-editor-continuation--2026-10-03), [source/native evidence](../evidence/toolbar/editors/README.md).
+## Evidence
 
-Source and actual native Light/Dark1040/520 matrices pass. Full locked gate passes196library/1gallery/9doctests, adapter12/14, fmt/warning-denied lint/builds. Coverage stays29/43 working,14 unported. **Next Toolbar slice: embedded InputGroup actions and popup trigger replacement**; Combobox remains a missing family dependency. Richer field/descendant composition, RTL and full-gallery/platform/speech/OS IME acceptance remain explicit. Prior entries below preserve historical checkpoints.
+- [Component contract and measured evidence](https://github.com/msmps/gpui-kumo/blob/work/docs/toolbar-validation.md)
+- [Current progress](https://github.com/msmps/gpui-kumo/blob/work/docs/port-progress.md)
+- [Coverage](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md)
 
-## Pushed action/link milestone — 2026-10-03
+Latest shared locked gate passes226 library/1gallery/9doctests and adapter12/14, fmt/warnings-denied lint/builds. [Announcement checkpoint macOS CI37139317488](https://github.com/msmps/gpui-kumo/actions/runs/37139317488) passes. That gate establishes build/regression health, not this issue's remaining visual/platform acceptance.
 
-Implementation/evidence [da6ff47](https://github.com/msmps/gpui-kumo/commit/da6ff4795c00455bdee1425e9a8e45c1b3210e2d) is pushed. [Remote macOS Rust gate37128708107](https://github.com/msmps/gpui-kumo/actions/runs/37128708107) succeeds for implementation da6ff47. [Contract/parts matrix/adaptations](../toolbar-validation.md), [browser/native results](../evidence/toolbar/README.md), [retained Base Link focus patch](../gpui-base-link-focus-patch.md). Full local gate passes190library/1gallery/9doctests, adapter12/14 and fmt/lint/builds. Browser/native Light/Dark1040/520 input/semantic/geometry matrices and visual review pass. Coverage is29/43 working families,14 unported.
-
-Next slice: Toolbar Input/InputGroup editing and caret-boundary navigation, then popup replacement. Full-family criteria below remain open for missing parts; passed action/link evidence does not establish speech, other platforms or arbitrary composition acceptance.
-
-## GPUI Kit/Base foundation
-
-**Match: Direct counterpart.**
-
-Source exports Root/Button/Link/Input/InputGroup; Group and Separator are not public source parts. The action/link core uses Base Toolbar/Button/Link with retained owner navigation filling verified Base gaps.
-
-Limits: Base supports horizontal arrow focus among rendered descendants. Its disabled flag suppresses its own navigation only; the owner must disable hosted controls. Check source orientation/loop/entry/exit rules rather than claiming full roving-tabindex behavior.
-
-- [gpui-base 0.7.0: toolbar.rs](https://docs.rs/crate/gpui-base/0.7.0/source/src/toolbar.rs)
-- [gpui-base 0.7.0: toggle.rs](https://docs.rs/crate/gpui-base/0.7.0/source/src/toggle.rs)
-- [gpui-base 0.7.0: toggle_group.rs](https://docs.rs/crate/gpui-base/0.7.0/source/src/toggle_group.rs)
-- [gpui-base 0.7.0: button.rs](https://docs.rs/crate/gpui-base/0.7.0/source/src/button.rs)
-
-## Dependencies and scope
-
-Build on: Button, Switch/Checkbox, Dropdown where menu compositions require. These are dependencies, not a claim that every dependency is already complete. Preserve the existing project and API patterns.
-
-[Full coverage/backlog](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md); [progress and selected milestone](https://github.com/msmps/gpui-kumo/blob/work/docs/port-progress.md).
-
-## Family acceptance criteria
-
-- [ ] Port source parts, grouping/separators, supported orientation and control composition with explicit hosted-control ownership.
-- [ ] Verify keyboard entry/exit, arrows/wrapping, source Home/End policy where applicable, disabled controls and dynamic insertion/removal; hosted Input retains caret arrows.
-- [ ] Inspect grouped borders/gaps, icon centres, focus layers and long/narrow wrapping in both themes; reuse primitives without importing gpui-component styling.
-
-## Shared fidelity and validation gate
-
-- [ ] Before coding, inspect the complete pinned Kumo source, styles, matching documentation/demos/tests and installed Base APIs; define a parts/variants/sizes/states/keyboard/focus/semantics parity matrix, explicitly marking N/A.
-- [ ] Keep Kumo semantic tokens, presentation and light/dark behavior authoritative. Use suitable Base behavior; avoid gpui-component default styling, duplicate state/listeners and entities recreated during render.
-- [ ] Add a realistic gallery example, observable regression tests and skeptical diff/render review. Run required formatting, tests, warning-denied workspace linting, builds and affected examples.
-- [ ] Inspect both themes at wide/narrow sizes: actual icon/control centres, text baselines, spacing/padding, clipping, rounded edges and agreement of fills/borders/rings/shadows across layers.
-- [ ] Record passed/failed/not-run evidence, native adaptations and unsupported semantics. Browser comparisons (#10), OS IME (#1) and screen-reader checks (#2–#4) are separate validation gates; no compilation-only full-fidelity claim.
-
-## Pinned reference
-
-- [Kumo Toolbar source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/toolbar/toolbar.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
-- GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
-- Original tracker checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444` was43 scoped/18 implemented/25 unported; the current milestone above supersedes those counts. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, Kit/Base0.7.0, GPUI0.3.7 and Rust1.99.0 remain pinned; existing vendor provenance stays authoritative. Historical implementation checkpoints remain in the contract and Git history.

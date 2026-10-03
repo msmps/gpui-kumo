@@ -1,43 +1,30 @@
-# Migration issue audit — 2026-10-03
+# Repository issue cleanup — 2026-10-03
 
-Audited `work` at33ab7668f71ec36359164dc34ceed0e6ce8233b2. GitHub REST inventory used `--paginate` with `state=all&per_page=100`:42 issues,37 open/five closed. Public exports, gallery modules, tests, acceptance documents/local-ID mapping, recorded native captures/results and ancestor commits were compared. Independent reviewer examined seven implemented families and five closed repairs. Recorded historical validation is distinguished from the macOS tests reproduced during this session.
+Audited `work` at **c1026fe042c133929eea2ef15da6e6a05b57c617** against all45 GitHub issues (state=all, per_page=100; below page limit), component exports/coverage, source contracts, local trackers and committed validation evidence. Both Toast94351f4 [macOS37138801443](https://github.com/msmps/gpui-kumo/actions/runs/37138801443) and announcementc1026fe [macOS37139317488](https://github.com/msmps/gpui-kumo/actions/runs/37139317488) pass. Current coverage is32/43 working families,11unported; implementation does not imply full fidelity.
 
-| GitHub | Local ID | Classification and remaining work |
-| --- | --- | --- |
-| #1 | KUMO-007 | Outstanding OS IME validation; native editing tests do not establish OS composition |
-| #2–#4 | KUMO-014–016 | Outstanding spoken Linux/VoiceOver/Windows acceptance; platform metadata is separate |
-| #5 | KUMO-019 | Partial LayerCard clipping, specific GPUI arbitrary-descendant rounded clipping limit |
-| #6 | KUMO-021 | Partial Tooltip motion/provider behavior |
-| #7 | KUMO-022 | Partial Tooltip rich content/trigger composition |
-| #8 | KUMO-023 | Partial contextual help/Checkbox.Item mixed presentation |
-| #9 | KUMO-024 | Leading actions published; multiple editors/rich parts remain |
-| #10 | KUMO-025 | Incomplete pinned browser comparison for27 working families; historical18-family baseline |
-| #11 | KUMO-026 | Unstarted Autocomplete |
-| #12 | KUMO-027 | Published Breadcrumbs core; opacity motion/root composition/styling and browser/spoken acceptance remain |
-| #13–#14 | KUMO-028–029 | Unstarted ClipboardText/CodeHighlighted |
-| #15 | KUMO-030 | Published Collapsible core; motion/custom trigger/control association remain. Authored expansion repaired by#41 |
-| #16–#21 | KUMO-031–036 | Unstarted Combobox/CommandPalette/DatePicker/Dialog/Dropdown/Grid |
-| #22 | KUMO-037 | Published InlineCopyText core; copy/check transitions/live-region capability/speech and clipboard delivery remain |
-| #23 | KUMO-038 | Published InputArea core; resize/scrollbar/rich slots/multiline accessible text ranges remain |
-| #24 | KUMO-039 | Unstarted LayerDialog |
-| #25 | KUMO-040 | Published Meter core; track/indicator customization and browser/spoken/preference-delivery acceptance remain |
-| #26 | KUMO-041 | Published Input/Simple/Info/Separator/PageSize. Missing cloud candidate reported174 tests; not present in local/remote branches. User authorizes recreation; Dropdown and fidelity remain |
-| #27 | KUMO-042 | Published Select groups/custom values/nested overlay/lifetime integration; placement/trigger/rich help and platform/browser fidelity remain |
-| #28 | KUMO-043 | Published SensitiveInput core; rich slots/localization/hover/opacity and clipboard delivery remain |
-| #29 | KUMO-044 | SkeletonLine implemented, required browser/preference-delivery validation outstanding; remain open until preserved bounded followups exist |
-| #30–#35 | KUMO-045–050 | Unstarted Table/TableOfContents/Tabs/TagInput/Toast/Toolbar |
-| #36 | KUMO-051 | Complete recorded disabled-state repair4144c60; exact guard and actual state/event/native evidence present |
-| #37 | KUMO-052 | Complete recorded readable Label repair7c496e0;143 labels,0 unnamed/changed bounds after repair |
-| #38 | KUMO-053 | Rich highlight font defect awaiting reproduction/repair |
-| #39–#40 | KUMO-054–055 | Complete recorded Busy/narrow Button repairs e1c38b8; native owner/action and containment evidence present |
-| #41 | KUMO-056 | Complete recorded authored expansion repair33ab766; optional state and exact events plus native transitions present |
-| #42 | KUMO-057 | Narrow foundation overflow, local repair/visual gate in progress |
-| #43 | KUMO-058 | Complete: #45 clock correction85871b7 and repeated full runs37115645935/37116002411 pass; see animation-clock evidence and resolution comment |
-| #44 | KUMO-059 | Complete: test-only native shortcut repair published744354a; local and successor CI regressions pass |
-| #45 | KUMO-060 | Complete: narrow correction85871b7,170-test full runs37115645935/37116002411, preserved assertions and documented downstream/removal obligations |
+## Disposition
 
-No family closure justified from rendering/count alone. No audit-supported reopening or duplicate closure found. Existing five resolution checklists reconciled against their published evidence, without claiming new platform measurements. GitHub remains the queue; local acceptance documents retain detailed contracts.
+| Issues | Action / current scope |
+| --- | --- |
+| #29 SkeletonLine | Close implementation-complete after transferring remaining browser comparison and OS reduced-motion preference delivery to #10. Implementationaeb3e1564b8651c0d4876f243d0759ac86cd8202; five paint/lifetime/range regressions and native both-theme1040/520 evidence pass |
+| #12 Breadcrumbs, #15 Collapsible, #19 Dialog, #20 Dropdown, #22 InlineCopyText, #23 InputArea, #25 Meter, #26 Pagination, #27 Select, #28 SensitiveInput, #32 Tabs, #34 Toast, #35 Toolbar | Keep open; replace generic “Port” descriptions/unchecked boilerplate with working status, bounded remaining API/motion/composition criteria and evidence links |
+| #9 InputGroup | Leading actions/hybrid ordering are already published at ebb53ab. Remove those from missing scope; retain multiple editors/rich addons |
+| #10 catalog validation | Update32-family baseline, recorded bounded source/native passes and partial Pagination/Select results; own consolidated SkeletonLine/browser/platform-preference checks |
+| #11, #13, #14, #16, #17, #18, #21, #24, #30, #31, #33 | All11 missing-family issues unchanged and open |
+| #1–#8 | Preserve concrete OS IME, speech, arbitrary clipping, Tooltip and Checkbox/Switch gaps |
+| #36–#45 | Already closed with repair evidence; no reopening or redundant re-closure |
 
-Independently reproduced: baseline169 library tests with three failures; repaired native shortcuts pass169 plus foundation gallery regression and nine doctests. Workspace formatting/Clippy/build/default-gallery gate passed; exact adapter12default/14all-feature tests and warning-denied lint passed after approved locked dependency download. Native foundation final matrix remains incomplete; code checkpoint744354a is published, #44 closed, first remote CI run37114282490 is in progress. No CI runs existed at audit baseline.
+After reconciliation: **34 open /11 closed GitHub issues**. Open queue comprises11 missing families,13 implemented-family follow-ups and10 shared implementation/validation issues. Closing #29 does not change32/43 coverage.
 
-Cloud continuation subsequently inventoried all 44 issues with `state=all&per_page=100` (one full result set, below the page limit) at c7fd554. #43 now has successful remote acceptance in run37114390570, including its actual job log; the earlier run was cancelled. No other new closure is justified by that CI result. [Continuation evidence](evidence/cloud-continuation-2026-10-03/README.md) separates the remote pass from the measured Linux dependency/network blocker.
+## Local and repository cleanup
+
+- Align implemented-family KUMO issue files and index with GitHub; preserve stable IDs/filenames.
+- Resolve unpublished KUMO-001 as superseded by #36/#39 and platform trackers #2–#4. Retain historical acceptance; no new all-platform activation claim.
+- Correct resolved KUMO-009's pending-publication pointer to #41.
+- Replace stale unpublished Pagination-candidate wording with its published recreation and actual partial native/popup gaps.
+- Move the obsolete duplicated resume timeline out of `cloud-handoff-prompt.md` into [history](history/cloud-handoff-before-cleanup-2026-10-03.md); keep the active handoff short and current. [Initial audit](history/issue-audit-initial-2026-10-03.md) remains historical evidence.
+- Record announcement CI success; original raw logs, captures, vendor patches and version pins stay intact.
+
+## Verification scope
+
+Cleanup changes tracking/documentation only. Check Markdown targets, local IDs/status/index consistency, missing-family open state and updated GitHub bodies; verify diff whitespace and identical published tree. No new component tests, visual measurements, spoken acceptance or OS preference validation are claimed. Existing full locked gate is226library/1gallery/9doctests and adapter12/14. GitHub issue edits preserve concrete remaining work rather than treating every working family as fully accepted.

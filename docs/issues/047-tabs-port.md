@@ -1,46 +1,31 @@
-# KUMO-047: Port Tabs with Kumo fidelity over GPUI Base
+# KUMO-047: Tabs: finish replacement composition and indicator motion
 
-Status: Open
+Status: In progress
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/32
 
-## Goal and status
+Local tracker: KUMO-047
 
-Port the supported **Tabs** Kumo family to Rust/GPUI. A retained native core is implemented; overflow/motion and full fidelity remain open; the issue covers its supported parts and public API, not just a static default-state demo.
+## Current scope — 2026-10-03
 
-## GPUI Kit/Base foundation
+**Working native implementation; remaining API/fidelity work.** Retained controlled/local tabs, source sizes, overflow controls, drag/scroll, moving/resizing indicator, edge fades and focus recovery are implemented.
 
-**Match: Direct counterpart.**
+Audited at `c1026fe042c133929eea2ef15da6e6a05b57c617`: 32/43 working families, 11 unported. This issue no longer tracks an unstarted port.
 
-Use/evaluate: Tabs/Tab + suitable focus/navigation primitives after checking installed APIs.
+## Remaining acceptance
 
-Limits: Base Tab source explicitly lacks complete compound keyboard navigation (roving focus, arrows, Home/End and Enter/Space). Direct names are not a complete desktop tabs contract; fill the verified gap or make a narrowly documented dependency repair.
+- [ ] Complete native replacement/link composition.
+- [ ] Port indicator enter/exit scale/opacity with reduced-motion interruption.
+- [ ] Complete full-gallery integration; document arbitrary transparent/gradient parent mask and descendant clipping limits.
 
-- [gpui-base 0.7.0: tabs.rs](https://docs.rs/crate/gpui-base/0.7.0/source/src/tabs.rs)
-- [gpui-base 0.7.0: toolbar.rs](https://docs.rs/crate/gpui-base/0.7.0/source/src/toolbar.rs)
+Browser comparison belongs to #10; OS IME to #1 where applicable; spoken Linux/VoiceOver/Windows acceptance to #2–#4. Native tests and metadata do not establish spoken or full platform fidelity. Existing native adaptations and dependency limitations remain in the linked contract.
 
-## Dependencies and scope
+## Evidence
 
-Build on: Button, Focus foundation. These are dependencies, not a claim that every dependency is already complete. Preserve the existing project and API patterns.
+- [Component contract and measured evidence](https://github.com/msmps/gpui-kumo/blob/work/docs/tabs-validation.md)
+- [Current progress](https://github.com/msmps/gpui-kumo/blob/work/docs/port-progress.md)
+- [Coverage](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md)
 
-[Full coverage/backlog](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md); [progress and selected milestone](https://github.com/msmps/gpui-kumo/blob/work/docs/port-progress.md).
+Latest shared locked gate passes226 library/1gallery/9doctests and adapter12/14, fmt/warnings-denied lint/builds. [Announcement checkpoint macOS CI37139317488](https://github.com/msmps/gpui-kumo/actions/runs/37139317488) passes. That gate establishes build/regression health, not this issue's remaining visual/platform acceptance.
 
-## Family acceptance criteria
-
-- [ ] Port supported standard and segmented Tabs variants/parts and controlled selection; omit deprecated MenuBar.
-- [ ] Implement source keyboard navigation/activation, disabled-item skipping, orientation rules and panel mounting/focus ownership; test reordered/removed tabs, rejected proposals and repeated instances.
-- [ ] Verify actual selected/tab/panel semantics supported by GPUI, long/narrow labels and focus/ring layering in both themes.
-
-## Shared fidelity and validation gate
-
-- [ ] Before coding, inspect the complete pinned Kumo source, styles, matching documentation/demos/tests and installed Base APIs; define a parts/variants/sizes/states/keyboard/focus/semantics parity matrix, explicitly marking N/A.
-- [ ] Keep Kumo semantic tokens, presentation and light/dark behavior authoritative. Use suitable Base behavior; avoid gpui-component default styling, duplicate state/listeners and entities recreated during render.
-- [ ] Add a realistic gallery example, observable regression tests and skeptical diff/render review. Run required formatting, tests, warning-denied workspace linting, builds and affected examples.
-- [ ] Inspect both themes at wide/narrow sizes: actual icon/control centres, text baselines, spacing/padding, clipping, rounded edges and agreement of fills/borders/rings/shadows across layers.
-- [ ] Record passed/failed/not-run evidence, native adaptations and unsupported semantics. Browser comparisons (#10), OS IME (#1) and screen-reader checks (#2–#4) are separate validation gates; no compilation-only full-fidelity claim.
-
-## Pinned reference
-
-- [Kumo Tabs source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/tabs/tabs.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
-- GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
-- Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, Kit/Base0.7.0, GPUI0.3.7 and Rust1.99.0 remain pinned; existing vendor provenance stays authoritative. Historical implementation checkpoints remain in the contract and Git history.

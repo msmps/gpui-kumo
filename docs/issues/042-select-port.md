@@ -1,78 +1,31 @@
-# KUMO-042: Port Select with Kumo fidelity over GPUI Base
+# KUMO-042: Select: finish popup sizing and composition fidelity
 
 Status: In progress
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/27
 
-## Goal and status
+Local tracker: KUMO-042
 
-Port the supported **Select** Kumo family to Rust/GPUI. A validated core is implemented; groups/value composition and integration remain in progress; the issue covers its supported parts and public API, not just a static default-state demo.
+## Current scope — 2026-10-03
 
-## GPUI Kit/Base foundation
+**Working native implementation; remaining API/fidelity work.** Retained single/multiple selection, groups, rich values, placement controls, semantic bridge, parent Popover boundaries and mount cleanup are implemented.
 
-**Match: Direct counterpart.**
+Audited at `c1026fe042c133929eea2ef15da6e6a05b57c617`: 32/43 working families, 11 unported. This issue no longer tracks an unstarted port.
 
-Use/evaluate: Select + Positioner/Popup; Button and suitable option elements.
+## Remaining acceptance
 
-Limits: Base supplies combobox semantics, opening/dismissal and focus transfer; caller owns option collection, highlighted option and selected value. Verify actual selected/active metadata rather than assuming list behavior is complete.
+- [ ] Repair measured numbered popup width/check-slot discrepancy (70px native versus about 60.92px source for selected 3).
+- [ ] Complete remaining source trigger/placement/rich-help/replacement capabilities.
+- [ ] Finish narrow collision/moving-anchor and native/browser composition acceptance.
 
-- [gpui-base 0.7.0: select.rs](https://docs.rs/crate/gpui-base/0.7.0/source/src/select.rs)
-- [gpui-base 0.7.0: positioner.rs](https://docs.rs/crate/gpui-base/0.7.0/source/src/positioner.rs)
-- [gpui-base 0.7.0: popup.rs](https://docs.rs/crate/gpui-base/0.7.0/source/src/popup.rs)
+Browser comparison belongs to #10; OS IME to #1 where applicable; spoken Linux/VoiceOver/Windows acceptance to #2–#4. Native tests and metadata do not establish spoken or full platform fidelity. Existing native adaptations and dependency limitations remain in the linked contract.
 
-## Dependencies and scope
+## Evidence
 
-Build on: Button, Popover. These are dependencies, not a claim that every dependency is already complete. Preserve the existing project and API patterns.
+- [Component contract and measured evidence](https://github.com/msmps/gpui-kumo/blob/work/docs/select-validation.md)
+- [Current progress](https://github.com/msmps/gpui-kumo/blob/work/docs/port-progress.md)
+- [Coverage](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md)
 
-[Full coverage/backlog](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md); [progress and selected milestone](https://github.com/msmps/gpui-kumo/blob/work/docs/port-progress.md).
+Latest shared locked gate passes226 library/1gallery/9doctests and adapter12/14, fmt/warnings-denied lint/builds. [Announcement checkpoint macOS CI37139317488](https://github.com/msmps/gpui-kumo/actions/runs/37139317488) passes. That gate establishes build/regression health, not this issue's remaining visual/platform acceptance.
 
-## Family acceptance criteria
-
-- [ ] Port pinned trigger/value/list/item/group/separator capabilities and supported selection/placeholder/clear contracts.
-- [ ] Implement source arrow/Home/End/typeahead/activation policy, unavailable-option skipping, controlled rejection and once-only callbacks; verify popup focus, collision, Escape/outside dismissal and restoration.
-
-## Shared fidelity and validation gate
-
-- [x] Before coding, inspect the complete pinned Kumo source, styles, matching documentation/demos/tests and installed Base APIs; define a parts/variants/sizes/states/keyboard/focus/semantics parity matrix, explicitly marking N/A.
-- [ ] Keep Kumo semantic tokens, presentation and light/dark behavior authoritative. Use suitable Base behavior; avoid gpui-component default styling, duplicate state/listeners and entities recreated during render.
-- [ ] Add a realistic gallery example, observable regression tests and skeptical diff/render review. Run required formatting, tests, warning-denied workspace linting, builds and affected examples.
-- [ ] Inspect both themes at wide/narrow sizes: actual icon/control centres, text baselines, spacing/padding, clipping, rounded edges and agreement of fills/borders/rings/shadows across layers.
-- [ ] Record passed/failed/not-run evidence, native adaptations and unsupported semantics. Browser comparisons (#10), OS IME (#1) and screen-reader checks (#2–#4) are separate validation gates; no compilation-only full-fidelity claim.
-
-## Pinned reference
-
-- [Kumo Select source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/select/select.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
-- GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
-- Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
-
-## Active milestone — 2026-10-03
-
-Selected after Breadcrumbs391113a. Complete pinned source/docs/tests/demos inspected; matrix and source/API decisions in [Select acceptance](../select-validation.md). Base Select owns semantic/keyboard disclosure and focus; caller must implement typed option collection/highlight/selection/typeahead/pointer/outside paths. Starting baseline134 tests/nine doctests. Implementation pending, no validation pass yet.
-
-
-## Select foundation checkpoint — 2026-10-03
-
-Complete pinned Select source/docs/demos/tests and installed Base APIs inspected; [acceptance matrix](select-validation.md) established. Actual rendered Base regression exposed confirmation overwriting consumer-restored focus after popup closure. Narrow [Select focus repair](gpui-base-select-focus-patch.md) retains closed-to-open transfer and preserves trigger/outside focus after confirmation. Original fails, patched passes; independent review and135 tests/nine doctests, formatting, warning-denied all-target/all-feature Clippy/build pass. Existing profiler deprecation remains visible. No Select gallery/visual acceptance yet;25/43 implemented,18 unported unchanged. #27 remains active.
-
-Exact next action: implement typed retained option/selection/highlight ownership and Kumo-painted Base Select root/deferred list; validate actual input/callback/focus before extending rich/group/multiple compositions. Keep all source-theme/layout/platform criteria open until measured.
-
-
-## Core checkpoint
-
-144 tests/nine doctests and required Rust gates pass; native both-theme wide/narrow checks and reviewer findings/fixes are recorded in [Select acceptance](../select-validation.md). Core single/multiple selection is usable; full parts criteria remain open. Next: named groups/separators, custom value content, placements, native state metadata and parent Popover integration.26 working families/43 scoped;17 unported.
-
-## Native semantics checkpoint
-
-145 tests/nine doctests and required Rust gates pass. Actual Base ComboBox node enrichment and guarded accessible Option Click implemented; live Linux AT-SPI validates disclosure, commit/restoration, multiple selection, helper/read-only metadata and disabled root action exclusion. Both themes/wide/narrow reviewed. Linux exporter limitations and remaining source parts/platform/browser acceptance are recorded in [Select acceptance](../select-validation.md). Next: groups/separators/custom values/placement/nested Popover composition. Family remains in progress.
-
-## Grouped collection checkpoint
-
-147 tests/nine doctests and required Rust gates pass. `SelectPart`/`SelectGroup` preserve one authoritative collection and stable highlight IDs; actual nested-row bounds drive nearest8px-padded reveal without fighting manual scrolling. Both-theme narrow/deep/oversized/reorder regressions and native wide/narrow alignment/divider/layer/End review pass. Live AT-SPI group export and option actions pass; [evidence and gaps](../select-validation.md). Custom values/placement and parent Popover integration remain next; issue stays in progress.
-
-## Custom value / placement checkpoint
-
-150 tests/nine doctests and required Rust gates pass. Retained typed decorative selected content/readable metadata, null/None fallback, empty multiple/loading and four-side/three-align/gap controls are implemented. Weak factory lifetime and source cross-axis/collision adaptations documented; native both-theme wide/narrow Badge count2→1, ellipsis/right-end popup alignment/corners/layers reviewed. [Evidence/gaps](../select-validation.md). Next: nested Select/Popover boundary/focus/dismissal/unmount integration. Issue remains in progress.
-
-## Nested overlay / retained-state checkpoint
-
-Weak parent boundary/dismissal integration and mount-scoped cleanup implemented.156 tests/nine doctests and required Rust gates pass; six actual-render regressions and live Linux pointer/AT-SPI/two-stage Escape checks pass in both themes at1040/520. Review reproduced and fixed retained-state unmount leakage; remount preserves value. [Evidence/limitations](../select-validation.md). Remaining source API/browser/platform criteria stay open; next family Pagination #26.
+Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, Kit/Base0.7.0, GPUI0.3.7 and Rust1.99.0 remain pinned; existing vendor provenance stays authoritative. Historical implementation checkpoints remain in the contract and Git history.

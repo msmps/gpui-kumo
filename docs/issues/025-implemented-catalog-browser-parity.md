@@ -28,3 +28,7 @@ Category: **Outstanding validation**.
 
 Baseline: Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`; GPUI Kit/Base 0.7.0; GPUI snapshot family 0.3.7. Current implementation checkpoint: `d07646f8d24acf72248f954a03c8da056d84848d`. Keep dependency versions pinned; do not claim full parity from compilation or screenshots alone.
 
+
+## Consolidated SkeletonLine acceptance — 2026-10-03
+
+SkeletonLine implementation #29 is resolved; browser geometry/gradient comparison and supported-platform OS reduced-motion preference delivery remain tracked here in #10. Component reduced-motion policy/frame regressions already pass. Current coverage32/43 working,11unported. Source/native Tabs/Dropdown/Dialog/Toast matrices are bounded passes; Pagination/Select matrices remain partial.

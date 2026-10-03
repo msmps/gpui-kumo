@@ -34,12 +34,12 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-03. This
 | link | Implemented; see component acceptance/gaps |
 | loader | Implemented; see component acceptance/gaps |
 | meter | Implemented; [acceptance/gaps](meter-validation.md), [#25](https://github.com/msmps/gpui-kumo/issues/25) remains open |
-| pagination | Input/simple, Dropdown, Info/Separator and PageSize implemented; recreated Dropdown validation and platform fidelity in progress, [acceptance/gaps](pagination-validation.md) — [#26](https://github.com/msmps/gpui-kumo/issues/26) |
+| pagination | Input/simple, Dropdown, Info/Separator and PageSize implemented; Dropdown is published; partial native matrix and popup/platform fidelity remain, [acceptance/gaps](pagination-validation.md) — [#26](https://github.com/msmps/gpui-kumo/issues/26) |
 | popover | Implemented; see component acceptance/gaps |
 | radio | Implemented; see component acceptance/gaps |
 | select | Core implemented; composition in progress, [acceptance/gaps](select-validation.md) — [#27](https://github.com/msmps/gpui-kumo/issues/27) |
 | sensitive-input | Implemented; [acceptance/gaps](sensitive-input-validation.md), [#28](https://github.com/msmps/gpui-kumo/issues/28) remains open |
-| skeleton-line | Implemented; [acceptance/gaps](skeleton-line-validation.md), [#29](https://github.com/msmps/gpui-kumo/issues/29) remains open |
+| skeleton-line | Implemented; [acceptance/gaps](skeleton-line-validation.md), implementation [#29](https://github.com/msmps/gpui-kumo/issues/29) resolved; validation [#10](https://github.com/msmps/gpui-kumo/issues/10) open |
 | switch | Implemented; see component acceptance/gaps |
 | table | Unported — [#30](https://github.com/msmps/gpui-kumo/issues/30) |
 | table-of-contents | Unported — [#31](https://github.com/msmps/gpui-kumo/issues/31) |

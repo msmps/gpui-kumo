@@ -6,7 +6,7 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 
 | ID | Area | Issue | Status |
 | --- | --- | --- | --- |
-| KUMO-001 | Button | [expose disabled and loading accessibility state](001-button-availability-semantics.md) | In progress |
+| KUMO-001 | Button | [expose disabled and loading accessibility state](001-button-availability-semantics.md) | Resolved; #36/#39 and platform trackers |
 | KUMO-002 | Button | [implement the authored 100ms outline color transition](002-button-outline-transition.md) | Open |
 | KUMO-003 | Button | [evaluate faithful shadow rendering on transparent outlines](003-button-outline-shadow.md) | Open |
 | KUMO-004 | Button | [complete pinned browser visual and narrow-layout comparisons](004-button-browser-parity.md) | Open |
@@ -29,33 +29,33 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 | KUMO-021 | Tooltip | [match Kumo motion and grouped instant switching](021-tooltip-motion-provider.md) | Open |
 | KUMO-022 | Tooltip | [support rich content and native trigger composition](022-tooltip-rich-content-triggers.md) | Open |
 | KUMO-023 | Checkbox/Switch | [complete contextual help and Checkbox.Item mixed presentation](023-checkbox-switch-help-item-indeterminate.md) | Open |
-| KUMO-024 | InputGroup | [support leading actions, multiple editors and rich parts](024-input-group-composition.md) | Open |
-| KUMO-025 | Components | [complete pinned browser comparisons for the implemented catalog](025-implemented-catalog-browser-parity.md) | Open |
+| KUMO-024 | InputGroup | [finish multiple editors and rich addon composition](024-input-group-composition.md) | In progress |
+| KUMO-025 | Components | [finish catalog browser parity and platform preference validation](025-implemented-catalog-browser-parity.md) | Open |
 | KUMO-026 | Autocomplete | [port Autocomplete](026-autocomplete-port.md) ([#11](https://github.com/msmps/gpui-kumo/issues/11)) | Open |
-| KUMO-027 | Breadcrumbs | [port Breadcrumbs](027-breadcrumbs-port.md) ([#12](https://github.com/msmps/gpui-kumo/issues/12)) | In progress |
+| KUMO-027 | Breadcrumbs | [finish root composition and motion](027-breadcrumbs-port.md) ([#12](https://github.com/msmps/gpui-kumo/issues/12)) | In progress |
 | KUMO-028 | ClipboardText | [port ClipboardText](028-clipboard-text-port.md) ([#13](https://github.com/msmps/gpui-kumo/issues/13)) | Open |
 | KUMO-029 | CodeHighlighted | [port CodeHighlighted](029-code-highlighted-port.md) ([#14](https://github.com/msmps/gpui-kumo/issues/14)) | Open |
-| KUMO-030 | Collapsible | [port Collapsible](030-collapsible-port.md) ([#15](https://github.com/msmps/gpui-kumo/issues/15)) | In progress |
+| KUMO-030 | Collapsible | [finish motion and trigger semantics](030-collapsible-port.md) ([#15](https://github.com/msmps/gpui-kumo/issues/15)) | In progress |
 | KUMO-031 | Combobox | [port Combobox](031-combobox-port.md) ([#16](https://github.com/msmps/gpui-kumo/issues/16)) | Open |
 | KUMO-032 | CommandPalette | [port CommandPalette](032-command-palette-port.md) ([#17](https://github.com/msmps/gpui-kumo/issues/17)) | Open |
 | KUMO-033 | DatePicker | [port DatePicker](033-date-picker-port.md) ([#18](https://github.com/msmps/gpui-kumo/issues/18)) | Open |
-| KUMO-034 | Dialog | [port Dialog](034-dialog-port.md) ([#19](https://github.com/msmps/gpui-kumo/issues/19)) | Open |
-| KUMO-035 | Dropdown | [port Dropdown](035-dropdown-port.md) ([#20](https://github.com/msmps/gpui-kumo/issues/20)) | Core implemented; parts in progress |
+| KUMO-034 | Dialog | [finish overlay composition and motion](034-dialog-port.md) ([#19](https://github.com/msmps/gpui-kumo/issues/19)) | In progress |
+| KUMO-035 | Dropdown | [finish menu parts and overlay composition](035-dropdown-port.md) ([#20](https://github.com/msmps/gpui-kumo/issues/20)) | In progress |
 | KUMO-036 | Grid | [port Grid](036-grid-port.md) ([#21](https://github.com/msmps/gpui-kumo/issues/21)) | Open |
-| KUMO-037 | InlineCopyText | [port InlineCopyText](037-inline-copy-text-port.md) ([#22](https://github.com/msmps/gpui-kumo/issues/22)) | In progress |
-| KUMO-038 | InputArea | [port InputArea](038-input-area-port.md) ([#23](https://github.com/msmps/gpui-kumo/issues/23)) | In progress |
+| KUMO-037 | InlineCopyText | [finish feedback motion and announcements](037-inline-copy-text-port.md) ([#22](https://github.com/msmps/gpui-kumo/issues/22)) | In progress |
+| KUMO-038 | InputArea | [finish resize, rich parts and text accessibility](038-input-area-port.md) ([#23](https://github.com/msmps/gpui-kumo/issues/23)) | In progress |
 | KUMO-039 | LayerDialog | [port LayerDialog](039-layer-dialog-port.md) ([#24](https://github.com/msmps/gpui-kumo/issues/24)) | Open |
-| KUMO-040 | Meter | [port Meter](040-meter-port.md) ([#25](https://github.com/msmps/gpui-kumo/issues/25)) | In progress |
-| KUMO-041 | Pagination | [port Pagination](041-pagination-port.md) ([#26](https://github.com/msmps/gpui-kumo/issues/26)) | In progress |
-| KUMO-042 | Select | [port Select](042-select-port.md) ([#27](https://github.com/msmps/gpui-kumo/issues/27)) | Core implemented; parts in progress |
-| KUMO-043 | SensitiveInput | [port SensitiveInput](043-sensitive-input-port.md) ([#28](https://github.com/msmps/gpui-kumo/issues/28)) | In progress |
-| KUMO-044 | SkeletonLine | [port SkeletonLine](044-skeleton-line-port.md) ([#29](https://github.com/msmps/gpui-kumo/issues/29)) | In progress |
+| KUMO-040 | Meter | [finish track and indicator styling](040-meter-port.md) ([#25](https://github.com/msmps/gpui-kumo/issues/25)) | In progress |
+| KUMO-041 | Pagination | [finish native matrix and Select fidelity](041-pagination-port.md) ([#26](https://github.com/msmps/gpui-kumo/issues/26)) | In progress |
+| KUMO-042 | Select | [finish popup sizing and composition fidelity](042-select-port.md) ([#27](https://github.com/msmps/gpui-kumo/issues/27)) | In progress |
+| KUMO-043 | SensitiveInput | [finish rich parts and presentation fidelity](043-sensitive-input-port.md) ([#28](https://github.com/msmps/gpui-kumo/issues/28)) | In progress |
+| KUMO-044 | SkeletonLine | [SkeletonLine implementation](044-skeleton-line-port.md) ([#29](https://github.com/msmps/gpui-kumo/issues/29)) | Resolved; validation #10 |
 | KUMO-045 | Table | [port Table](045-table-port.md) ([#30](https://github.com/msmps/gpui-kumo/issues/30)) | Open |
 | KUMO-046 | TableOfContents | [port TableOfContents](046-table-of-contents-port.md) ([#31](https://github.com/msmps/gpui-kumo/issues/31)) | Open |
-| KUMO-047 | Tabs | [port Tabs](047-tabs-port.md) ([#32](https://github.com/msmps/gpui-kumo/issues/32)) | Open |
+| KUMO-047 | Tabs | [finish replacement composition and indicator motion](047-tabs-port.md) ([#32](https://github.com/msmps/gpui-kumo/issues/32)) | In progress |
 | KUMO-048 | TagInput | [port TagInput](048-tag-input-port.md) ([#33](https://github.com/msmps/gpui-kumo/issues/33)) | Open |
-| KUMO-049 | Toast | [port Toast](049-toast-port.md) ([#34](https://github.com/msmps/gpui-kumo/issues/34)) | Open |
-| KUMO-050 | Toolbar | [port Toolbar](050-toolbar-port.md) ([#35](https://github.com/msmps/gpui-kumo/issues/35)) | Open |
+| KUMO-049 | Toast | [finish manager APIs, stack motion and focus guards](049-toast-port.md) ([#34](https://github.com/msmps/gpui-kumo/issues/34)) | In progress |
+| KUMO-050 | Toolbar | [finish popup and joined editor composition](050-toolbar-port.md) ([#35](https://github.com/msmps/gpui-kumo/issues/35)) | In progress |
 
 ## Published GitHub issues
 
@@ -71,12 +71,12 @@ The following fidelity gaps are published on 2026-10-02. GitHub numbers differ f
 | KUMO-021 | [#6 — Tooltip: match Kumo motion and grouped instant switching](https://github.com/msmps/gpui-kumo/issues/6) | Missing implementation |
 | KUMO-022 | [#7 — Tooltip: support rich content and native trigger composition](https://github.com/msmps/gpui-kumo/issues/7) | Missing implementation |
 | KUMO-023 | [#8 — Checkbox/Switch: complete contextual help and Checkbox.Item mixed presentation](https://github.com/msmps/gpui-kumo/issues/8) | Missing implementation |
-| KUMO-024 | [#9 — InputGroup: support leading actions, multiple editors and rich parts](https://github.com/msmps/gpui-kumo/issues/9) | Missing implementation |
-| KUMO-025 | [#10 — Components: complete pinned browser comparisons for the implemented catalog](https://github.com/msmps/gpui-kumo/issues/10) | Outstanding validation |
+| KUMO-024 | [#9 — InputGroup: support multiple editors and rich parts](https://github.com/msmps/gpui-kumo/issues/9) | In progress |
+| KUMO-025 | [#10 — Components: complete pinned browser comparisons for the implemented catalog](https://github.com/msmps/gpui-kumo/issues/10) | Open |
 
 ## Remaining component family ports
 
-The original 25-family queue has one confirmed GitHub issue per family;13 remain unported. Family issues each (#11–#35), linked above and in [coverage](../component-coverage.md). Local IDs KUMO-026–050 distinguish these family ports from earlier fidelity follow-ups. Issues describe the pinned Base primitives, dependency order, limitations and acceptance gates: 11 direct counterparts, 7 partial compositions and 7 without a dedicated Base counterpart. A direct name does not establish complete behavior; Tabs keyboard navigation, Dropdown menu semantics and Meter range semantics require particular care. Publication does not change implementation coverage.
+The original 25-family queue has one confirmed GitHub issue per family;11 remain unported. Missing-family issues remain open; implemented-family issues now track bounded remaining work (#29 is resolved with validation in #10). All original issues (#11–#35) are linked above and in [coverage](../component-coverage.md). Local IDs KUMO-026–050 distinguish these family ports from earlier fidelity follow-ups. Issues describe the pinned Base primitives, dependency order, limitations and acceptance gates: 11 direct counterparts, 7 partial compositions and 7 without a dedicated Base counterpart. A direct name does not establish complete behavior; Tabs keyboard navigation, Dropdown menu semantics and Meter range semantics require particular care. Publication does not change implementation coverage.
 
 ## Maintaining the tracker
 
@@ -105,3 +105,7 @@ Necessary example repair: [KUMO-055 — Button gallery narrow composition](055-b
 [KUMO-059 — native InputArea test shortcuts](059-input-area-platform-shortcuts.md) ([#44](https://github.com/msmps/gpui-kumo/issues/44)), Resolved in744354a.
 
 [KUMO-060 — duration-animation clock](060-animation-clock.md) ([#45](https://github.com/msmps/gpui-kumo/issues/45)), Resolved — executor-clock repair preserves consumer paint assertions; full runs37115645935 and37116002411 pass at85871b7/5ea81bb.
+
+## Current cleanup — 2026-10-03
+
+Audited all45 GitHub issues at c1026fe. SkeletonLine #29 is implementation-complete; remaining browser/OS preference acceptance moves to #10. Thirteen implemented-family issues now describe their concrete remaining API/fidelity work. All11 missing-family issues remain open. Local KUMO-001 is superseded by published disabled/busy repairs #36/#39 and platform acceptance #2–#4; KUMO-009 points to resolved #41. No existing clipping, speech, IME or composition gap is discarded. [Current audit](../issue-audit-2026-10-03.md) records the disposition and evidence.

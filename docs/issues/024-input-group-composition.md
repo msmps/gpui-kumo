@@ -1,8 +1,8 @@
-# KUMO-024: InputGroup: support leading actions, multiple editors and rich parts
+# KUMO-024: InputGroup: support multiple editors and rich parts
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/9
 
-Status: Open
+Status: In progress
 
 ## Problem
 
@@ -28,3 +28,7 @@ Baseline: Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`; GPUI Kit/Base 0.7.0; 
 
 
 Leading direct actions and fixed/native-aligned editor composition now implemented;158 tests/nine doctests and Rust gates pass; review width/order repairs and both-theme1040/520 evidence in [InputGroup acceptance](../input-group-validation.md). Multiple editors/rich parts remain open.
+
+## Current scope — 2026-10-03
+
+Leading direct actions and source hybrid ordering are implemented in ebb53ab. #9 remains open for multiple editors and arbitrary rich addons, with browser/platform acceptance separate. Earlier leading-action checklist is historical.

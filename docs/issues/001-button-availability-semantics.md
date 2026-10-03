@@ -1,8 +1,8 @@
 # KUMO-001: Button: expose disabled and loading accessibility state
 
-Status: In progress — metadata bridge implemented; full adapter/busy and accessible-activation acceptance remains open.
+Status: Resolved — consolidated into published repair and platform trackers
 
-GitHub issue: Pending publication
+GitHub issues: [#36](https://github.com/msmps/gpui-kumo/issues/36), [#39](https://github.com/msmps/gpui-kumo/issues/39)
 
 ## Problem
 
@@ -26,3 +26,7 @@ Baseline: commit `38c2ea8`, GPUI Kit/Base 0.7.0 and GPUI 0.3.7. Where a browser 
 ## Continuation — 2026-10-02
 
 Button enriches Base's existing AccessKit node through `a11y_synthetic_children`: disabled is set for `disabled || loading`, busy for loading. No dependency fork, duplicate role or public API change. Native macOS inspection of the gallery and [state fixture](../../apps/gallery/examples/state_semantics.rs) reports `(disabled)` for disabled/loading buttons and removes it on reset. Existing rendered pointer/keyboard/traversal tests pass. Busy export and assistive activation gating across platforms remain acceptance work. GPUI's debug JSON serializer omits these state bits; its description strings are not used as proof of the flags.
+
+## Consolidation — 2026-10-03
+
+Authored disabled/busy metadata and exact Linux adapter exports are implemented and validated in closed #36/#39. Keep their patches/evidence. This unpublished umbrella is superseded; remaining assistive activation and spoken/cross-platform acceptance belongs to #2–#4. Historical acceptance checkboxes above are not a claim that every platform was exercised.

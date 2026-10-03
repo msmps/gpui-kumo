@@ -2,7 +2,7 @@
 
 Status: Resolved by #41
 
-GitHub issue: Pending publication
+GitHub issue: [#41](https://github.com/msmps/gpui-kumo/issues/41) (resolved shared repair)
 
 ## Problem
 
