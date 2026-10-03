@@ -38,6 +38,7 @@ mod skeletons;
 mod switches;
 mod tabs;
 mod texts;
+mod toolbars;
 mod tooltips;
 
 #[cfg(feature = "frame-profiler")]
@@ -55,6 +56,9 @@ impl AssetSource for GalleryAssets {
             ))),
             "caret-down.svg" => Some(Cow::Borrowed(include_bytes!(
                 "../../../crates/gpui-kumo/assets/caret-down.svg"
+            ))),
+            "toolbar-settings.svg" => Some(Cow::Borrowed(include_bytes!(
+                "../assets/toolbar-settings.svg"
             ))),
             "workspace.svg" => Some(Cow::Borrowed(include_bytes!("../assets/workspace.svg"))),
             _ => None,
@@ -99,6 +103,7 @@ struct Gallery {
     selects: gpui_kit::Entity<selects::Selects>,
     paginations: gpui_kit::Entity<paginations::Paginations>,
     tabs: gpui_kit::Entity<tabs::TabExamples>,
+    toolbars: gpui_kit::Entity<toolbars::Toolbars>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -208,6 +213,7 @@ impl Render for Gallery {
         )
         .child(self.paginations.clone())
         .child(self.tabs.clone())
+        .child(self.toolbars.clone())
         .child(self.input_groups.clone())
         .child(self.selects.clone())
         .child(self.breadcrumbs.clone())
@@ -321,6 +327,7 @@ fn main() {
                             selects: cx.new(|cx| selects::Selects::new(window, cx)),
                             paginations: cx.new(|cx| paginations::Paginations::new(window, cx)),
                             tabs: cx.new(tabs::TabExamples::new),
+                            toolbars: cx.new(toolbars::Toolbars::new),
                             activations: 0,
                             disabled: false,
                             loading: false,

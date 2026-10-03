@@ -71,6 +71,7 @@ pub struct Button {
     accent: Option<Box<AccentRecipe>>,
     style: StyleRefinement,
     join: Option<Box<(bool, bool, bool, JoinedRingQueue)>>,
+    toolbar_focus: Option<Box<crate::toolbar::ButtonFocus>>,
 }
 
 impl Button {
@@ -97,6 +98,7 @@ impl Button {
             accent: None,
             style: Default::default(),
             join: None,
+            toolbar_focus: None,
         }
     }
 
@@ -114,6 +116,12 @@ impl Button {
         }
     }
 
+    pub(crate) fn toolbar_focus(mut self, focus: crate::toolbar::ButtonFocus) -> Self {
+        self.variant = Variant::Ghost;
+        self.size = Size::Base;
+        self.toolbar_focus = Some(Box::new(focus));
+        self
+    }
     pub(crate) fn input_group_action(mut self, disabled: bool) -> Self {
         self.disabled |= disabled;
         self.input_group_action = true;
@@ -473,12 +481,22 @@ fn shadows(paint: &Paint, theme: &Theme) -> Vec<BoxShadow> {
 impl RenderOnce for Button {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let theme = theme(cx);
+        let toolbar_focus = self.toolbar_focus;
+        let toolbar_width = toolbar_focus.as_ref().and_then(|f| f.icon_width);
         let geometry = self.size.geometry(self.shape, theme);
-        let unavailable = self.disabled || self.loading;
+        let unavailable = toolbar_focus
+            .as_ref()
+            .map_or(self.disabled || self.loading, |f| f.unavailable);
+        let toolbar = toolbar_focus.is_some();
         let mut rest = self.accent.as_ref().map_or_else(
             || self.variant.paint(theme, unavailable, self.open, false),
             |recipe| recipe.paint(false, unavailable),
         );
+        // Toolbar's ghost visual follows the original Button props; group
+        // availability affects behavior without inventing dimmed presentation.
+        if toolbar {
+            rest.foreground = theme.text.default;
+        }
         if self.join.is_some() || self.input_group_action || self.input_group_zone.is_some() {
             rest.drop_shadow = false;
         }
@@ -486,10 +504,16 @@ impl RenderOnce for Button {
             rest.background = theme.colors.overlay.into();
             rest.foreground = theme.text.inactive;
         }
-        let hovered = self.accent.as_ref().map_or_else(
-            || self.variant.paint(theme, unavailable, self.open, true),
+        let mut hovered = self.accent.as_ref().map_or_else(
+            || {
+                self.variant
+                    .paint(theme, unavailable && !toolbar, self.open, true)
+            },
             |recipe| recipe.paint(true, unavailable),
         );
+        if toolbar {
+            hovered.foreground = theme.text.default;
+        }
         let emphasis = self.accent.as_ref().map_or_else(
             || self.variant.emphasis(theme),
             |recipe| recipe.emphasis.as_ref(),
@@ -518,7 +542,18 @@ impl RenderOnce for Button {
         let mut button = base::Button::new(self.id)
             .accessibility_label(self.name)
             .track_focus(&focus_handle)
-            .disabled(unavailable)
+            .disabled(
+                unavailable
+                    && toolbar_focus
+                        .as_ref()
+                        .is_none_or(|f| !f.focusable_when_disabled),
+            )
+            .tab_stop(toolbar_focus.as_ref().is_none_or(|f| f.tab_stop))
+            .when_some(toolbar_focus, |button, hooks| {
+                button.on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
+                    (hooks.on_focus)(window, cx)
+                })
+            })
             .a11y_synthetic_children(move |builder| {
                 // Enrich Base's actual control node; do not add another button.
                 let node = builder.parent_node();
@@ -550,15 +585,19 @@ impl RenderOnce for Button {
             .relative()
             .shadow(shadows(&rest, &theme))
             .when(self.shape != Shape::Standard, |this| {
-                this.w(geometry.height)
+                this.w(toolbar_width.unwrap_or(geometry.height))
             })
-            .when(!unavailable, |this| this.cursor_pointer())
-            .when(unavailable, |this| this.cursor_not_allowed())
+            .when(!unavailable || (toolbar && !self.disabled), |this| {
+                this.cursor_pointer()
+            })
+            .when(unavailable && (!toolbar || self.disabled), |this| {
+                this.cursor_not_allowed()
+            })
             .when(self.loading, |this| this.aria_description("Loading"))
             .when(!self.loading && self.disabled, |this| {
                 this.aria_description("Unavailable")
             })
-            .when(!unavailable, |this| {
+            .when(toolbar || !unavailable, |this| {
                 this.hover(|style| style.bg(hovered.background).text_color(hovered.foreground))
             });
         let tooltip_bounds = self
@@ -578,7 +617,7 @@ impl RenderOnce for Button {
                 }
             });
             button = button.cursor_default();
-        } else if let Some(handler) = self.on_click {
+        } else if !unavailable && let Some(handler) = self.on_click {
             button = button.on_click(handler);
         }
 

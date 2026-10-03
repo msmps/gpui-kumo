@@ -333,3 +333,5 @@ style and motion contracts.
 ## License
 
 Apache-2.0. See [`../../LICENSE-APACHE`](../../LICENSE-APACHE).
+
+Local Kumo continuation: `src/link.rs` also preserves a supplied retained focus handle, matching Button's existing hook. Scope/provenance, consumer regressions, removal condition and downstream Cargo-root obligations: [retained Link focus correction](../../docs/gpui-base-link-focus-patch.md).

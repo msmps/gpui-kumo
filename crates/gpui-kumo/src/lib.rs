@@ -110,3 +110,6 @@ mod animation_clock_tests;
 
 pub mod tabs;
 pub use tabs::{TabItem, Tabs, TabsEvent, TabsLabels, TabsState};
+
+pub mod toolbar;
+pub use toolbar::{Toolbar, ToolbarEvent, ToolbarItem, ToolbarState};

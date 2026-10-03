@@ -1,8 +1,8 @@
 # Component coverage inventory
 
-Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-02. This is a count of catalog component families, not subparts or fidelity acceptance checkboxes. Checkbox.Group/Item, Radio.Item, TooltipProvider and Button subsidiary APIs count inside their families. InputArea, SkeletonLine and recommended CodeHighlighted have separate catalog pages and count separately even though some share source directories.
+Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-03. This is a count of catalog component families, not subparts or fidelity acceptance checkboxes. Checkbox.Group/Item, Radio.Item, TooltipProvider and Button subsidiary APIs count inside their families. InputArea, SkeletonLine and recommended CodeHighlighted have separate catalog pages and count separately even though some share source directories.
 
-43 in-scope families:28 with working implementations,15 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
+43 in-scope families:29 with working implementations,14 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
 
 | Catalog component | State |
 | --- | --- |
@@ -47,7 +47,7 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-02. This
 | tag-input | Unported — [#33](https://github.com/msmps/gpui-kumo/issues/33) |
 | text | Implemented; see component acceptance/gaps |
 | toast | Unported — [#34](https://github.com/msmps/gpui-kumo/issues/34) |
-| toolbar | Unported — [#35](https://github.com/msmps/gpui-kumo/issues/35) |
+| toolbar | Action/link core implemented; [contract and remaining composition](toolbar-validation.md) — [#35](https://github.com/msmps/gpui-kumo/issues/35) |
 | tooltip | Implemented; see component acceptance/gaps |
 
 Excluded: charts, Flow, Sidebar/application shells, Cloudflare branding and blocks. Deprecated Code/CodeBlock, Surface, MenuBar and DateRangePicker are omitted under AGENTS/task scope. Their recommended replacements remain in scope: CodeHighlighted, LayerCard, segmented Tabs and DatePicker range mode. CodeHighlighted highlighter dependency policy remains deferred, not excluded. InputArea and SkeletonLine were missing from the coarse early backlog and are explicitly restored here from the pinned catalog.

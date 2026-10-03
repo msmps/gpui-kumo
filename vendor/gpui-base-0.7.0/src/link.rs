@@ -34,6 +34,7 @@ pub struct Link {
     accessibility_label: Option<SharedString>,
     tab_index: isize,
     tab_stop: bool,
+    provided_focus_handle: Option<FocusHandle>,
 }
 
 /// Semantic root styles supported by [`Link`].
@@ -66,6 +67,7 @@ impl Link {
             accessibility_label: None,
             tab_index: 0,
             tab_stop: true,
+            provided_focus_handle: None,
         }
     }
 
@@ -132,11 +134,20 @@ impl Link {
         self
     }
 
+    /// Uses the caller's retained focus target for pointer, keyboard and traversal.
+    /// Matches Button's hook; the default still uses keyed component focus.
+    pub fn track_focus(mut self, handle: &FocusHandle) -> Self {
+        self.provided_focus_handle = Some(handle.clone());
+        self
+    }
+
     fn focus_handle(&self, window: &mut Window, cx: &mut App) -> FocusHandle {
-        window
-            .use_keyed_state(self.id.clone(), cx, |_, cx| cx.focus_handle())
-            .read(cx)
-            .clone()
+        self.provided_focus_handle.clone().unwrap_or_else(|| {
+            window
+                .use_keyed_state(self.id.clone(), cx, |_, cx| cx.focus_handle())
+                .read(cx)
+                .clone()
+        })
     }
 }
 
