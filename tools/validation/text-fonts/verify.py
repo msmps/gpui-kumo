@@ -4,7 +4,7 @@ Requires Pillow/FreeType and fontconfig; run from any working directory.
 Coordinates describe these recorded artifacts, not arbitrary future layouts.
 """
 from pathlib import Path
-import re
+import json
 import subprocess
 from PIL import Image, ImageFont
 
@@ -18,14 +18,13 @@ matches = [y for y in range(530, 690)
            if current.crop((57, y, 220, y + 14)).tobytes() == reference]
 assert len(matches) == 1, matches
 print('Historical/gallery/explicit DejaVu Sans rich pixels match exactly:', matches)
-traces = (root / 'docs/evidence/text-fonts/linux/light-1040.log').read_text()
+metrics = json.loads((evidence / 'font-metrics.json').read_text())
 widths = {}
 for family in ['DejaVu Sans', 'Liberation Sans', 'DejaVu Serif']:
-    line = next(line for line in traces.splitlines() if line.startswith(f'FONT {family}:'))
-    native = float(re.search(r'width: ([0-9.]+)px', line.split('; plain=')[1])[1])
+    native = metrics['native_advance_px'][family]
     path = subprocess.check_output(
         ['fc-match', '-f', '%{file}', f'{family}:weight=semibold'], text=True)
-    independent = ImageFont.truetype(path, 14).getlength('emphasis')
+    independent = ImageFont.truetype(path, metrics['font_size_px']).getlength(metrics['text'])
     assert abs(native - independent) < .03, (family, native, independent)
     widths[family] = native
     print(f'{family}: native={native}, FreeType={independent}, face={path}')

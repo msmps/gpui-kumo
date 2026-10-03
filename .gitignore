@@ -3,3 +3,6 @@
 .DS_Store
 
 /vendor/accesskit_atspi_common-0.19.1/target/
+
+# Raw build/runtime logs can contain private local paths.
+*.log

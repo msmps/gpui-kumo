@@ -14,7 +14,7 @@ Scripts retain managed-workspace/runtime assumptions and are manual validation t
 
 The quick-win fixture uses macOS Metal and `Window::render_to_image`, with actual rendered pointer/Space paths. Copy it temporarily into the gallery examples, run the capture command below, inspect both themes at1040/520, then remove the temporary example. It supports interactive controls without `--capture`. Ensure foreground visibility when reviewing real presentation: an occluded macOS window can update state while suspending displayed frames.
 
-The historical font verifier intentionally reads the issue-referenced PNGs under `docs/evidence/readable-labels/` and `docs/evidence/text-fonts/linux/`, plus `docs/evidence/text-fonts/linux/light-1040.log`. It requires Pillow/FreeType and fontconfig. Retain those baseline inputs until changing the verifier to consume fresh output. The capture script writes new artifacts under `tools/validation/text-fonts/linux/`.
+The historical font verifier intentionally reads the issue-referenced PNGs under `docs/evidence/readable-labels/` and `docs/evidence/text-fonts/linux/`, plus the metrics-only `tools/validation/text-fonts/font-metrics.json` fixture. It requires Pillow/FreeType and fontconfig. The fixture contains only the font size, sample text and measured advances; raw logs are not retained. The capture script writes new artifacts under `tools/validation/text-fonts/linux/`.
 
 ## Fixture inventory
 
