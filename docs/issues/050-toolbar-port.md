@@ -10,7 +10,7 @@ Port the supported **Toolbar** Kumo family to Rust/GPUI. The action/link core is
 
 ## Compact addon action continuation — 2026-10-03
 
-Independent action Tab stops, remembered-entry arrow navigation, root/editor versus group availability, hosted focus containment/reorder/removal recovery, and native deferred text snapshot updates are implemented. [Source/native evidence](../evidence/toolbar/addon-actions/README.md). Exact pins and29/43 working-family coverage remain; #35 stays open.
+Published511efcd1f8884a00a190732e34f2572f2c852426 passes [remote CI37133020509](https://github.com/msmps/gpui-kumo/actions/runs/37133020509), local198-library full gate and browser/native Light/Dark1040/520. Independent action Tab stops, remembered-entry arrow navigation, root/editor versus group availability, hosted focus containment/reorder/removal recovery, and native deferred text snapshot updates are implemented. [Source/native evidence](../evidence/toolbar/addon-actions/README.md). Exact pins and29/43 working-family coverage remain; #35 stays open.
 
 ## Toolbar retained editor continuation — 2026-10-03
 
