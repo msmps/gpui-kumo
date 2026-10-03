@@ -99,7 +99,7 @@ pub use select::{
 pub mod pagination;
 pub use pagination::{
     Pagination, PaginationEvent, PaginationInfo, PaginationInfoValue, PaginationLabels,
-    PaginationParts, PaginationSeparator, PaginationState, PaginationTotal,
+    PaginationPageSize, PaginationParts, PaginationSeparator, PaginationState, PaginationTotal,
 };
 
 #[cfg(test)]

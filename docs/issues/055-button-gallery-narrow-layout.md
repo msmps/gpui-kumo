@@ -17,3 +17,5 @@ Acceptance:
 Implementation uses existing dimensions/spacing,920px threshold derived from the808px wide row and112px combined padding, and existing160px caption width. No library Button/API/style change. [Before captures](../evidence/linux-busy-state/before-narrow-dark.png) and [joint acceptance/results](../linux-busy-state-validation.md) accompany the #39 checkpoint. Continue #26 Pagination parts afterward.
 
 Resolved in the joint Busy/narrow-gallery checkpoint; [validation and evidence](../linux-busy-state-validation.md).166 workspace tests/nine doctests plus required Rust/vendor gates and actual four-combination native probes passed. No OS speech/other-platform claim.
+
+Published joint checkpoint: `e1c38b832030605601a256065264dfd087b53a4b`; remote work ref/tree verified. No CI workflow/runs.

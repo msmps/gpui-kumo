@@ -9,6 +9,7 @@ use gpui_kumo::{
 pub struct Paginations {
     states: Vec<Entity<PaginationState>>,
     proposals: usize,
+    size_proposals: usize,
     _subscriptions: Vec<Subscription>,
 }
 impl Paginations {
@@ -25,6 +26,9 @@ impl Paginations {
             ),
             (1, 10, PaginationTotal::Known(100)),
             (1, 10, PaginationTotal::Known(0)),
+            (3, 25, PaginationTotal::Known(500)),
+            (1, 10, PaginationTotal::Known(200)),
+            (2, 10, PaginationTotal::Known(200)),
         ];
         let states: Vec<_> = configs
             .into_iter()
@@ -36,10 +40,14 @@ impl Paginations {
                         PaginationLabels {
                             navigation: format!("Dataset {index} pages").into(),
                             page_number: format!("Dataset {index} page number").into(),
+                            page_size: format!("Dataset {index} page size café 🦀").into(),
                             ..Default::default()
                         },
                         cx,
                     );
+                    if index >= 6 {
+                        s.set_page_size_options(vec![10, 20, 50], cx);
+                    }
                     s
                 })
             })
@@ -52,7 +60,21 @@ impl Paginations {
                     state,
                     window,
                     move |v: &mut Self, state, event, window, cx| {
-                        let PaginationEvent::Page(page) = *event;
+                        let PaginationEvent::Page(page) = *event else {
+                            if let PaginationEvent::PageSize(size) = *event {
+                                v.size_proposals += 1;
+                                if index != 6 {
+                                    state.update(cx, |s, cx| {
+                                        s.set_per_page(size, window, cx);
+                                        if index == 5 {
+                                            s.set_page(1, window, cx);
+                                        }
+                                    });
+                                }
+                                cx.notify();
+                            }
+                            return;
+                        };
                         v.proposals += 1;
                         if index != 3 {
                             state.update(cx, |s, cx| {
@@ -77,6 +99,7 @@ impl Paginations {
         Self {
             states,
             proposals: 0,
+            size_proposals: 0,
             _subscriptions: subscriptions,
         }
     }
@@ -108,6 +131,69 @@ impl Render for Paginations {
         .child(Pagination::new("pagination-rejected", &self.states[3]))
         .child("Empty dataset · both directions unavailable")
         .child(Pagination::new("pagination-empty", &self.states[4]))
+        .child("Page size · owner accepts and explicitly resets to first page")
+        .child(Pagination::new("pagination-size", &self.states[5]).page_size(true))
+        .child("Custom label/options · owner rejects size proposals")
+        .child(
+            Pagination::new("pagination-size-rejected", &self.states[6]).content(|parts, _, _| {
+                div()
+                    .flex()
+                    .flex_wrap()
+                    .items_center()
+                    .gap(px(8.))
+                    .child(parts.info)
+                    .child(parts.page_size.label("Résultats par page café 🦀:"))
+                    .child(parts.controls)
+                    .into_any_element()
+            }),
+        )
+        .child("Hidden visible label · custom options; owner keeps the current page")
+        .child(
+            Pagination::new("pagination-size-hidden", &self.states[7]).content(|parts, _, _| {
+                div()
+                    .flex()
+                    .flex_wrap()
+                    .items_center()
+                    .gap(px(8.))
+                    .child(parts.info)
+                    .child(parts.page_size.without_label())
+                    .child(parts.controls)
+                    .into_any_element()
+            }),
+        )
+        .child(gpui_kumo::Text::new(
+            "pagination-size-proposals",
+            format!("Page size proposals: {}", self.size_proposals),
+        ))
+        .child(
+            div()
+                .flex()
+                .flex_wrap()
+                .gap(px(8.))
+                .child(
+                    Button::new("pagination-size-reset", "Reset size datasets").on_click(
+                        cx.listener(|v, _, window, cx| {
+                            v.states[5].update(cx, |s, cx| {
+                                s.set_disabled(false, window, cx);
+                                s.set_per_page(25, window, cx);
+                                s.set_page(3, window, cx);
+                            });
+                            v.states[6].update(cx, |s, cx| s.set_per_page(10, window, cx));
+                            v.states[7].update(cx, |s, cx| {
+                                s.set_per_page(10, window, cx);
+                                s.set_page(2, window, cx);
+                            });
+                        }),
+                    ),
+                )
+                .child(
+                    Button::new("pagination-size-availability", "Toggle size availability")
+                        .on_click(cx.listener(|v, _, window, cx| {
+                            v.states[5]
+                                .update(cx, |s, cx| s.set_disabled(!s.is_disabled(), window, cx));
+                        })),
+                ),
+        )
         .child(format!("Page proposals: {}", self.proposals))
         .child(
             div()

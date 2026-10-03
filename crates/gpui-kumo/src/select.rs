@@ -340,6 +340,14 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
     pub fn focus_handle(&self) -> FocusHandle {
         self.trigger.clone()
     }
+    pub(crate) fn set_name(&mut self, name: SharedString, cx: &mut Context<Self>) {
+        assert!(
+            !name.trim().is_empty(),
+            "Select requires an accessible name"
+        );
+        self.name = name;
+        cx.notify();
+    }
     pub fn set_controlled(&mut self, controlled: bool, cx: &mut Context<Self>) {
         self.controlled = controlled;
         cx.notify();
@@ -1167,17 +1175,44 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
                     .into_any_element(),
             });
         }
+        // CSS gives the source popup an anchor minimum, not a fixed anchor
+        // width. Plain option words need their intrinsic text space plus the
+        // actual mx6/px8/check14/gap8/border1 recipe. Allow long sentences to
+        // wrap while keeping compact numeric options on one line. Rich option
+        // content keeps its existing caller-owned layout contract.
+        let word_width = self
+            .options()
+            .filter(|option| option.content.is_none())
+            .flat_map(|option| option.label.split_whitespace())
+            .map(|word| {
+                let text: SharedString = word.to_owned().into();
+                let run = gpui_kit::TextRun {
+                    len: text.len(),
+                    font: gpui_kit::font(t.typography.font_family.clone()),
+                    color: t.text.default,
+                    background_color: None,
+                    underline: None,
+                    strikethrough: None,
+                };
+                window
+                    .text_system()
+                    .shape_line(text, px(14.), &[run], None)
+                    .width
+                    .ceil()
+            })
+            .fold(px(0.), |width, next| width.max(next));
+        let option_chrome = px(2. * 6. + 2. * 8. + 14. + 8. + 2. * 1.);
+        let popup_width = trigger_bounds
+            .size
+            .width
+            .max(word_width + option_chrome)
+            .min((window.viewport_size().width - px(16.)).max(px(1.)));
         let surface = div()
             .id("surface")
             .test_support()
             .occlude()
             .relative()
-            .w(self
-                .bounds
-                .get()
-                .size
-                .width
-                .min(window.viewport_size().width - px(16.)))
+            .w(popup_width)
             .py(px(6.))
             .rounded(px(8.))
             .bg(t.colors.base)

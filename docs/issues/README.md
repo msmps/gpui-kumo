@@ -95,3 +95,7 @@ Visual follow-up: [KUMO-053 — rich Text highlight font fidelity](053-rich-text
 Shared follow-up: [KUMO-054 — authored busy-state export on Linux](054-linux-busy-state.md) ([#39](https://github.com/msmps/gpui-kumo/issues/39)), Resolved. Authored Busy now exports independently of availability, with actual state/event and four-combination native checks.
 
 Necessary example repair: [KUMO-055 — Button gallery narrow composition](055-button-gallery-narrow-layout.md) ([#40](https://github.com/msmps/gpui-kumo/issues/40)), Resolved. Intrinsic Button geometry preserved; counter, variant and size-row wrapping verified natively in all four combinations.
+
+[ KUMO-056 — Linux expansion export](056-linux-expansion-state.md) ([#41](https://github.com/msmps/gpui-kumo/issues/41)), Open. Native PageSize popup opens but pinned adapter omits Expanded/Expandable; selected after PageSize checkpoint.
+
+[KUMO-057 — narrow foundation gallery](057-foundation-gallery-narrow-layout.md) ([#42](https://github.com/msmps/gpui-kumo/issues/42)), Open. Actual swatch-column overflow below Button panels remains a separate gallery repair.

@@ -1,5 +1,8 @@
 //! Kumo compound pagination with a retained native draft and Base controlled bounds.
-use crate::{Button, InputEvent, InputGroup, InputState, Theme, theme};
+use crate::{
+    Button, InputEvent, InputGroup, InputState, Select, SelectEvent, SelectOption, SelectState,
+    SelectValue, SelectValueContent, Theme, theme,
+};
 use gpui_kit::base::TestSupportExt;
 use gpui_kit::{
     AnyElement, App, AppContext, Context, ElementId, Entity, EventEmitter, FocusHandle, Focusable,
@@ -49,6 +52,8 @@ impl Default for PaginationLabels {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PaginationEvent {
     Page(usize),
+    /// Proposed size; only the owner chooses acceptance and reset-to-first policy.
+    PageSize(usize),
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PaginationInfoValue {
@@ -138,16 +143,93 @@ impl RenderOnce for PaginationSeparator {
             .border_color(theme(cx).colors.hairline)
     }
 }
+/// Source PageSize composition. Label presentation does not rename the Select.
+#[derive(IntoElement)]
+pub struct PaginationPageSize {
+    state: Entity<SelectState<usize>>,
+    value: usize,
+    label: Option<AnyElement>,
+    text: Option<SharedString>,
+}
+impl PaginationPageSize {
+    /// Localized visible label; an empty label is hidden.
+    pub fn label(mut self, label: impl Into<SharedString>) -> Self {
+        let label = label.into();
+        self.text = (!label.is_empty()).then_some(label);
+        self.label = None;
+        self
+    }
+    /// Rich label content owns its accessible meaning.
+    pub fn label_content(mut self, content: impl IntoElement) -> Self {
+        self.label = Some(content.into_any_element());
+        self.text = None;
+        self
+    }
+    pub fn without_label(mut self) -> Self {
+        self.label = None;
+        self.text = None;
+        self
+    }
+}
+impl RenderOnce for PaginationPageSize {
+    fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let t = theme(cx);
+        let (_, padding, _, style) = crate::input::metrics(crate::input::Size::Base, t);
+        let text: SharedString = self.value.to_string().into();
+        let run = gpui_kit::TextRun {
+            len: text.len(),
+            font: gpui_kit::font(t.typography.font_family.clone()),
+            color: t.text.default,
+            background_color: None,
+            underline: None,
+            strikethrough: None,
+        };
+        // Kumo's Select trigger is intrinsically sized here. Reuse its actual
+        // text/padding/gap/caret recipe without changing full-width form Selects.
+        let width = window
+            .text_system()
+            .shape_line(text, style.size, &[run], None)
+            .width
+            + padding * 2.
+            + t.spacing.eight
+            + px(16.);
+        div()
+            .id("pagination-page-size")
+            .test_support()
+            .flex()
+            .items_center()
+            .gap(t.spacing.eight)
+            .min_w_0()
+            .when_some(self.text, |this, text| {
+                this.child(crate::Text::new("pagination-page-size-label", text).style(
+                    crate::text::Style::Copy {
+                        tone: crate::text::Tone::Secondary,
+                        size: crate::text::Size::Sm,
+                        bold: false,
+                    },
+                ))
+            })
+            .children(self.label)
+            .child(
+                div()
+                    .w(width)
+                    .flex_shrink_0()
+                    .child(Select::new("pagination-size-select", &self.state)),
+            )
+    }
+}
 /// Fresh parts from the retained root. Reorder/wrap them without retaining UI entities.
 pub struct PaginationParts {
     pub info: PaginationInfo,
     pub separator: PaginationSeparator,
+    pub page_size: PaginationPageSize,
     pub controls: AnyElement,
 }
 type Content = Rc<dyn Fn(PaginationParts, &mut Window, &mut App) -> AnyElement>;
 #[derive(Default)]
 struct Presentation {
     controls: Controls,
+    page_size: bool,
     content: Option<Content>,
 }
 /// Controlled current page. Accept proposals with set_page; setters emit no events.
@@ -157,6 +239,7 @@ pub struct PaginationState {
     per_page: usize,
     total: PaginationTotal,
     input: Entity<InputState>,
+    page_size: Entity<SelectState<usize>>,
     draft_dirty: bool,
     draft_revision: u64,
     labels: PaginationLabels,
@@ -181,6 +264,40 @@ impl PaginationState {
             s.set_value(model.current_page().to_string(), window, cx);
             s
         });
+        let page_size = cx.new(|cx| {
+            let mut state = SelectState::new(
+                labels.page_size.clone(),
+                SelectValue::Single(Some(per_page)),
+                size_options(vec![25, 50, 100, 250]),
+                cx,
+            );
+            state.set_controlled(true, cx);
+            // External owner values need not occur in the current option list.
+            // Keep the actual size readable without adding an invented option.
+            state.set_value_content(
+                |value, _, _| match value {
+                    SelectValue::Single(Some(size)) => Some(SelectValueContent::new(
+                        size.to_string(),
+                        div().child(size.to_string()),
+                    )),
+                    _ => None,
+                },
+                cx,
+            );
+            state
+        });
+        let size_events = cx.subscribe_in(
+            &page_size,
+            window,
+            |state: &mut Self, _, event: &SelectEvent<usize>, _, cx| {
+                if let SelectValue::Single(Some(size)) = event.value
+                    && !state.is_disabled()
+                    && size != state.per_page
+                {
+                    cx.emit(PaginationEvent::PageSize(size));
+                }
+            },
+        );
         let events =
             cx.subscribe_in(
                 &input,
@@ -205,12 +322,17 @@ impl PaginationState {
             per_page,
             total,
             input,
+            page_size,
             draft_dirty: false,
             draft_revision: 0,
             labels,
             focuses: std::array::from_fn(|_| cx.focus_handle()),
             presentation: Presentation::default(),
-            _subscriptions: vec![events, cx.observe_global::<Theme>(|_, cx| cx.notify())],
+            _subscriptions: vec![
+                events,
+                size_events,
+                cx.observe_global::<Theme>(|_, cx| cx.notify()),
+            ],
         }
     }
     fn model(
@@ -309,11 +431,16 @@ impl PaginationState {
     pub fn set_per_page(&mut self, per_page: usize, window: &mut Window, cx: &mut Context<Self>) {
         assert!(per_page > 0, "Pagination page size must be positive");
         self.per_page = per_page;
+        self.page_size.update(cx, |s, cx| {
+            s.set_value(SelectValue::Single(Some(per_page)), cx)
+        });
         self.set_page(self.page(), window, cx);
     }
     pub fn set_disabled(&mut self, disabled: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.model = Self::model(self.page(), self.per_page, self.total, disabled, cx);
         self.input.update(cx, |s, cx| s.set_disabled(disabled, cx));
+        self.page_size
+            .update(cx, |s, cx| s.set_disabled(disabled, window, cx));
         self.reset_draft(window, cx);
         cx.notify();
     }
@@ -334,8 +461,16 @@ impl PaginationState {
         }
         self.input
             .update(cx, |s, cx| s.set_name(labels.page_number.clone(), cx));
+        self.page_size
+            .update(cx, |s, cx| s.set_name(labels.page_size.clone(), cx));
         self.labels = labels;
         cx.notify();
+    }
+    /// Replace source options without changing the owner's size or emitting a proposal.
+    /// Empty lists are allowed. Positive, unique whole sizes have stable numeric IDs.
+    pub fn set_page_size_options(&mut self, options: Vec<usize>, cx: &mut Context<Self>) {
+        self.page_size
+            .update(cx, |s, cx| s.set_options(size_options(options), cx));
     }
     fn reconcile_hidden_focus(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let full = self.presentation.controls == Controls::Full
@@ -566,7 +701,9 @@ impl PaginationState {
         };
         div()
             .flex_1()
-            .min_w_0()
+            // Preserve the intrinsic joined control width when the source parts
+            // are composed in a wrapping native row; never paint over siblings.
+            .min_w(px(if full { 190. } else { 71. }))
             .flex()
             .flex_col()
             .items_end()
@@ -577,6 +714,20 @@ impl PaginationState {
             )
             .into_any_element()
     }
+}
+fn size_options(options: Vec<usize>) -> Vec<SelectOption<usize>> {
+    let mut seen = std::collections::HashSet::with_capacity(options.len());
+    options
+        .into_iter()
+        .map(|size| {
+            assert!(size > 0, "Pagination page size options must be positive");
+            assert!(
+                seen.insert(size),
+                "Pagination page size options must be unique"
+            );
+            SelectOption::new(("pagination-size", size), size, size.to_string())
+        })
+        .collect()
 }
 #[derive(IntoElement)]
 struct NavigationGlyph(&'static [u8]);
@@ -638,6 +789,11 @@ impl Pagination {
         self.presentation.controls = controls;
         self
     }
+    /// Include the default PageSize part. Custom content chooses its own parts.
+    pub fn page_size(mut self, show: bool) -> Self {
+        self.presentation.page_size = show;
+        self
+    }
     /// Reorder/wrap fresh compound parts. Capture the owner weakly, and never
     /// read/update this PaginationState while it is rendering under a borrow.
     pub fn content(
@@ -666,6 +822,12 @@ impl Render for PaginationState {
                 text: None,
             },
             separator: PaginationSeparator,
+            page_size: PaginationPageSize {
+                state: self.page_size.clone(),
+                value: self.per_page,
+                label: None,
+                text: Some("Per page:".into()),
+            },
             controls: self.controls(window, cx),
         };
         let body = if let Some(content) = &self.presentation.content {
@@ -674,8 +836,12 @@ impl Render for PaginationState {
             div()
                 .flex()
                 .items_center()
+                .flex_wrap()
                 .gap(theme(cx).spacing.eight)
                 .child(parts.info)
+                .when(self.presentation.page_size, |this| {
+                    this.child(parts.separator).child(parts.page_size)
+                })
                 .child(parts.controls)
                 .into_any_element()
         };

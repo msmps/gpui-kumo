@@ -13,3 +13,5 @@ Next selected after #36, then #26 Pagination parts. Exact source/checksum/root c
 Baseline actual Adapter regression fails for enabled Button Busy after set_busy. Added role matrix covers Button/Switch, enabled/disabled, state set/clear and emitted notifications; only Busy is allowed to change. Shared private state-event fixture extracted from existing concrete test duplication. Production candidate maps is_busy to State::Busy using installed getter.
 
 Resolved in the joint Busy/narrow-gallery checkpoint; [validation and evidence](../linux-busy-state-validation.md).166 workspace tests/nine doctests plus required Rust/vendor gates and actual four-combination native probes passed. No OS speech/other-platform claim.
+
+Published joint checkpoint: `e1c38b832030605601a256065264dfd087b53a4b`; remote work ref/tree verified. No CI workflow/runs.

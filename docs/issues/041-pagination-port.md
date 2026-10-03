@@ -6,7 +6,7 @@ GitHub issue: https://github.com/msmps/gpui-kumo/issues/26
 
 ## Goal and status
 
-Port the supported **Pagination** Kumo family to Rust/GPUI. Input/simple controls, Info/Separator and controlled native editing are implemented; dropdown/PageSize and fidelity acceptance are in progress; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Pagination** Kumo family to Rust/GPUI. Input/simple controls, Info/Separator and controlled native editing are implemented; PageSize is now implemented; dropdown Controls and fidelity acceptance are in progress; the issue covers its supported parts and public API, not just a static default-state demo.
 
 ## GPUI Kit/Base foundation
 
@@ -53,3 +53,7 @@ Pinned source has no numbered-page/ellipsis strip. Compound API is recommended; 
 ## Core checkpoint
 
 165 workspace tests/nine doctests and required Rust gates pass. Controlled input/full and simple controls, known/unknown/empty bounds, Info/Separator/custom content, observable edit/owner-race/once-only/disabled/focus/geometry regressions and retained gallery implemented. Native glyph review fixed explicit tint; platform Button disabled-state export remains#36. [Acceptance/results](../pagination-validation.md). Dropdown/PageSize, browser/OS IME/spoken acceptance remain open. Next selected shared readable-Label repair#37, then disabled-Button repair#36 before resuming retained dropdown/PageSize; do not close this family from core coverage.
+
+## PageSize checkpoint
+
+Retained controlled Select, PageSize proposals, explicit owner acceptance/reset, default/custom/empty positive options, readable numeric owner projection, default/custom/rich/hidden labels and fresh composition. Required gate/native results and source/geometry fixes are recorded in [Pagination acceptance](../pagination-validation.md). #36/#37/#39 shared semantics repairs are published. Remaining #41 expansion export is selected next before dropdown Controls; never infer native Expanded or ComboBox string interfaces from authored metadata. Family remains open.

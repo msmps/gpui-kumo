@@ -5,6 +5,9 @@ use gpui_kit::{
 struct Host {
     state: Entity<PaginationState>,
     events: Vec<usize>,
+    sizes: Vec<usize>,
+    show_size: bool,
+    size_label: Option<&'static str>,
     accept: bool,
     simple: bool,
     info_text: Option<&'static str>,
@@ -20,10 +23,24 @@ impl Render for Host {
             .child(crate::Button::new("before", "Before"))
             .child(
                 Pagination::new("pages", &self.state)
+                    .page_size(self.show_size)
                     .controls(if self.simple {
                         Controls::Simple
                     } else {
                         Controls::Full
+                    })
+                    .when_some(self.size_label, |this, label| {
+                        this.content(move |parts, _, _| {
+                            div()
+                                .flex()
+                                .flex_wrap()
+                                .items_center()
+                                .gap(px(8.))
+                                .child(parts.info)
+                                .child(parts.page_size.label(label))
+                                .child(parts.controls)
+                                .into_any_element()
+                        })
                     })
                     .when_some(self.info_text, |this, text| {
                         this.content(move |parts, _, _| {
@@ -49,7 +66,16 @@ fn host(
     let (view, cx) = cx.add_window_view(|window, cx| {
         let state = cx.new(|cx| PaginationState::new(page, 10, total, window, cx));
         let events = cx.subscribe_in(&state, window, |h: &mut Host, state, event, window, cx| {
-            let PaginationEvent::Page(page) = *event;
+            let PaginationEvent::Page(page) = *event else {
+                if let PaginationEvent::PageSize(size) = *event {
+                    h.sizes.push(size);
+                    if h.accept {
+                        state.update(cx, |s, cx| s.set_per_page(size, window, cx));
+                    }
+                    cx.notify();
+                }
+                return;
+            };
             h.events.push(page);
             if h.accept {
                 state.update(cx, |s, cx| s.set_page(page, window, cx));
@@ -59,6 +85,9 @@ fn host(
         Host {
             state,
             events: vec![],
+            sizes: vec![],
+            show_size: false,
+            size_label: None,
             accept,
             simple: false,
             info_text: None,
@@ -407,4 +436,256 @@ fn owner_update_cancels_deferred_draft_and_preserves_owner_value(cx: &mut TestAp
     cx.run_until_parked();
     assert_eq!(state.read_with(cx, |s, _| s.page()), 3);
     assert!(view.read_with(cx, |v, _| v.events.is_empty()));
+}
+
+#[gpui_kit::test]
+fn page_size_controlled_proposals_owner_sync_and_source_labels(cx: &mut TestAppContext) {
+    let (view, cx) = host(cx, 5, PaginationTotal::Known(95), false);
+    let state = cx.read(|cx| view.read(cx).state.clone());
+    let select = cx.read(|cx| state.read(cx).page_size.clone());
+    cx.update(|window, cx| {
+        view.update(cx, |v, cx| {
+            v.show_size = true;
+            cx.notify();
+        });
+        state.update(cx, |s, cx| {
+            s.set_labels(
+                PaginationLabels {
+                    page_size: "Résultats par page café 🦀".into(),
+                    ..Default::default()
+                },
+                cx,
+            )
+        });
+        window.render_frame(cx);
+        assert_eq!(window.find("trigger").role(), Some(Role::ComboBox));
+        assert_eq!(
+            window.find("trigger").label(),
+            Some("Résultats par page café 🦀")
+        );
+        assert_eq!(window.find("trigger").value(), Some("10"));
+        assert_eq!(
+            window.find("pagination-page-size-label").value(),
+            Some("Per page:")
+        );
+        window.click("hit", cx);
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        assert!(select.read(cx).is_open());
+        for value in [25usize, 50, 100, 250] {
+            assert_eq!(
+                window.find(("pagination-size", value)).bounds().size.height,
+                px(32.),
+                "numeric option must stay on one source line"
+            );
+            assert_eq!(
+                window.find(("pagination-size", value)).label(),
+                Some(value.to_string().as_str())
+            );
+        }
+        window.click(("pagination-size", 25usize), cx);
+    });
+    cx.run_until_parked();
+    assert_eq!(view.read_with(cx, |v, _| v.sizes.clone()), vec![25]);
+    assert_eq!(
+        state.read_with(cx, |s, _| (s.page(), s.per_page())),
+        (5, 10)
+    );
+    assert_eq!(
+        select.read_with(cx, |s, _| s.value().clone()),
+        SelectValue::Single(Some(10))
+    );
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert!(!select.read(cx).is_open());
+        assert!(select.read(cx).focus_handle().is_focused(window));
+        view.update(cx, |v, _| v.accept = true);
+        window.press("space", cx);
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        window.press("down", cx);
+        window.render_frame(cx);
+        window.press("enter", cx);
+    });
+    cx.run_until_parked();
+    assert_eq!(view.read_with(cx, |v, _| v.sizes.clone()), vec![25, 50]);
+    assert_eq!(
+        state.read_with(cx, |s, _| (s.page(), s.per_page())),
+        (2, 50)
+    );
+    assert_eq!(
+        state
+            .read_with(cx, |s, cx| s.input.read(cx).value(cx))
+            .as_ref(),
+        "2"
+    );
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert_eq!(window.find("trigger").value(), Some("50"));
+        window.press("enter", cx);
+        window.render_frame(cx);
+        window.press("enter", cx); // Same selected size closes, no duplicate proposal.
+        state.update(cx, |s, cx| {
+            s.set_per_page(25, window, cx);
+            s.set_page(1, window, cx);
+        });
+    });
+    cx.run_until_parked();
+    assert_eq!(view.read_with(cx, |v, _| v.sizes.len()), 2);
+    assert!(view.read_with(cx, |v, _| v.events.is_empty()));
+    assert_eq!(
+        select.read_with(cx, |s, _| s.value().clone()),
+        SelectValue::Single(Some(25))
+    );
+}
+
+#[gpui_kit::test]
+fn page_size_changed_options_owner_updates_empty_and_disabled_paths(cx: &mut TestAppContext) {
+    let (view, cx) = host(
+        cx,
+        1,
+        PaginationTotal::Unknown {
+            has_next_page: true,
+        },
+        true,
+    );
+    let state = cx.read(|cx| view.read(cx).state.clone());
+    let select = cx.read(|cx| state.read(cx).page_size.clone());
+    cx.update(|window, cx| {
+        view.update(cx, |v, cx| {
+            v.show_size = true;
+            cx.notify();
+        });
+        state.update(cx, |s, cx| s.set_page_size_options(vec![10, 20, 50], cx));
+        window.render_frame(cx);
+        window.click("hit", cx);
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        // Replace/reorder while open; removed highlighted option cannot submit a stale value.
+        window.press("down", cx);
+        window.render_frame(cx);
+        state.update(cx, |s, cx| {
+            s.set_page_size_options(vec![50, 10], cx);
+            s.set_per_page(250, window, cx);
+        });
+        window.render_frame(cx);
+        assert_eq!(window.find("trigger").value(), Some("250"));
+        window.press("enter", cx);
+    });
+    cx.run_until_parked();
+    assert_eq!(view.read_with(cx, |v, _| v.sizes.clone()), vec![50]);
+    assert_eq!(state.read_with(cx, |s, _| s.per_page()), 50);
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.press("enter", cx);
+        window.render_frame(cx);
+        state.update(cx, |s, cx| s.set_disabled(true, window, cx));
+        window.render_frame(cx);
+        assert!(!select.read(cx).is_open());
+        // Synthetic Select disabled metadata is verified by the actual native probe.
+        window.click("hit", cx);
+        window.press("space", cx);
+        window.press("enter", cx);
+        state.update(cx, |s, cx| {
+            s.set_page_size_options(vec![], cx);
+            s.set_disabled(false, window, cx);
+            s.set_total(PaginationTotal::Known(0), window, cx);
+        });
+        window.render_frame(cx);
+        window.click("hit", cx);
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        assert!(select.read(cx).is_open());
+        assert_eq!(window.find("list").role(), Some(Role::ListBox));
+        window.press("enter", cx);
+        window.press("escape", cx);
+        window.render_frame(cx);
+        assert!(select.read(cx).focus_handle().is_focused(window));
+        assert_eq!(window.find("trigger").value(), Some("50"));
+    });
+    cx.run_until_parked();
+    assert_eq!(view.read_with(cx, |v, _| v.sizes.clone()), vec![50]);
+}
+
+#[gpui_kit::test]
+fn page_size_unmount_remount_focus_and_theme_geometry(cx: &mut TestAppContext) {
+    let (view, cx) = host(cx, 1, PaginationTotal::Known(usize::MAX), true);
+    let state = cx.read(|cx| view.read(cx).state.clone());
+    let select = cx.read(|cx| state.read(cx).page_size.clone());
+    cx.update(|window, cx| {
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            view.update(cx, |v, cx| {
+                v.show_size = true;
+                v.size_label = Some("Par page café 🦀");
+                cx.notify();
+            });
+            state.update(cx, |s, cx| s.set_per_page(usize::MAX, window, cx));
+            for _ in 0..3 {
+                window.render_frame(cx);
+            }
+            let bounds = window.find("trigger").bounds();
+            assert_eq!(bounds.size.height, px(36.));
+            assert!(bounds.left() >= px(0.) && bounds.right() <= px(360.));
+            assert_eq!(
+                window.find("trigger").value(),
+                Some(usize::MAX.to_string().as_str())
+            );
+            assert_eq!(
+                window.find("pagination-page-size-label").value(),
+                Some("Par page café 🦀")
+            );
+            window.click("hit", cx);
+            for _ in 0..3 {
+                window.render_frame(cx);
+            }
+            assert!(select.read(cx).is_open());
+            window.press("escape", cx);
+            window.render_frame(cx);
+            assert!(select.read(cx).focus_handle().is_focused(window));
+        }
+        view.update(cx, |v, cx| {
+            v.size_label = None;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        window.click("hit", cx);
+        window.render_frame(cx);
+        assert!(select.read(cx).is_open());
+        view.update(cx, |v, cx| {
+            v.show_size = false;
+            cx.notify();
+        });
+        window.render_frame(cx);
+    });
+    cx.run_until_parked();
+    assert!(!select.read_with(cx, |s, _| s.is_open()));
+    cx.update(|window, cx| {
+        assert!(!select.read(cx).focus_handle().is_focused(window));
+        select.update(cx, |s, cx| s.set_open(true, window, cx));
+        assert!(!select.read(cx).is_open());
+        view.update(cx, |v, cx| {
+            v.show_size = true;
+            v.size_label = Some("");
+            cx.notify();
+        });
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        assert_eq!(
+            select.read(cx).value(),
+            &SelectValue::Single(Some(usize::MAX))
+        );
+        window.click("hit", cx);
+        window.render_frame(cx);
+        assert!(select.read(cx).is_open());
+        window.press("tab", cx);
+        window.render_frame(cx);
+        assert!(!select.read(cx).is_open());
+        assert!(!select.read(cx).focus_handle().is_focused(window));
+    });
 }
