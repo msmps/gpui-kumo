@@ -57,6 +57,62 @@ fn harness(cx: &mut TestAppContext) -> (Entity<Harness>, &mut VisualTestContext)
 }
 
 #[gpui_kit::test]
+fn menu_outline_survives_the_scroll_mask_at_straight_edges_and_corners(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx);
+    for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+        for width in [1040., 520.] {
+            cx.simulate_resize(gpui_kit::size(px(width), px(800.)));
+            cx.update(|window, cx| {
+                crate::set_appearance(appearance, cx);
+                let menu = view.read(cx).menu.clone();
+                menu.update(cx, |menu, cx| menu.set_open(true, window, cx));
+                window.render_frame(cx);
+                window.render_frame(cx);
+                let theme = crate::theme(cx);
+                let scale = window.scale_factor();
+                let outside = window.find("menu").bounds().dilate(px(1.)).scale(scale);
+                // GPUI splits transparent border quads into strips. Check their
+                // combined masks, including straight edges and rounded corners.
+                let outlines: Vec<_> = window
+                    .painted_quads()
+                    .into_iter()
+                    .filter(|quad| quad.bounds == outside && quad.border_color == theme.colors.line)
+                    .collect();
+                let outline = outlines
+                    .first()
+                    .expect("The menu must paint its outside outline");
+                let samples = window.find("menu").bounds().dilate(px(0.5)).scale(scale);
+                for sample in [
+                    samples.origin,
+                    samples.top_right(),
+                    samples.bottom_left(),
+                    samples.bottom_right(),
+                    samples.top_center(),
+                    samples.bottom_center(),
+                    gpui_kit::point(samples.left(), samples.center().y),
+                    gpui_kit::point(samples.right(), samples.center().y),
+                ] {
+                    assert!(
+                        outlines
+                            .iter()
+                            .any(|quad| quad.content_mask.bounds.contains(&sample)),
+                        "The scroll mask clips the outside outline at {sample:?}"
+                    );
+                }
+                assert_eq!(
+                    outline.corner_radii,
+                    gpui_kit::Corners::all((theme.radii.lg + px(1.)).scale(scale))
+                );
+                assert_eq!(
+                    outline.background.as_solid(),
+                    Some(theme.colors.line.alpha(0.))
+                );
+            });
+        }
+    }
+}
+
+#[gpui_kit::test]
 fn menu_unmount_releases_popup_with_retained_state_and_remounts_closed(cx: &mut TestAppContext) {
     let (view, cx) = harness(cx);
     cx.update(|window, cx| {

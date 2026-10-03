@@ -668,14 +668,16 @@ impl Render for DropdownState {
         }
         let line = t.colors.line;
         let radius = t.radii.lg;
-        surface = surface.child(
+        // The outside outline must not inherit the menu's rectangular scroll
+        // mask. Keep it stationary in an unclipped sibling paint layer.
+        let panel = div().relative().child(surface).child(
             gpui_kit::canvas(
                 |_, _, _| (),
                 move |bounds, _, window, _| {
                     window.paint_quad(gpui_kit::quad(
                         bounds.dilate(px(1.)),
                         radius + px(1.),
-                        line.opacity(0.),
+                        line.alpha(0.),
                         px(1.),
                         line,
                         Default::default(),
@@ -710,7 +712,7 @@ impl Render for DropdownState {
             .flex()
             .flex_none()
             .child(backdrop)
-            .child(root.content(surface))
+            .child(root.content(panel))
             .into_any_element()
     }
 }
