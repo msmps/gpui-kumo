@@ -54,3 +54,5 @@ SensitiveInput: [acceptance, native adaptations and evidence](sensitive-input-va
 InputArea: [acceptance/evidence](input-area-validation.md), [Base growth patch](gpui-base-textarea-growth-patch.md).
 
 InlineCopyText: [acceptance/evidence](inline-copy-text-validation.md).
+
+Collapsible: [acceptance/evidence](collapsible-validation.md).

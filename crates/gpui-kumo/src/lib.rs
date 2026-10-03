@@ -73,3 +73,6 @@ pub use input_area::{InputArea, InputAreaEvent, InputAreaState, Textarea};
 
 pub mod inline_copy_text;
 pub use inline_copy_text::InlineCopyText;
+
+pub mod collapsible;
+pub use collapsible::{Collapsible, CollapsiblePanel};

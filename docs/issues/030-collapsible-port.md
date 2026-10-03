@@ -1,12 +1,12 @@
 # KUMO-030: Port Collapsible with Kumo fidelity over GPUI Base
 
-Status: Open
+Status: Working core checkpoint; open motion/platform gates
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/15
 
 ## Goal and status
 
-Port the supported **Collapsible** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Collapsible** Kumo family to Rust/GPUI. Working core is implemented; the issue covers its supported parts and public API, not just a static default-state demo.
 
 ## GPUI Kit/Base foundation
 
@@ -44,3 +44,7 @@ Build on: Button. These are dependencies, not a claim that every dependency is a
 - [Kumo Collapsible source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/collapsible/collapsible.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
 - GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
 - Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+
+## Checkpoint — 2026-10-03
+
+120 tests/nine doctests, required Rust gate and native both-theme wide/narrow/input/focus/activation review pass. [Matrix/evidence and remaining source motion/custom-trigger/platform gates](../collapsible-validation.md).

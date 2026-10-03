@@ -65,7 +65,7 @@ pub struct Button {
     input_group_zone: Option<Box<crate::input_group::Zone>>,
     tooltip_trigger: Option<Box<crate::tooltip::TriggerHooks>>,
     open: bool,
-    popover_expanded: Option<bool>,
+    expanded: Option<(bool, Option<&'static str>)>,
     focus_handle: Option<FocusHandle>,
     on_click: Option<ActivationHandler>,
     accent: Option<Box<AccentRecipe>>,
@@ -91,7 +91,7 @@ impl Button {
             input_group_zone: None,
             tooltip_trigger: None,
             open: false,
-            popover_expanded: None,
+            expanded: None,
             focus_handle: None,
             on_click: None,
             accent: None,
@@ -198,7 +198,36 @@ impl Button {
     }
 
     pub(crate) fn popover_expanded(mut self, expanded: bool) -> Self {
-        self.popover_expanded = Some(expanded);
+        self.expanded = Some((
+            expanded,
+            Some(if expanded {
+                "Expanded nonmodal dialog"
+            } else {
+                "Collapsed nonmodal dialog"
+            }),
+        ));
+        self
+    }
+
+    pub(crate) fn disclosure_trigger(
+        mut self,
+        focus: &FocusHandle,
+        disabled: bool,
+        expanded: bool,
+        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.focus_handle = Some(focus.clone());
+        self.disabled |= disabled;
+        self.expanded = Some((expanded, None));
+        let consumer = self.on_click.take();
+        self.on_click = Some(Box::new(move |event, window, cx| {
+            if let Some(consumer) = &consumer {
+                consumer(event, window, cx);
+            }
+            if !window.default_prevented() {
+                handler(event, window, cx);
+            }
+        }));
         self
     }
 
@@ -500,12 +529,11 @@ impl RenderOnce for Button {
                     node.set_busy();
                 }
             })
-            .when_some(self.popover_expanded, |this, expanded| {
-                this.aria_expanded(expanded).aria_description(if expanded {
-                    "Expanded nonmodal dialog"
-                } else {
-                    "Collapsed nonmodal dialog"
-                })
+            .when_some(self.expanded, |this, (expanded, description)| {
+                this.aria_expanded(expanded)
+                    .when_some(description, |this, description| {
+                        this.aria_description(description)
+                    })
             })
             .flex_shrink_0()
             .h(geometry.height)

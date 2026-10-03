@@ -16,6 +16,7 @@ mod button_groups;
 mod buttons;
 mod cards;
 mod checkboxes;
+mod collapsibles;
 mod empties;
 mod fields;
 mod inline_copies;
@@ -83,6 +84,7 @@ struct Gallery {
     sensitive_inputs: gpui_kit::Entity<sensitive_inputs::SensitiveInputs>,
     input_areas: gpui_kit::Entity<input_areas::InputAreas>,
     inline_copies: gpui_kit::Entity<inline_copies::InlineCopies>,
+    collapsibles: gpui_kit::Entity<collapsibles::Collapsibles>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -190,6 +192,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.collapsibles.clone())
         .child(self.inline_copies.clone())
         .child(self.input_areas.clone())
         .child(self.sensitive_inputs.clone())
@@ -433,6 +436,7 @@ fn main() {
                                 .new(|cx| sensitive_inputs::SensitiveInputs::new(window, cx)),
                             input_areas: cx.new(|cx| input_areas::InputAreas::new(window, cx)),
                             inline_copies: cx.new(|_| inline_copies::InlineCopies::new()),
+                            collapsibles: cx.new(|cx| collapsibles::Collapsibles::new(window, cx)),
                             activations: 0,
                             disabled: false,
                             loading: false,
