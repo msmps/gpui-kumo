@@ -33,3 +33,9 @@ Remaining acceptance: source opacity transition on copy reveal, web arbitrary ro
 Rust gate:134 workspace all-feature tests/nine doctests, formatting, warning-denied all-target/all-feature workspace Clippy and all-target/all-feature build pass. Logs `/tmp/breadcrumbs-final-{test,clippy,build,fmt}.log`. Pre-existing upstream profiler deprecation warning remains visible, no suppression. Native gallery closed after review. No CI config/Actions runs exist; no CI pass claimed.
 
 Asset provenance: gallery House, reused regular Copy and bold Check from Phosphor React2.1.10, MIT; existing `crates/gpui-kumo/assets/PHOSPHOR-LICENSE` applies. Chevron copies the exact pinned Kumo path.
+
+## Quick-win completion — 2026-10-03
+
+Breadcrumbs implements `Styled` for its actual navigation root. Its copy action now uses the pinned 100ms opacity transition with cubic-bezier(0.4,0,0.2,1), retained root hover, keyboard visibility, interruption and reduced-motion behavior. Existing composable links/current/separators/extras remain supported. Rendered tests verify caller geometry, preserved names/roles, reversal and cessation of frame requests.
+
+This supersedes the historical implementation gaps above. Issue #12 is resolved for its bounded implementation scope. Catalog/browser and OS reduced-motion delivery remain #10; speech remains #2–#4. [New native matrix, source fixture and review](evidence/quick-wins/README.md). Full locked workspace/adapter gate passes232library/1gallery/9doctests and adapter12/14, formatting, warnings-denied Clippy and builds.

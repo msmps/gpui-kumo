@@ -1,30 +1,17 @@
-# KUMO-027: Breadcrumbs: finish root composition and motion
+# KUMO-027: Breadcrumbs: root styling and copy motion
 
-Status: In progress
+Status: Resolved
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/12
 
-Local tracker: KUMO-027
+## Resolution — 2026-10-03
 
-## Current scope — 2026-10-03
+Breadcrumbs implements `Styled` for its actual navigation root. Its copy action now uses the pinned 100ms opacity transition with cubic-bezier(0.4,0,0.2,1), retained root hover, keyboard visibility, interruption and reduced-motion behavior. Existing composable links/current/separators/extras remain supported. Rendered tests verify caller geometry, preserved names/roles, reversal and cessation of frame requests.
 
-**Working native implementation; remaining API/fidelity work.** Sizes, responsive collapse, current/loading/copy/extras, navigation and retained copy feedback are implemented.
+Native macOS Metal rendering was inspected in Light/Dark at1040/520 logical widths, including text/control centres, baselines, sibling gaps, edge padding, rounded corners, fill/border/ring/shadow agreement and narrow layouts. [Capture fixture and measured evidence](https://github.com/msmps/gpui-kumo/blob/work/docs/evidence/quick-wins/README.md).
 
-Audited at `c1026fe042c133929eea2ef15da6e6a05b57c617`: 32/43 working families, 11 unported. This issue no longer tracks an unstarted port.
+Full `scripts/check-rust.sh` gate:232 library tests,1gallery,9doctests; workspace and adapter formatting; warnings-denied Clippy; locked all-target/all-feature/default-gallery builds; adapter12default/14all-feature tests. Dependency warnings remain visible; no pins or vendor patches changed.
 
-## Remaining acceptance
+Browser/catalog comparison and OS reduced-motion preference delivery remain under #10; actual spoken accessibility remains under #2–#4. These separate gates are not claimed complete. GPUI's clipboard API cannot report delivery failure and arbitrary descendant rounded clipping remains under #5.
 
-- [ ] Complete supported root composition/style overrides.
-- [ ] Match remaining opacity/copy transitions with interruption and reduced-motion coverage.
-
-Browser comparison belongs to #10; OS IME to #1 where applicable; spoken Linux/VoiceOver/Windows acceptance to #2–#4. Native tests and metadata do not establish spoken or full platform fidelity. Existing native adaptations and dependency limitations remain in the linked contract.
-
-## Evidence
-
-- [Component contract and measured evidence](https://github.com/msmps/gpui-kumo/blob/work/docs/breadcrumbs-validation.md)
-- [Current progress](https://github.com/msmps/gpui-kumo/blob/work/docs/port-progress.md)
-- [Coverage](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md)
-
-Latest shared locked gate passes226 library/1gallery/9doctests and adapter12/14, fmt/warnings-denied lint/builds. [Announcement checkpoint macOS CI37139317488](https://github.com/msmps/gpui-kumo/actions/runs/37139317488) passes. That gate establishes build/regression health, not this issue's remaining visual/platform acceptance.
-
-Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, Kit/Base0.7.0, GPUI0.3.7 and Rust1.99.0 remain pinned; existing vendor provenance stays authoritative. Historical implementation checkpoints remain in the contract and Git history.
+Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`; Kit/Base0.7.0; patched GPUI0.3.7. Component coverage remains32/43 working,11unported.

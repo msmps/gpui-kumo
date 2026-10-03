@@ -3,13 +3,13 @@
 use crate::{Button, Link, SkeletonLine, button, theme};
 use gpui_kit::{
     AnyElement, App, ClipboardItem, Context, ElementId, FocusHandle, FontWeight,
-    InteractiveElement, IntoElement, ParentElement, RenderOnce, Role, SharedString,
-    StatefulInteractiveElement, Styled, Subscription, Task, Window, base::TestSupportExt, div,
-    prelude::FluentBuilder, px, svg,
+    InteractiveElement, IntoElement, ParentElement, Refineable, RenderOnce, Role, SharedString,
+    StatefulInteractiveElement, StyleRefinement, Styled, Subscription, Task, Window, base,
+    base::TestSupportExt, div, prelude::FluentBuilder, px, svg,
 };
 use std::time::Duration;
 
-const GROUP: &str = "kumo-breadcrumbs";
+struct HoverState(bool);
 /// Source breadcrumb density.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
 pub enum Size {
@@ -98,6 +98,7 @@ pub struct BreadcrumbClipboard {
     id: ElementId,
     text: SharedString,
     disabled: bool,
+    group_hovered: bool,
 }
 impl BreadcrumbClipboard {
     /// Create a native clipboard action; empty payloads never copy.
@@ -106,6 +107,7 @@ impl BreadcrumbClipboard {
             id: id.into(),
             text: text.into(),
             disabled: false,
+            group_hovered: false,
         }
     }
     /// Gate pointer/keyboard activation and remove traversal.
@@ -142,55 +144,68 @@ impl RenderOnce for BreadcrumbClipboard {
         let state = feedback.read(cx);
         let copied = state.copied;
         let focus = state.focus.clone();
-        let visible = focus.is_focused(window) && window.last_input_was_keyboard();
+        let visible =
+            self.group_hovered || focus.is_focused(window) && window.last_input_was_keyboard();
+        let opacity = window.with_id(self.id.clone(), |window| {
+            base::transition(
+                "copy-opacity",
+                if visible { 1.0_f32 } else { 0. },
+                base::Transition::new(Duration::from_millis(100)).easing(
+                    base::Easing::CubicBezier {
+                        x1: 0.4,
+                        y1: 0.,
+                        x2: 0.2,
+                        y2: 1.,
+                    },
+                ),
+                window,
+                cx,
+            )
+        });
         let theme = theme(cx);
         let activate = feedback.downgrade();
-        div()
-            .flex_none()
-            .opacity(if visible { 1. } else { 0. })
-            .group_hover(GROUP, |style| style.opacity(1.))
-            .child(
-                Button::icon(
-                    self.id,
-                    if copied { "Copied" } else { "Copy" },
-                    svg()
-                        .data(if copied {
-                            include_bytes!("../assets/checkbox-check.svg").as_slice()
-                        } else {
-                            include_bytes!("../assets/empty-copy.svg").as_slice()
-                        })
-                        .size(px(16.))
-                        .text_color(if copied {
-                            theme.colors.success
-                        } else {
-                            theme.text.default
-                        }),
-                )
-                .variant(button::Variant::Ghost)
-                .size(button::Size::Sm)
-                .track_focus(&focus)
-                .disabled(self.disabled)
-                .on_click(move |_, _, cx| {
-                    let _ = activate.update(cx, |state, cx| {
-                        if state.value.is_empty() {
-                            return;
-                        }
-                        cx.write_to_clipboard(ClipboardItem::new_string(state.value.to_string()));
-                        state.copied = true;
-                        state.reset = Some(cx.spawn(async move |state, cx| {
-                            cx.background_executor()
-                                .timer(Duration::from_millis(2000))
-                                .await;
-                            let _ = state.update(cx, |state, cx| {
-                                state.copied = false;
-                                state.reset = None;
-                                cx.notify();
-                            });
-                        }));
-                        cx.notify();
-                    });
-                }),
+        div().flex_none().opacity(opacity).child(
+            Button::icon(
+                self.id,
+                if copied { "Copied" } else { "Copy" },
+                svg()
+                    .data(if copied {
+                        include_bytes!("../assets/checkbox-check.svg").as_slice()
+                    } else {
+                        include_bytes!("../assets/empty-copy.svg").as_slice()
+                    })
+                    .size(px(16.))
+                    .text_color(if copied {
+                        theme.colors.success
+                    } else {
+                        theme.text.default
+                    }),
             )
+            .variant(button::Variant::Ghost)
+            .size(button::Size::Sm)
+            .track_focus(&focus)
+            .disabled(self.disabled)
+            .on_click(move |_, _, cx| {
+                let _ = activate.update(cx, |state, cx| {
+                    if state.value.is_empty() {
+                        return;
+                    }
+                    cx.write_to_clipboard(ClipboardItem::new_string(state.value.to_string()));
+                    state.copied = true;
+                    state.reset = Some(cx.spawn(async move |state, cx| {
+                        cx.background_executor()
+                            .timer(Duration::from_millis(2000))
+                            .await;
+                        let _ = state.update(cx, |state, cx| {
+                            state.copied = false;
+                            state.reset = None;
+                            cx.notify();
+                        });
+                    }));
+                    cx.notify();
+                });
+            }),
+        )
     }
 }
 enum Part {
@@ -211,6 +226,7 @@ pub struct Breadcrumbs {
     id: ElementId,
     size: Size,
     parts: Vec<Part>,
+    style: StyleRefinement,
 }
 impl Breadcrumbs {
     /// Create an empty navigation trail with accessible name "breadcrumb".
@@ -219,6 +235,7 @@ impl Breadcrumbs {
             id: id.into(),
             size: Size::Base,
             parts: Vec::new(),
+            style: StyleRefinement::default(),
         }
     }
     /// Set the source size.
@@ -252,12 +269,22 @@ impl Breadcrumbs {
         self
     }
 }
+impl Styled for Breadcrumbs {
+    fn style(&mut self) -> &mut StyleRefinement {
+        &mut self.style
+    }
+}
 fn separator(cx: &App) -> impl IntoElement {
     svg().data(br#"<svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.75 8.75L14.25 12L10.75 15.25"/></svg>"#.as_slice())
         .size(px(24.)).flex_none().text_color(theme(cx).text.inactive)
 }
 impl RenderOnce for Breadcrumbs {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let hover = window.with_id(self.id.clone(), |window| {
+            window.use_keyed_state("hover", cx, |_, _| HoverState(false))
+        });
+        let hovered = hover.read(cx).0;
+        let hover_handle = hover.downgrade();
         let theme = theme(cx);
         let count = self.parts.iter().filter(|part| part.is_crumb()).count();
         let compact = window.viewport_size().width < px(640.) && count > 2;
@@ -266,7 +293,13 @@ impl RenderOnce for Breadcrumbs {
             .test_support()
             .role(Role::Navigation)
             .aria_label("breadcrumb")
-            .group(GROUP)
+            .hover_listener_mode(gpui_kit::HoverListenerMode::InputModalityIndependent)
+            .on_hover(move |hovered, _, cx| {
+                let _ = hover_handle.update(cx, |state, cx| {
+                    state.0 = *hovered;
+                    cx.notify();
+                });
+            })
             .flex()
             .flex_grow(1.)
             .min_w_0()
@@ -291,6 +324,7 @@ impl RenderOnce for Breadcrumbs {
             } else {
                 theme.spacing.four
             });
+        root.style().refine(&self.style);
         if compact {
             root = root
                 .child(div().flex_none().text_color(theme.text.subtle).child("..."))
@@ -322,7 +356,8 @@ impl RenderOnce for Breadcrumbs {
                 Part::Current(current) => current.into_any_element(),
                 Part::Separator if compact => continue,
                 Part::Separator => separator(cx).into_any_element(),
-                Part::Clipboard(copy) => {
+                Part::Clipboard(mut copy) => {
+                    copy.group_hovered = hovered;
                     let element = copy.into_any_element();
                     if compact {
                         extras.push(element);

@@ -320,3 +320,79 @@ fn compact_size_empty_trail_and_extra_reordering_preserve_action_identity(cx: &m
     });
     assert_eq!(view.read_with(cx, |v, _| v.extra), 2);
 }
+
+#[gpui_kit::test]
+fn root_style_overrides_preserve_navigation_and_current_semantics(cx: &mut TestAppContext) {
+    struct StyledTrail;
+    impl Render for StyledTrail {
+        fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+            Breadcrumbs::new("styled-trail")
+                .h(px(56.))
+                .mr(px(0.))
+                .px(px(8.))
+                .rounded(px(6.))
+                .bg(theme(cx).colors.tint)
+                .current(BreadcrumbCurrent::new("page", "Current café"))
+        }
+    }
+    cx.update(crate::init);
+    let (_, cx) = cx.add_window_view(|_, _| StyledTrail);
+    for width in [1040., 320.] {
+        cx.simulate_resize(size(px(width), px(200.)));
+        cx.update(|window, cx| {
+            for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+                crate::set_appearance(appearance, cx);
+                window.render_frame(cx);
+                let trail = window.find("styled-trail");
+                assert_eq!(trail.role(), Some(Role::Navigation));
+                assert_eq!(trail.bounds().size.height, px(56.));
+                let page = window.find("page");
+                assert_eq!(page.label(), Some("Current café"));
+                assert_eq!(page.bounds().left(), trail.bounds().left() + px(8.));
+                assert!((page.bounds().center().y - trail.bounds().center().y).abs() < px(0.1));
+            }
+        });
+    }
+}
+
+#[gpui_kit::test]
+fn group_hover_copy_fade_reverses_and_reduced_motion_stops_frames(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (_, cx) = cx.add_window_view(|_, _| Harness {
+        href: "/projects".into(),
+        route: vec![],
+        disabled: false,
+        copy: "café".into(),
+        loading: false,
+    });
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.hover("trail", cx);
+        window.render_frame(cx);
+        assert!(window.simulate_next_frame(cx) > 0);
+    });
+    cx.background_executor
+        .advance_clock(Duration::from_millis(75));
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.dispatch_event(
+            gpui_kit::PlatformInput::MouseMove(gpui_kit::MouseMoveEvent {
+                position: gpui_kit::point(px(900.), px(500.)),
+                pressed_button: None,
+                modifiers: Modifiers::default(),
+            }),
+            cx,
+        );
+        window.render_frame(cx);
+        assert!(window.simulate_next_frame(cx) > 0);
+        cx.set_reduce_motion(true);
+        window.render_frame(cx);
+        window.simulate_next_frame(cx);
+        window.render_frame(cx);
+        assert_eq!(window.simulate_next_frame(cx), 0);
+        window.click("copy", cx);
+        window.press("space", cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("copy").label(), Some("Copied"));
+    });
+}
