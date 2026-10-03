@@ -143,6 +143,9 @@ impl Button {
     pub(crate) fn provided_focus(&self) -> Option<FocusHandle> {
         self.focus_handle.clone()
     }
+    pub(crate) fn is_unavailable(&self) -> bool {
+        self.disabled || self.loading
+    }
     pub(crate) fn is_ghost(&self) -> bool {
         self.variant == Variant::Ghost
     }

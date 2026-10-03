@@ -6,7 +6,11 @@ GitHub issue: https://github.com/msmps/gpui-kumo/issues/35
 
 ## Goal and status
 
-Port the supported **Toolbar** Kumo family to Rust/GPUI. The action/link core is implemented and validated; Input/InputGroup compact addon actions are also implemented; direct actions, independent addon removal and popup/richer composition, RTL and full-gallery/platform/speech acceptance remain.
+Port the supported **Toolbar** Kumo family to Rust/GPUI. The action/link core is implemented and validated; Input/InputGroup compact addon actions are also implemented; direct actions and popup/richer composition, RTL and full-gallery/platform/speech acceptance remain.
+
+## Independent addon lifecycle continuation — 2026-10-03
+
+Retained scoped action handles, pruning, focused removal/unavailability/caller-handle replacement recovery, cancellation for newer focus/same-handle reinstatement, and retained Unicode selection/value are implemented. The shared gallery exercises removal/reinsertion without changing default action availability. [Evidence](../evidence/toolbar/addon-removal/README.md). Toolbar#35 remains open for direct actions, popup/richer composition and fidelity/platform acceptance.
 
 ## Compact addon action continuation — 2026-10-03
 

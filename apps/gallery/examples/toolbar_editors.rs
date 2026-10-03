@@ -17,7 +17,8 @@ gpui_kit::actions!(
         ToggleItems,
         ToggleDisabled,
         ToggleReadonly,
-        ToggleGroupDisabled
+        ToggleGroupDisabled,
+        ToggleAddon
     ]
 );
 struct Review {
@@ -46,6 +47,9 @@ impl Render for Review {
             }))
             .on_action(cx.listener(|this, _: &ToggleGroupDisabled, _, cx| {
                 this.toolbar.update(cx, |s, cx| s.toggle_group_disabled(cx));
+            }))
+            .on_action(cx.listener(|this, _: &ToggleAddon, window, cx| {
+                this.toolbar.update(cx, |s, cx| s.toggle_addon(window, cx));
             }))
             .flex()
             .flex_col()
@@ -94,6 +98,7 @@ fn main() {
                 gpui_kit::KeyBinding::new("alt-d", ToggleDisabled, None),
                 gpui_kit::KeyBinding::new("alt-r", ToggleReadonly, None),
                 gpui_kit::KeyBinding::new("alt-g", ToggleGroupDisabled, None),
+                gpui_kit::KeyBinding::new("alt-c", ToggleAddon, None),
             ]);
             set_appearance(
                 if dark {

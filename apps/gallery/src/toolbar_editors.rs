@@ -10,6 +10,7 @@ pub struct ToolbarEditors {
     rows: Vec<Entity<ToolbarState>>,
     inputs: Vec<Vec<Entity<InputState>>>,
     short: bool,
+    addon: bool,
     disabled: bool,
     changes: usize,
     clears: usize,
@@ -20,6 +21,7 @@ fn items(
     inputs: &[Entity<InputState>],
     short: bool,
     mode: usize,
+    addon: bool,
     owner: gpui_kit::WeakEntity<ToolbarEditors>,
 ) -> Vec<ToolbarItem> {
     let mut group = ToolbarItem::input_group("filter-query", &inputs[3], gpui_kit::px(220.)).start(
@@ -29,21 +31,23 @@ fn items(
         ]),
     );
     let target = inputs[3].downgrade();
-    group = group.end(InputGroupAddon::button(
-        "clear-filter",
-        "Clear",
-        move |button, _, _| {
-            let target = target.clone();
-            let owner = owner.clone();
-            button.on_click(move |_, window, cx| {
-                let _ = target.update(cx, |state, cx| state.set_value("", window, cx));
-                let _ = owner.update(cx, |s, cx| {
-                    s.clears += 1;
-                    cx.notify();
-                });
-            })
-        },
-    ));
+    if addon {
+        group = group.end(InputGroupAddon::button(
+            "clear-filter",
+            "Clear",
+            move |button, _, _| {
+                let target = target.clone();
+                let owner = owner.clone();
+                button.on_click(move |_, window, cx| {
+                    let _ = target.update(cx, |state, cx| state.set_value("", window, cx));
+                    let _ = owner.update(cx, |s, cx| {
+                        s.clears += 1;
+                        cx.notify();
+                    });
+                })
+            },
+        ));
+    }
     if mode == 1 {
         group = group.suffix("units");
     }
@@ -95,7 +99,7 @@ impl ToolbarEditors {
             .enumerate()
             .map(|(index, inputs)| {
                 cx.new(|cx| {
-                    ToolbarState::new(items(inputs, false, index, owner.clone()), cx)
+                    ToolbarState::new(items(inputs, false, index, true, owner.clone()), cx)
                         .disabled(index == 2)
                 })
             })
@@ -113,6 +117,7 @@ impl ToolbarEditors {
             rows,
             inputs,
             short: false,
+            addon: true,
             disabled: false,
             changes: 0,
             clears: 0,
@@ -124,7 +129,23 @@ impl ToolbarEditors {
         self.short = !self.short;
         let owner = cx.entity().downgrade();
         self.rows[0].update(cx, |s, cx| {
-            s.set_items(items(&self.inputs[0], self.short, 0, owner), window, cx)
+            s.set_items(
+                items(&self.inputs[0], self.short, 0, self.addon, owner),
+                window,
+                cx,
+            )
+        });
+        cx.notify();
+    }
+    pub fn toggle_addon(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.addon = !self.addon;
+        let owner = cx.entity().downgrade();
+        self.rows[0].update(cx, |s, cx| {
+            s.set_items(
+                items(&self.inputs[0], self.short, 0, self.addon, owner),
+                window,
+                cx,
+            )
         });
         cx.notify();
     }
@@ -148,6 +169,7 @@ impl Render for ToolbarEditors {
         let disable = owner.clone();
         let readonly = owner.clone();
         let group_disabled = owner.clone();
+        let addon = owner.clone();
         crate::panel(theme(cx), "Toolbar · retained editors")
             .child(Toolbar::new("editing", "Editing toolbar", &self.rows[0]))
             .child(
@@ -188,6 +210,13 @@ impl Render for ToolbarEditors {
                 Button::new("toggle-group-disabled", "Toggle InputGroup availability").on_click(
                     move |_, _, cx| {
                         let _ = group_disabled.update(cx, |s, cx| s.toggle_group_disabled(cx));
+                    },
+                ),
+            )
+            .child(
+                Button::new("toggle-addon", "Toggle filter action").on_click(
+                    move |_, window, cx| {
+                        let _ = addon.update(cx, |s, cx| s.toggle_addon(window, cx));
                     },
                 ),
             )

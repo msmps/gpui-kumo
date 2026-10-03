@@ -76,6 +76,7 @@ pub struct InputState {
     accessibility: accessibility::Bridge,
     group_focus: Option<FocusHandle>,
     group_zone_focus: Option<FocusHandle>,
+    group_addon_focus: crate::input_group::AddonFocus,
     group_button_focus: std::collections::HashMap<ElementId, FocusHandle>,
     _subscriptions: Vec<Subscription>,
 }
@@ -115,6 +116,7 @@ impl InputState {
             accessibility: accessibility::Bridge::default(),
             group_focus: None,
             group_zone_focus: None,
+            group_addon_focus: Default::default(),
             group_button_focus: std::collections::HashMap::new(),
             _subscriptions: vec![events, theme, editor_observer],
         }
@@ -484,6 +486,7 @@ impl Render for InputState {
             Size::Base => 8.,
             Size::Lg => 10.,
         };
+        let previous_action = self.group_addon_focus.begin(window);
         let start = group
             .and_then(|g| g.start.as_ref())
             .filter(|a| !a.is_empty())
@@ -495,6 +498,7 @@ impl Render for InputState {
                         size: self.presentation.size,
                         disabled: self.disabled,
                         start: true,
+                        focus: &mut self.group_addon_focus,
                     },
                     window,
                     cx,
@@ -511,11 +515,35 @@ impl Render for InputState {
                         size: self.presentation.size,
                         disabled: self.disabled,
                         start: false,
+                        focus: &mut self.group_addon_focus,
                     },
                     window,
                     cx,
                 )
             });
+        if let Some(removed) = self.group_addon_focus.finish(previous_action) {
+            let owner = cx.entity().downgrade();
+            let recovery = toolbar.map(|hooks| hooks.on_action_removed.clone());
+            window.defer(cx, move |window, cx| {
+                if !removed.is_focused(window)
+                    || owner
+                        .upgrade()
+                        .is_none_or(|state| state.read(cx).group_addon_focus.is_available(&removed))
+                {
+                    return;
+                }
+                if let Some(recovery) = recovery {
+                    recovery(window, cx);
+                } else if let Some(owner) = owner.upgrade() {
+                    let state = owner.read(cx);
+                    if !state.effectively_disabled() {
+                        state.focus_handle(cx).focus(window, cx);
+                    } else {
+                        window.focus_next(cx);
+                    }
+                }
+            });
+        }
         let suffix = group.and_then(|g| g.suffix.clone());
         let editor_content_width = suffix.as_ref().map(|_| {
             let editor = self.editor.read(cx);

@@ -998,3 +998,116 @@ fn shared_ghost_leading_width_preserves_containment_order_and_activation(cx: &mu
         assert_eq!(view.read(cx).calls, 3);
     });
 }
+
+struct MutableAddon {
+    input: Entity<InputState>,
+    show: bool,
+    replacement: Option<gpui_kit::FocusHandle>,
+}
+impl Render for MutableAddon {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        let mut group =
+            InputGroup::new("mutable-group", &self.input).start(InputGroupAddon::text("Filter"));
+        if self.show {
+            let replacement = self.replacement.clone();
+            group = group.end(InputGroupAddon::button(
+                "mutable-action",
+                "Clear",
+                move |button, _, _| {
+                    if let Some(focus) = &replacement {
+                        button.track_focus(focus)
+                    } else {
+                        button
+                    }
+                },
+            ));
+        }
+        div()
+            .tab_group()
+            .w(px(260.))
+            .child(crate::Button::new("mutable-before", "Before"))
+            .child(group)
+            .child(crate::Button::new("mutable-after", "After"))
+    }
+}
+
+#[gpui_kit::test]
+fn standalone_addon_removal_and_caller_focus_replacement_preserve_unicode_selection(
+    cx: &mut TestAppContext,
+) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| MutableAddon {
+        input: cx.new(|cx| {
+            let mut state = InputState::new("Mutable query", window, cx);
+            state.set_value("café 🦀", window, cx);
+            state
+        }),
+        show: true,
+        replacement: None,
+    });
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        let input = view.read(cx).input.clone();
+        input.read(cx).focus_handle(cx).focus(window, cx);
+        window.press("end", cx);
+        window.press("shift-left", cx);
+        window.focus_next(cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("mutable-action").focused(), Some(true));
+        view.update(cx, |s, cx| {
+            s.show = false;
+            cx.notify();
+        });
+        window.render_frame(cx);
+    });
+    cx.run_until_parked();
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        let input = view.read(cx).input.clone();
+        assert!(input.read(cx).focus_handle(cx).is_focused(window));
+        assert_eq!(input.read(cx).selected_value(cx).as_ref(), "🦀");
+        window.focus_next(cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("mutable-after").focused(), Some(true));
+        view.update(cx, |s, cx| {
+            s.show = true;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        window.click("mutable-action", cx);
+        view.update(cx, |s, cx| {
+            s.replacement = Some(cx.focus_handle());
+            cx.notify();
+        });
+        window.render_frame(cx);
+    });
+    cx.run_until_parked();
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        let input = view.read(cx).input.clone();
+        assert!(input.read(cx).focus_handle(cx).is_focused(window));
+        assert_eq!(input.read(cx).selected_value(cx).as_ref(), "🦀");
+        window.focus_next(cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("mutable-action").focused(), Some(true));
+        view.update(cx, |s, cx| {
+            s.show = false;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        view.update(cx, |s, cx| {
+            s.show = true;
+            cx.notify();
+        });
+        window.render_frame(cx);
+    });
+    cx.run_until_parked();
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert_eq!(
+            window.find("mutable-action").focused(),
+            Some(true),
+            "reinstating the same caller focus cancels queued removal recovery"
+        );
+    });
+}

@@ -12,6 +12,57 @@ pub(crate) struct AddonContext<'a> {
     pub size: Size,
     pub disabled: bool,
     pub start: bool,
+    pub focus: &'a mut AddonFocus,
+}
+
+/// Retain compact action identity without retaining rendered buttons or callbacks.
+#[derive(Default)]
+pub(crate) struct AddonFocus {
+    handles: std::collections::HashMap<(bool, ElementId), gpui_kit::FocusHandle>,
+    seen: std::collections::HashSet<(bool, ElementId)>,
+    available: Vec<gpui_kit::FocusHandle>,
+}
+impl AddonFocus {
+    pub fn begin(&mut self, window: &Window) -> Option<gpui_kit::FocusHandle> {
+        self.seen.clear();
+        self.available.clear();
+        self.handles
+            .values()
+            .find(|h| h.is_focused(window))
+            .cloned()
+    }
+    fn button(
+        &mut self,
+        button: crate::Button,
+        start: bool,
+        disabled: bool,
+        cx: &mut App,
+    ) -> crate::Button {
+        let key = (start, button.id().clone());
+        assert!(
+            self.seen.insert(key.clone()),
+            "InputGroup addon action IDs must be unique within each addon"
+        );
+        let handle = button
+            .provided_focus()
+            .or_else(|| self.handles.get(&key).cloned())
+            .unwrap_or_else(|| cx.focus_handle());
+        self.handles.insert(key, handle.clone());
+        if !disabled && !button.is_unavailable() {
+            self.available.push(handle.clone());
+        }
+        button.track_focus(&handle)
+    }
+    pub fn is_available(&self, handle: &gpui_kit::FocusHandle) -> bool {
+        self.available.contains(handle)
+    }
+    pub fn finish(
+        &mut self,
+        previous: Option<gpui_kit::FocusHandle>,
+    ) -> Option<gpui_kit::FocusHandle> {
+        self.handles.retain(|id, _| self.seen.contains(id));
+        previous.filter(|handle| !self.available.contains(handle))
+    }
 }
 
 #[derive(Clone)]
@@ -123,6 +174,7 @@ impl InputGroupAddon {
             size,
             disabled,
             start,
+            focus,
         } = context;
         let (outer, icon_size) = match size {
             Size::Xs => (6., 10.),
@@ -161,7 +213,11 @@ impl InputGroupAddon {
             .children(items.into_iter().enumerate().map(|(index, item)| {
                 let child = div().flex().items_center().child(match item {
                     Self::Action(render) => div()
-                        .child(render(size, window, cx).input_group_action(disabled))
+                        .child(
+                            focus
+                                .button(render(size, window, cx), start, disabled, cx)
+                                .input_group_action(disabled),
+                        )
                         .into_any_element(),
                     Self::Text(text) => div().child(text.clone()).into_any_element(),
                     Self::Icon(path) => crate::Icon::new(path.clone())

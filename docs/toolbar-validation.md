@@ -49,13 +49,22 @@ GPUI dispatches bound Input actions before raw key handlers. Root action capture
 
 Shared gallery and focused editor preview cover horizontal/vertical/disabled roots, plain Inputs, icon/text addons, trailing text and suffix, owner read-only/availability updates, removal and reinsertion. [Editor evidence](evidence/toolbar/editors/README.md) distinguishes source focus-on-removal (BODY) from native recovery to an eligible control, retained value after native reinsertion, and frame settling before screenshot capture. Six added rendered regressions cover Unicode selection, owner/clipboard guards, collection/vertical/narrow/remount behavior ordinary caller Tab policy and actual marked composition through the same Base engine. These are native adaptations and bounded composition evidence, not browser-identical focus removal or OS IME/speech acceptance.
 
-Remaining Toolbar work is now popup trigger replacement, direct InputGroup actions, independent addon removal while retaining the editor, richer field/descendant composition, RTL, full-gallery interaction and additional platform/speech acceptance. Coverage stays29/43 working families,14 unported.
+Remaining Toolbar work is now popup trigger replacement, direct InputGroup actions, richer field/descendant composition, RTL, full-gallery interaction and additional platform/speech acceptance. Coverage stays29/43 working families,14 unported.
 
 
 ## Compact addon action continuation
 
 `start`/`end` now accept existing InputGroupAddon button factories. Actions retain independent Base focus and Tab stops; they are not Toolbar collection entries. Toolbar root disabled guards only the editor, leaving actions enabled and sensitive. InputState owner disabled gates the whole group and skips its editor during roving navigation. Group semantic disabled state follows that owner, rather than the Toolbar override. Existing InputGroup action disabled-OR policy remains; source explicit-false override is a documented gap.
 
-Arrow navigation from an action uses the remembered composite entry (initially the first eligible entry); caret boundary restrictions apply only when the actual editor owns focus. Hosted-focus containment is used for viewport reveal, reorder retention and whole-group removal recovery. A removed focused group recovers to a remaining entry; Tab then exits. Independent addon removal within a surviving editor remains next work.
+Arrow navigation from an action uses the remembered composite entry (initially the first eligible entry); caret boundary restrictions apply only when the actual editor owns focus. Hosted-focus containment is used for viewport reveal, reorder retention and whole-group removal recovery. A removed focused group recovers to a remaining entry; Tab then exits. Independent addon removal is now covered by the continuation below.
 
 The shared gallery editor preview now includes compact Clear actions and owner availability toggles (Alt+g). Two new rendered regressions cover pointer focus before Space/Enter, once-only activation, availability distinctions, initial/remembered entry navigation, reorder and focused group removal/Tab exit. [Browser/native evidence and reproduction](evidence/toolbar/addon-actions/README.md).
+
+
+## Independent addon lifecycle continuation
+
+Compact action factories retain focus handles by caller ID within their start/end addon scope. Passive parts can reorder without moving action identity. Focused removal, disabled/loading availability and caller-focus replacement recover to the existing editor after render, preserving value and selection. Recovery is cancelled if the user moves focus or the same provided handle becomes available again. Caller IDs must be unique within each addon. Stale handles are pruned; factories keep their weak-capture contract.
+
+Toolbar delegates recovery to its current eligible editor/collection entry or host exit. Standalone InputGroup also recovers to the editor when available. Source removal leaves BODY; native editor recovery is deliberate and does not remove or disable supported action functionality. Actions remain visible by default; the gallery's Alt+c/action toggle exercises an owner removing/reinserting a slot.
+
+Three new rendered regressions cover independent action lifecycle, current root availability, cancelled stale recovery, preserved Unicode selection, caller-focus replacement and same-handle reinstatement. [Pinned browser/native evidence](evidence/toolbar/addon-removal/README.md). Next composition work is direct joined actions, then popup/replacement composition.

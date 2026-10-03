@@ -1,0 +1,118 @@
+[
+  {
+    "case": "light-1040",
+    "result": "PASS",
+    "removed": {
+      "tag": "BODY",
+      "name": null,
+      "text": "Before editorsBeforeFilterAfterBeforeFilterClearun"
+    },
+    "retainedSelection": "🦀",
+    "removalTab": {
+      "tag": "BUTTON",
+      "name": null,
+      "text": "Before",
+      "row": "vertical"
+    },
+    "disabledRemoved": {
+      "tag": "BODY",
+      "name": null,
+      "text": "Before editorsBeforeFilterAfterBeforeFilterClearun"
+    },
+    "actions": [
+      "pointer focus/clear",
+      "Unicode selection retained across focus/removal",
+      "editor value retained",
+      "independent action removal observed",
+      "reinserted keyboard operation",
+      "root-disabled editor after action removal"
+    ]
+  },
+  {
+    "case": "light-520",
+    "result": "PASS",
+    "removed": {
+      "tag": "BODY",
+      "name": null,
+      "text": "Before editorsBeforeFilterAfterBeforeFilterClearun"
+    },
+    "retainedSelection": "🦀",
+    "removalTab": {
+      "tag": "BUTTON",
+      "name": null,
+      "text": "Before",
+      "row": "vertical"
+    },
+    "disabledRemoved": {
+      "tag": "BODY",
+      "name": null,
+      "text": "Before editorsBeforeFilterAfterBeforeFilterClearun"
+    },
+    "actions": [
+      "pointer focus/clear",
+      "Unicode selection retained across focus/removal",
+      "editor value retained",
+      "independent action removal observed",
+      "reinserted keyboard operation",
+      "root-disabled editor after action removal"
+    ]
+  },
+  {
+    "case": "dark-1040",
+    "result": "PASS",
+    "removed": {
+      "tag": "BODY",
+      "name": null,
+      "text": "Before editorsBeforeFilterAfterBeforeFilterClearun"
+    },
+    "retainedSelection": "🦀",
+    "removalTab": {
+      "tag": "BUTTON",
+      "name": null,
+      "text": "Before",
+      "row": "vertical"
+    },
+    "disabledRemoved": {
+      "tag": "BODY",
+      "name": null,
+      "text": "Before editorsBeforeFilterAfterBeforeFilterClearun"
+    },
+    "actions": [
+      "pointer focus/clear",
+      "Unicode selection retained across focus/removal",
+      "editor value retained",
+      "independent action removal observed",
+      "reinserted keyboard operation",
+      "root-disabled editor after action removal"
+    ]
+  },
+  {
+    "case": "dark-520",
+    "result": "PASS",
+    "removed": {
+      "tag": "BODY",
+      "name": null,
+      "text": "Before editorsBeforeFilterAfterBeforeFilterClearun"
+    },
+    "retainedSelection": "🦀",
+    "removalTab": {
+      "tag": "BUTTON",
+      "name": null,
+      "text": "Before",
+      "row": "vertical"
+    },
+    "disabledRemoved": {
+      "tag": "BODY",
+      "name": null,
+      "text": "Before editorsBeforeFilterAfterBeforeFilterClearun"
+    },
+    "actions": [
+      "pointer focus/clear",
+      "Unicode selection retained across focus/removal",
+      "editor value retained",
+      "independent action removal observed",
+      "reinserted keyboard operation",
+      "root-disabled editor after action removal"
+    ]
+  }
+]

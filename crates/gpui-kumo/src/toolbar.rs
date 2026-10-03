@@ -585,6 +585,7 @@ impl RenderOnce for Toolbar {
     }
 }
 pub(crate) struct InputFocus {
+    pub on_action_removed: FocusHandler,
     pub tab_stop: bool,
     pub first: bool,
     pub last: bool,
@@ -692,7 +693,26 @@ impl Render for ToolbarState {
                         .into_any_element()
                 }
                 Kind::Input(editor) => {
+                    let recovery_owner = cx.entity().downgrade();
+                    let recovery_id = control.id.clone();
                     let hooks = InputFocus {
+                        on_action_removed: Rc::new(move |window, cx| {
+                            let _ = recovery_owner.update(cx, |s, cx| {
+                                let index = s
+                                    .items
+                                    .iter()
+                                    .position(|i| {
+                                        i.control.id == recovery_id && s.eligible(&i.control, cx)
+                                    })
+                                    .or_else(|| s.entry(window, cx));
+                                if let Some(index) = index {
+                                    let id = s.items[index].control.id.clone();
+                                    s.focus_item(&id, window, cx);
+                                } else {
+                                    s.leave(window, cx, &[]);
+                                }
+                            });
+                        }),
                         tab_stop: entry == Some(index),
                         first: index == 0,
                         last: index + 1 == total,

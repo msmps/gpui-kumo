@@ -844,3 +844,108 @@ fn embedded_action_reorder_and_focused_group_removal_recover_then_exit(cx: &mut 
         assert_eq!(window.find("outside-after").focused(), Some(true));
     });
 }
+
+#[gpui_kit::test]
+fn removing_only_focused_addon_preserves_editor_and_recovers_then_tabs_out(
+    cx: &mut TestAppContext,
+) {
+    let (view, cx) = editors(cx);
+    cx.update(|window, cx| {
+        let inputs = view.read(cx).inputs.clone();
+        let toolbar = view.read(cx).toolbar.clone();
+        toolbar.update(cx, |s, cx| s.set_items(addon_items(&inputs), window, cx));
+        window.render_frame(cx);
+        window.within("filter").click("clear", cx);
+        window.press("space", cx);
+        window.render_frame(cx);
+        assert_eq!(inputs[3].read(cx).value(cx).as_ref(), "status!!");
+        let items = vec![
+            ToolbarItem::button("first", "Before"),
+            ToolbarItem::input_group("filter", &inputs[3], px(220.))
+                .start(InputGroupAddon::text("Filter")),
+            ToolbarItem::button("last", "After"),
+        ];
+        toolbar.update(cx, |s, cx| s.set_items(items, window, cx));
+        window.render_frame(cx);
+    });
+    cx.run_until_parked();
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert!(focused_editor(&view, 3, window, cx));
+        assert_eq!(
+            view.read(cx).inputs[3].read(cx).value(cx).as_ref(),
+            "status!!"
+        );
+        window.focus_next(cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("outside-after").focused(), Some(true));
+        window.focus_prev(cx);
+        window.render_frame(cx);
+        assert!(focused_editor(&view, 3, window, cx));
+    });
+}
+#[gpui_kit::test]
+fn addon_availability_and_deferred_removal_respect_editor_policy_and_newer_focus(
+    cx: &mut TestAppContext,
+) {
+    let (view, cx) = editors(cx);
+    cx.update(|window, cx| {
+        let inputs = view.read(cx).inputs.clone();
+        let toolbar = view.read(cx).toolbar.clone();
+        toolbar.update(cx, |s, cx| s.set_items(addon_items(&inputs), window, cx));
+        window.render_frame(cx);
+        window.within("filter").click("clear", cx);
+        toolbar.update(cx, |s, cx| {
+            s.set_disabled(true, window, cx);
+            let items = vec![
+                ToolbarItem::button("first", "Before"),
+                ToolbarItem::input_group("filter", &inputs[3], px(220.)).end(
+                    InputGroupAddon::button("clear", "Clear", |button, _, _| button.disabled(true)),
+                ),
+                ToolbarItem::button("last", "After"),
+            ];
+            s.set_items(items, window, cx);
+        });
+        window.render_frame(cx);
+    });
+    cx.run_until_parked();
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert!(
+            focused_editor(&view, 3, window, cx),
+            "root-disabled editor remains a focusable recovery target"
+        );
+        assert!(!view.read(cx).inputs[3].read(cx).is_disabled());
+        window.press("backspace", cx);
+        assert_eq!(
+            view.read(cx).inputs[3].read(cx).value(cx).as_ref(),
+            "status!"
+        );
+        let inputs = view.read(cx).inputs.clone();
+        let toolbar = view.read(cx).toolbar.clone();
+        toolbar.update(cx, |s, cx| {
+            s.set_disabled(false, window, cx);
+            s.set_items(addon_items(&inputs), window, cx);
+        });
+        window.render_frame(cx);
+        window.within("filter").click("clear", cx);
+        toolbar.update(cx, |s, cx| {
+            s.set_items(
+                vec![ToolbarItem::input_group("filter", &inputs[3], px(220.))],
+                window,
+                cx,
+            )
+        });
+        window.render_frame(cx);
+        window.click("outside-before", cx);
+    });
+    cx.run_until_parked();
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert_eq!(
+            window.find("outside-before").focused(),
+            Some(true),
+            "a queued recovery must not steal newer focus"
+        );
+    });
+}

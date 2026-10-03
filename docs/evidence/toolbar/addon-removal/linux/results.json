@@ -1,0 +1,66 @@
+[
+  {
+    "case": "light-1040",
+    "result": "PASS",
+    "removedFocus": "retained Filter query",
+    "removedSelection": "\ud83e\udd80",
+    "removalTab": "Vertical toolbar Before",
+    "disabledRemovedFocus": "retained unavailable Filter query",
+    "actions": [
+      "pointer focus before once-only Space/Enter",
+      "Unicode selection/value retained",
+      "independent action removal and editor recovery",
+      "Tab exit/remembered editor reentry",
+      "reinserted keyboard activation once",
+      "root-disabled editor recovery/edit guard"
+    ]
+  },
+  {
+    "case": "light-520",
+    "result": "PASS",
+    "removedFocus": "retained Filter query",
+    "removedSelection": "\ud83e\udd80",
+    "removalTab": "Vertical toolbar Before",
+    "disabledRemovedFocus": "retained unavailable Filter query",
+    "actions": [
+      "pointer focus before once-only Space/Enter",
+      "Unicode selection/value retained",
+      "independent action removal and editor recovery",
+      "Tab exit/remembered editor reentry",
+      "reinserted keyboard activation once",
+      "root-disabled editor recovery/edit guard"
+    ]
+  },
+  {
+    "case": "dark-1040",
+    "result": "PASS",
+    "removedFocus": "retained Filter query",
+    "removedSelection": "\ud83e\udd80",
+    "removalTab": "Vertical toolbar Before",
+    "disabledRemovedFocus": "retained unavailable Filter query",
+    "actions": [
+      "pointer focus before once-only Space/Enter",
+      "Unicode selection/value retained",
+      "independent action removal and editor recovery",
+      "Tab exit/remembered editor reentry",
+      "reinserted keyboard activation once",
+      "root-disabled editor recovery/edit guard"
+    ]
+  },
+  {
+    "case": "dark-520",
+    "result": "PASS",
+    "removedFocus": "retained Filter query",
+    "removedSelection": "\ud83e\udd80",
+    "removalTab": "Vertical toolbar Before",
+    "disabledRemovedFocus": "retained unavailable Filter query",
+    "actions": [
+      "pointer focus before once-only Space/Enter",
+      "Unicode selection/value retained",
+      "independent action removal and editor recovery",
+      "Tab exit/remembered editor reentry",
+      "reinserted keyboard activation once",
+      "root-disabled editor recovery/edit guard"
+    ]
+  }
+]
