@@ -40,6 +40,7 @@ mod skeletons;
 mod switches;
 mod tabs;
 mod texts;
+mod toasts;
 mod toolbar_editors;
 mod toolbars;
 mod tooltips;

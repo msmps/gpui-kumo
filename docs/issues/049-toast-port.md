@@ -6,7 +6,11 @@ GitHub issue: https://github.com/msmps/gpui-kumo/issues/34
 
 ## Goal and status
 
-Port the supported **Toast** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Toast** Kumo family to Rust/GPUI. A working retained native core is implemented; the issue covers its supported parts and public API, not just a static default-state demo.
+
+## Native core checkpoint — 2026-10-03
+
+Retained add/update/dismiss, five variants, title/description/actions, source placement, timeout pause/cleanup, focus recovery and document-operation feedback are implemented. Eight rendered regressions and Light/Dark1040/520 source/native matrices pass; full local Rust gate passes226library/1gallery/9doctests plus adapter12/14. [Contract/adaptations](../toast-validation.md), [evidence](../evidence/toast/README.md). Full-family checkboxes stay open: promise/external-manager APIs, priority, swipe/bump/CSS motion, complete focus guards, long/custom content, close-hover and platform/speech/IME acceptance remain.
 
 ## GPUI Kit/Base foundation
 

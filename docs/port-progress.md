@@ -1,3 +1,9 @@
+## Announcement demo milestone: Toast feedback core — 2026-10-03
+
+The document workflow now connects Dropdown → edit/delete Dialog → confirmed operation → Toast feedback. Retained native Toast supports five variants, stable add/update/dismiss, typed actions, 5s/persistent lifetimes, hover/focus/inactive pause, focus recovery and unmount/window cleanup. [Contract and explicit adaptations](toast-validation.md), [source/native evidence](evidence/toast/README.md).
+
+Local full pinned Rust gate passes226library/1gallery/9doctests and adapter12default/14all-feature, formatting, warnings-denied lint and locked builds/default gallery. Browser and native Linux Light/Dark1040/520 matrices pass. Coverage advances to32/43 working families,11unported. #34 stays open for full APIs, source stack/swipe/bump motion, complete guards, long/custom content and platform/speech/IME acceptance. Pins and vendor provenance are unchanged. Next announcement slice: composed workflow and target-platform visual polish, then recording. Full migration continues beyond the announcement. Published SHA/remote macOS gate will be recorded after push; older checkpoints below are historical.
+
 ## Announcement demo milestone: Dialog modal core — 2026-10-03
 
 The shared gallery now composes Dropdown → edit/delete Dialog → application operation result. Retained drafts, rejected save, standard/alert dismissal policies, named modal bounds, explicit/default initial focus, forward/reverse trapping, surviving/removed opener restoration, unmount/remount and two-Dialog ordering are implemented. Actual pinned browser and native Linux Light/Dark1040/520 matrices pass. Four widths and narrow positioning have rendered regressions. [Contract and remaining gaps](dialog-validation.md), [source/native evidence](evidence/dialog/README.md).

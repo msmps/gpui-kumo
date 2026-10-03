@@ -1,3 +1,7 @@
+## Current continuation: Toast feedback core — 2026-10-03
+
+The announcement path now composes Dropdown → Dialog → confirmed operation → Toast. Native Toast core and Light/Dark1040/520 browser/native evidence pass; full locked Rust gate passes226library/1gallery/9doctests and adapter12/14. Coverage is32/43 working,11unported; working core does not mean full-fidelity acceptance. See [current progress](port-progress.md), [Toast contract/gaps](toast-validation.md) and [evidence](evidence/toast/README.md). Preserve exact pins/vendor provenance and commit/push coherent checkpoints. Next: composed workflow and target-platform polish/recording, then continue the full migration. Older entries below are historical.
+
 ## Announcement demo milestone: Dropdown action core — 2026-10-03
 
 The user selected the announcement demo goal: prioritize Dropdown, Dialog and Toast, then a target-platform visual polish and recording pass. Dropdown now has a retained flat action-menu core and shared gallery/focused preview. Stable row IDs, default/danger/disabled items, labels/separators/icons/inset/selected/shortcut slots, arrow/Home/End/typeahead, once-only operation events, Escape/Tab/outside dismissal, focus restoration, owner reorder/removal and mount cleanup are implemented over Base Popup, without Select semantics. Source disabled rows remain keyboard-focusable and guarded; Shift+Tab restores the trigger. Pointer opening focuses the menu container. [Contract and gaps](dropdown-validation.md), [actual source/native evidence](evidence/dropdown/README.md).

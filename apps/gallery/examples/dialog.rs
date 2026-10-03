@@ -4,6 +4,8 @@ mod panel;
 use panel::panel;
 #[path = "../src/dialogs.rs"]
 mod dialogs;
+#[path = "../src/toasts.rs"]
+mod toasts;
 use gpui_kit::{
     App, AppContext, Bounds, Context, InteractiveElement, IntoElement, ParentElement, Render,
     Styled, Window, WindowBounds, WindowOptions, div, px, size,

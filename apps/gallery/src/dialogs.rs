@@ -5,7 +5,7 @@ use gpui_kumo::button::Variant;
 use gpui_kumo::{
     Button, Dialog, DialogCloseReason, DialogEvent, DialogRole, DialogSize, DialogState,
     DialogTrigger, Dropdown, DropdownEvent, DropdownItem, DropdownState, DropdownVariant, Input,
-    InputState, Text, theme,
+    InputState, Text, Toast, ToastState, ToastVariant, ToastViewport, theme,
 };
 
 pub struct Dialogs {
@@ -13,6 +13,7 @@ pub struct Dialogs {
     edit: Entity<DialogState>,
     delete: Entity<DialogState>,
     draft: Entity<InputState>,
+    toasts: Entity<ToastState>,
     result: String,
     count: usize,
     _events: Vec<Subscription>,
@@ -20,6 +21,7 @@ pub struct Dialogs {
 impl Dialogs {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let edit = cx.new(|cx| DialogState::new("Edit document", cx));
+        let toasts = cx.new(ToastState::new);
         let delete = cx.new(|cx| DialogState::new("Delete document?", cx));
         delete.update(cx, |state, cx| state.set_role(DialogRole::AlertDialog, cx));
         let draft = cx.new(|cx| {
@@ -67,32 +69,61 @@ impl Dialogs {
                 });
             }
         });
-        let edit_events = cx.subscribe(&edit, |state: &mut Self, _, event: &DialogEvent, cx| {
-            match event {
-                DialogEvent::Closed(DialogCloseReason::Action) => {
-                    state.count += 1;
-                    state.result = format!("Saved {}", state.draft.read(cx).value(cx));
+        let edit_events = cx.subscribe(
+            &edit,
+            move |state: &mut Self, _, event: &DialogEvent, cx| {
+                match event {
+                    DialogEvent::Closed(DialogCloseReason::Action) => {
+                        state.count += 1;
+                        state.result = format!("Saved {}", state.draft.read(cx).value(cx));
+                        let toasts = state.toasts.clone();
+                        let _ = handle.update(cx, |_, window, cx| {
+                            toasts.update(cx, |state, cx| {
+                                state.add(
+                                    Toast::new("document-saved", "Document saved")
+                                        .description("Your changes are ready to share.")
+                                        .variant(ToastVariant::Success),
+                                    window,
+                                    cx,
+                                );
+                            });
+                        });
+                    }
+                    DialogEvent::ClosePrevented(DialogCloseReason::Action) => {
+                        state.result = "Enter a document name before saving".into()
+                    }
+                    _ => {}
                 }
-                DialogEvent::ClosePrevented(DialogCloseReason::Action) => {
-                    state.result = "Enter a document name before saving".into()
-                }
-                _ => {}
-            }
-            cx.notify();
-        });
-        let delete_events =
-            cx.subscribe(&delete, |state: &mut Self, _, event: &DialogEvent, cx| {
+                cx.notify();
+            },
+        );
+        let delete_events = cx.subscribe(
+            &delete,
+            move |state: &mut Self, _, event: &DialogEvent, cx| {
                 if *event == DialogEvent::Closed(DialogCloseReason::Action) {
                     state.count += 1;
                     state.result = "Document deleted".into();
+                    let toasts = state.toasts.clone();
+                    let _ = handle.update(cx, |_, window, cx| {
+                        toasts.update(cx, |state, cx| {
+                            state.add(
+                                Toast::new("document-deleted", "Document deleted")
+                                    .description("The demo operation completed."),
+                                window,
+                                cx,
+                            );
+                        });
+                    });
                 }
                 cx.notify();
-            });
+            },
+        );
         Self {
             menu,
             edit,
             delete,
             draft,
+            toasts,
             result: "No changes yet".into(),
             count: 0,
             _events: vec![menu_events, edit_events, delete_events],
@@ -108,6 +139,8 @@ impl Render for Dialogs {
             .child(DialogTrigger::new("edit-trigger", &self.edit, Button::new("open-editor", "Edit document")))
             .child(DialogTrigger::new("delete-trigger", &self.delete, Button::new("open-delete", "Delete document").variant(Variant::Destructive)))
             .child(Text::new("result", format!("{} operations · {}", self.count, self.result)))
+            .child(crate::toasts::controls(&self.toasts))
+            .child(ToastViewport::new("document-feedback", &self.toasts))
             .child(Dialog::new("editor", &self.edit, move |close, _, cx| {
                 let save = close.clone(); let _ = cx;
                 div().p(px(32.)).flex().flex_col().gap(px(16.))

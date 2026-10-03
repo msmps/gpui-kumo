@@ -2,7 +2,7 @@
 
 Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-03. This is a count of catalog component families, not subparts or fidelity acceptance checkboxes. Checkbox.Group/Item, Radio.Item, TooltipProvider and Button subsidiary APIs count inside their families. InputArea, SkeletonLine and recommended CodeHighlighted have separate catalog pages and count separately even though some share source directories.
 
-43 in-scope families:31 with working implementations,12 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
+43 in-scope families:32 with working implementations,11 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
 
 | Catalog component | State |
 | --- | --- |
@@ -46,7 +46,7 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-03. This
 | tabs | Core implemented; [contract and remaining overflow/motion/fidelity](tabs-validation.md) — [#32](https://github.com/msmps/gpui-kumo/issues/32) |
 | tag-input | Unported — [#33](https://github.com/msmps/gpui-kumo/issues/33) |
 | text | Implemented; see component acceptance/gaps |
-| toast | Unported — [#34](https://github.com/msmps/gpui-kumo/issues/34) |
+| toast | Implemented core; [acceptance/gaps](toast-validation.md), [#34](https://github.com/msmps/gpui-kumo/issues/34) |
 | toolbar | Action/link, retained Input/InputGroup and compact addon action lifecycle implemented; [contract and remaining composition](toolbar-validation.md) — [#35](https://github.com/msmps/gpui-kumo/issues/35) |
 | tooltip | Implemented; see component acceptance/gaps |
 
