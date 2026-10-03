@@ -16,7 +16,7 @@ Highest-value common navigation family depends on Link/Button/SkeletonLine, sema
 | N/A | Selection/value/invalid/open, focus trapping/dismissal, IME/input editing; disabled only actionable native parts |
 | Verification | Observable rendered input/geometry/focus/clipboard regressions, source review, both-theme wide/narrow native alignment and clipped rings/layers, full Rust gate/independent review |
 
-Native adaptations: explicit injected navigation (no automatic browser launch); native viewport uses source640px breakpoint; keyboard copy visibility improves on pointer-only source hover. Focus indication remains native and must be inspected inside overflow root. Implementation/validation pending.
+Native adaptations: explicit injected navigation (no automatic browser launch); native viewport uses source640px breakpoint; keyboard copy visibility improves on pointer-only source hover. Focus indication remains native and must be inspected inside overflow root. Historical pre-implementation acceptance.
 
 ## Validated core checkpoint — 2026-10-03
 

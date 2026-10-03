@@ -47,6 +47,14 @@ fn harness(cx: &mut TestAppContext) -> (Entity<Harness>, &mut VisualTestContext)
         }
     })
 }
+fn edit_key(key: &str) -> String {
+    let modifier = if cfg!(target_os = "macos") {
+        "cmd"
+    } else {
+        "ctrl"
+    };
+    format!("{modifier}-{key}")
+}
 fn settle(cx: &mut VisualTestContext) {
     cx.run_until_parked();
     // Wrap geometry is available after Base's first paint and feeds the next frame.
@@ -76,15 +84,15 @@ fn editing_retains_unicode_clipboard_history_and_tab_exit(cx: &mut TestAppContex
             window.find("control").role(),
             Some(gpui_kit::Role::MultilineTextInput)
         );
-        window.press("ctrl-a", cx);
-        window.press("ctrl-c", cx);
+        window.press(&edit_key("a"), cx);
+        window.press(&edit_key("c"), cx);
         assert_eq!(state.read(cx).selected_value(cx).as_ref(), "café 🦀\nnext");
         assert_eq!(
             cx.read_from_clipboard().unwrap().text().unwrap(),
             "café 🦀\nnext"
         );
         window.press("backspace", cx);
-        window.press("ctrl-z", cx);
+        window.press(&edit_key("z"), cx);
         assert_eq!(state.read(cx).value(cx).as_ref(), "café 🦀\nnext");
         window.press("tab", cx);
         window.render_frame(cx);
@@ -163,8 +171,8 @@ fn current_availability_rejects_edits_without_rejecting_owner_updates(cx: &mut T
         });
         window.render_frame(cx);
         state.read(cx).focus_handle(cx).focus(window, cx);
-        window.press("ctrl-a", cx);
-        window.press("ctrl-c", cx);
+        window.press(&edit_key("a"), cx);
+        window.press(&edit_key("c"), cx);
         window.press("backspace", cx);
         window.press("enter", cx);
         assert_eq!(state.read(cx).value(cx).as_ref(), "café\n🦀");
@@ -179,7 +187,7 @@ fn current_availability_rejects_edits_without_rejecting_owner_updates(cx: &mut T
         window.render_frame(cx);
         window.press("backspace", cx);
         window.press("enter", cx);
-        window.press("ctrl-v", cx);
+        window.press(&edit_key("v"), cx);
         assert_eq!(state.read(cx).value(cx).as_ref(), "café\n🦀");
         window.click("after", cx);
         assert_eq!(window.find("after").focused(), Some(true));
@@ -204,7 +212,7 @@ fn policy_width_and_font_changes_preserve_selection_and_undo(cx: &mut TestAppCon
     cx.update(|window, cx| state.read(cx).focus_handle(cx).focus(window, cx));
     cx.simulate_input("café 🦀");
     cx.update(|window, cx| {
-        window.press("ctrl-a", cx);
+        window.press(&edit_key("a"), cx);
     });
     for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
         for size in [Size::Xs, Size::Sm, Size::Base, Size::Lg] {
@@ -239,7 +247,7 @@ fn policy_width_and_font_changes_preserve_selection_and_undo(cx: &mut TestAppCon
     });
     settle(cx);
     cx.update(|window, cx| {
-        window.press("ctrl-z", cx);
+        window.press(&edit_key("z"), cx);
         assert_eq!(state.read(cx).value(cx).as_ref(), "café 🦀");
     });
     cx.run_until_parked();

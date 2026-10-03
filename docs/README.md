@@ -74,3 +74,5 @@ Linux availability: [pinned disabled-state patch and consumer setup](linux-disab
 Linux loading semantics: [authored Busy acceptance and evidence](linux-busy-state-validation.md).
 
 Linux disclosures: [authored expansion acceptance and evidence](linux-expansion-state-validation.md).
+
+Cloud continuation: [self-contained handoff prompt](cloud-handoff-prompt.md), [resume audit](issue-audit-2026-10-03.md).

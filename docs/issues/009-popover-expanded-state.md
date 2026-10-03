@@ -1,6 +1,6 @@
 # KUMO-009: Popover: export expanded/collapsed state through Linux AT-SPI
 
-Status: Open
+Status: Resolved by #41
 
 GitHub issue: Pending publication
 
@@ -22,3 +22,5 @@ GPUI aria_expanded metadata is set and tested, but accesskit_atspi_common 0.19.1
 - [ ] Document versions and the remaining role of the descriptive fallback.
 
 Baseline: commit `38c2ea8`, GPUI Kit/Base 0.7.0 and GPUI 0.3.7. Where a browser comparison is needed, use Kumo commit `3fd5b648df578cb1ba214dedd30f475009f6a668`.
+
+Published33ab766 repairs authored optional expansion in the exact adapter. See [acceptance and evidence](../linux-expansion-state-validation.md); speech and control association are separate.

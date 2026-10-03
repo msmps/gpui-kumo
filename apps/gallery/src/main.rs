@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 
 use gpui_kit::{
-    App, AppContext, AssetSource, Bounds, Context, Div, FocusHandle, FontWeight,
-    InteractiveElement, IntoElement, KeyBinding, Menu, MenuItem, ParentElement, Render,
-    SharedString, StatefulInteractiveElement, Styled, Subscription, TitlebarOptions, Window,
-    WindowBounds, WindowOptions, div, px, size, svg,
+    App, AppContext, AssetSource, Bounds, Context, FocusHandle, FontWeight, InteractiveElement,
+    IntoElement, KeyBinding, Menu, MenuItem, ParentElement, Render, SharedString,
+    StatefulInteractiveElement, Styled, Subscription, TitlebarOptions, Window, WindowBounds,
+    WindowOptions, div, px, size, svg,
 };
 use gpui_kumo::{
     Appearance, Button, Theme, button::Variant, set_appearance, theme as current_theme,
@@ -20,6 +20,8 @@ mod checkboxes;
 mod collapsibles;
 mod empties;
 mod fields;
+mod foundations;
+use foundations::panel;
 mod inline_copies;
 mod input_areas;
 mod input_groups;
@@ -235,17 +237,7 @@ impl Render for Gallery {
             window.viewport_size().width < px(920.),
         ))
         .child(buttons::size_panel(&theme))
-        .child(
-            div().flex().gap(px(24.)).child(color_panel(&theme)).child(
-                div()
-                    .flex()
-                    .flex_col()
-                    .gap(px(24.))
-                    .flex_1()
-                    .child(typography_panel(&theme))
-                    .child(effects_panel(&theme)),
-            ),
-        )
+        .child(foundations::panels(&theme, window.viewport_size().width))
         .child(
             div()
                 .text_color(theme.text.subtle)
@@ -253,146 +245,6 @@ impl Render for Gallery {
                 .child("System font · ⌘L switches appearance · Text · Button · Input · Popover"),
         )
     }
-}
-
-fn panel(theme: &Theme, title: &'static str) -> Div {
-    div()
-        .flex()
-        .flex_col()
-        .flex_shrink_0()
-        .gap(theme.spacing.sixteen)
-        .p(px(24.))
-        .bg(theme.colors.base)
-        .rounded(theme.radii.lg)
-        .border_1()
-        .border_color(theme.colors.hairline)
-        .child(div().font_weight(FontWeight::MEDIUM).child(title))
-}
-
-fn color_panel(theme: &Theme) -> Div {
-    panel(theme, "Semantic colors").flex_1().children(
-        [
-            ("Canvas", theme.colors.canvas),
-            ("Base", theme.colors.base),
-            ("Control", theme.colors.control),
-            ("Tint", theme.colors.tint),
-            ("Brand", theme.colors.brand),
-            ("Danger", theme.colors.danger),
-            ("Line", theme.colors.line),
-            ("Focus", theme.colors.focus),
-            ("Text / default", theme.text.default),
-            ("Text / subtle", theme.text.subtle),
-            ("Text / brand", theme.text.brand),
-        ]
-        .map(|(label, color)| {
-            div()
-                .flex()
-                .items_center()
-                .gap(theme.spacing.twelve)
-                .child(
-                    div()
-                        .w(px(48.))
-                        .h(px(24.))
-                        .flex_shrink_0()
-                        .rounded(theme.radii.sm)
-                        .bg(color)
-                        .border_1()
-                        .border_color(theme.colors.hairline),
-                )
-                .child(label)
-        }),
-    )
-}
-
-fn typography_panel(theme: &Theme) -> Div {
-    panel(theme, "Typography").children(
-        [
-            ("Extra small · 12 / 16", theme.typography.xs),
-            ("Small · 13 / 15.29", theme.typography.sm),
-            ("Base · 14 / 21", theme.typography.base),
-            ("Large · 16 / 24", theme.typography.lg),
-        ]
-        .map(|(label, style)| {
-            div()
-                .text_size(style.size)
-                .line_height(style.line_height)
-                .font_weight(style.weight)
-                .child(label)
-        }),
-    )
-}
-
-fn effects_panel(theme: &Theme) -> Div {
-    panel(theme, "Gradients and elevation")
-        .child(
-            div().flex().gap(theme.spacing.sixteen).children(
-                [
-                    ("Primary", &theme.primary),
-                    ("Destructive", &theme.destructive),
-                ]
-                .map(|(label, emphasis)| {
-                    div()
-                        .flex()
-                        .flex_col()
-                        .gap(theme.spacing.eight)
-                        .flex_1()
-                        .child(
-                            div()
-                                .text_color(theme.text.subtle)
-                                .text_size(theme.typography.xs.size)
-                                .child(label),
-                        )
-                        .child(
-                            div()
-                                .h(px(40.))
-                                .rounded(theme.radii.lg)
-                                .bg(emphasis.gradient(false))
-                                .shadow(vec![emphasis.inset_highlight()])
-                                .flex()
-                                .items_center()
-                                .justify_center()
-                                .text_color(gpui_kit::rgb(0xffffff))
-                                .child("Rest"),
-                        )
-                        .child(
-                            div()
-                                .h(px(40.))
-                                .rounded(theme.radii.lg)
-                                .bg(emphasis.gradient(true))
-                                .shadow(vec![emphasis.inset_highlight()])
-                                .flex()
-                                .items_center()
-                                .justify_center()
-                                .text_color(gpui_kit::rgb(0xffffff))
-                                .child("Hover"),
-                        )
-                }),
-            ),
-        )
-        .child(
-            div()
-                .flex()
-                .gap(theme.spacing.sixteen)
-                .pt(theme.spacing.eight)
-                .child(
-                    div()
-                        .flex_1()
-                        .p(theme.spacing.twelve)
-                        .rounded(theme.radii.lg)
-                        .bg(theme.colors.control)
-                        .shadow(theme.effects.shadow_xs.clone())
-                        .child("Shadow / xs"),
-                )
-                .child(
-                    div()
-                        .flex_1()
-                        .p(theme.spacing.twelve)
-                        .rounded(theme.radii.lg)
-                        .bg(theme.colors.control)
-                        .shadow(theme.effects.shadow_md.clone())
-                        .child("Shadow / md"),
-                ),
-        )
 }
 
 fn main() {

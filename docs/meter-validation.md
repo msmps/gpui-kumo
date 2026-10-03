@@ -16,7 +16,7 @@ Small common quota composition before complex collection/overlays. Reuse Base Pr
 | N/A | Hover/pressed/focused/disabled/selected/loading/invalid/open interactive states, callback activation, navigation/dismissal/trapping |
 | Validation | Observable metadata/paint/dynamic updates/frame regressions, both-theme wide/narrow actual native round-cap/alignment review, full Rust gate and independent skepticism |
 
-Native formatting: deterministic default whole percentage; consumers provide formatting/value-text callbacks for locale, units and speech instead of importing web Intl. Unavailable spoken/platform/browser checks remain separate gates. Implementation and validation pending.
+Native formatting: deterministic default whole percentage; consumers provide formatting/value-text callbacks for locale, units and speech instead of importing web Intl. Unavailable spoken/platform/browser checks remain separate gates. Historical pre-implementation acceptance.
 
 ## Passed checkpoint — 2026-10-03
 
