@@ -60,3 +60,7 @@ Exact next action: implement typed retained option/selection/highlight ownership
 ## Core checkpoint
 
 144 tests/nine doctests and required Rust gates pass; native both-theme wide/narrow checks and reviewer findings/fixes are recorded in [Select acceptance](../select-validation.md). Core single/multiple selection is usable; full parts criteria remain open. Next: named groups/separators, custom value content, placements, native state metadata and parent Popover integration.26 working families/43 scoped;17 unported.
+
+## Native semantics checkpoint
+
+145 tests/nine doctests and required Rust gates pass. Actual Base ComboBox node enrichment and guarded accessible Option Click implemented; live Linux AT-SPI validates disclosure, commit/restoration, multiple selection, helper/read-only metadata and disabled root action exclusion. Both themes/wide/narrow reviewed. Linux exporter limitations and remaining source parts/platform/browser acceptance are recorded in [Select acceptance](../select-validation.md). Next: groups/separators/custom values/placement/nested Popover composition. Family remains in progress.

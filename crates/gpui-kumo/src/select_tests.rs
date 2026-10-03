@@ -10,6 +10,8 @@ struct Harness {
     size: Size,
     offset: f32,
     after: FocusHandle,
+    description: Option<SharedString>,
+    error: Option<(SharedString, bool)>,
 }
 impl Render for Harness {
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
@@ -23,7 +25,9 @@ impl Render for Harness {
             .child(
                 Select::new("select", &self.state)
                     .loading(self.loading)
-                    .size(self.size),
+                    .size(self.size)
+                    .when_some(self.description.clone(), |v, d| v.description(d))
+                    .when_some(self.error.clone(), |v, (e, show)| v.error(e, show)),
             )
             .child(crate::Button::new("after", "After").track_focus(&self.after))
     }
@@ -62,6 +66,8 @@ fn harness(cx: &mut TestAppContext, multiple: bool) -> (Entity<Harness>, &mut Vi
             size: Size::Base,
             offset: 0.,
             after: cx.focus_handle(),
+            description: None,
+            error: None,
         }
     });
     cx.update(|window, _| window.activate_window());
@@ -554,4 +560,65 @@ fn select_rich_option_unmount_releases_open_entity(cx: &mut TestAppContext) {
         weak.upgrade().is_none(),
         "Rich option factories and open overlay listeners must not retain an unmounted state"
     );
+}
+
+#[gpui_kit::test]
+fn select_actual_base_node_enrichment_and_message_precedence(cx: &mut TestAppContext) {
+    use gpui_kit::{Element, accesskit};
+    let (view, cx) = harness(cx, false);
+    let state = view.read_with(cx, |v, _| v.state.clone());
+    for (read_only, disabled, error, expected_description) in [
+        (false, false, None, Some("Choose a region")),
+        (
+            true,
+            false,
+            Some(("Region required", true)),
+            Some("Region required"),
+        ),
+        (false, true, Some(("Region required", false)), None),
+        (false, false, None, Some("Choose a region")),
+    ] {
+        view.update(cx, |v, cx| {
+            v.description = Some("Choose a region".into());
+            v.error = error.map(|(e, show)| (e.into(), show));
+            cx.notify();
+        });
+        cx.update(|window, cx| {
+            state.update(cx, |s, cx| {
+                s.set_read_only(read_only, cx);
+                s.set_disabled(disabled, window, cx);
+            });
+            window.render_frame(cx);
+            let node = state.update(cx, |s, cx| {
+                let element = s.trigger_element(window, cx);
+                assert_eq!(element.a11y_role(), Some(Role::ComboBox));
+                let mut node = accesskit::Node::new(Role::ComboBox);
+                element.write_a11y_info(&mut node);
+                node
+            });
+            assert_eq!(node.supports_action(accesskit::Action::Click), !disabled);
+            assert_eq!(node.supports_action(accesskit::Action::Focus), !disabled);
+            assert_eq!(node.label(), Some("Fruit"));
+            assert_eq!(node.value(), Some("Apple"));
+            assert_eq!(node.is_expanded(), Some(false));
+            assert_eq!(node.is_read_only(), read_only);
+            assert_eq!(node.is_disabled(), disabled);
+            assert_eq!(node.invalid(), error.map(|_| accesskit::Invalid::True));
+            assert_eq!(node.description(), expected_description);
+        });
+    }
+    view.update(cx, |v, cx| {
+        v.loading = true;
+        cx.notify();
+    });
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        let node = state.update(cx, |s, cx| {
+            let element = s.trigger_element(window, cx);
+            let mut node = accesskit::Node::new(Role::ComboBox);
+            element.write_a11y_info(&mut node);
+            node
+        });
+        assert!(node.is_disabled());
+    });
 }

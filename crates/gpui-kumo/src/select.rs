@@ -1,4 +1,6 @@
 //! Retained typed Kumo Select over Base disclosure and deferred positioning.
+#[path = "select_semantics.rs"]
+mod semantics;
 #[cfg(test)]
 #[path = "select_tests.rs"]
 mod tests;
@@ -104,6 +106,7 @@ pub struct SelectState<T: Clone + PartialEq + 'static> {
     size: Size,
     placeholder: SharedString,
     invalid: bool,
+    description: Option<SharedString>,
     loading: bool,
     hovered: bool,
     _theme: Subscription,
@@ -144,6 +147,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             size: Size::Base,
             placeholder: "Select…".into(),
             invalid: false,
+            description: None,
             loading: false,
             hovered: false,
             _theme: cx.observe_global::<Theme>(|_, cx| cx.notify()),
@@ -317,6 +321,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
                 SelectValue::Multiple(values)
             }
         };
+        self.highlighted = Some(id.clone());
         let changed = !match (&next, &self.value) {
             (SelectValue::Single(None), SelectValue::Single(None)) => true,
             (SelectValue::Single(Some(a)), SelectValue::Single(Some(b))) => (self.compare)(a, b),
@@ -526,6 +531,9 @@ impl<T: Clone + PartialEq + 'static> RenderOnce for Select<T> {
             v.size = self.size;
             v.placeholder = self.placeholder;
             v.invalid = self.invalid || self.error.is_some();
+            v.description =
+                crate::field::resolve_message(self.description.clone(), self.error.clone())
+                    .map(|(text, _)| text);
             v.loading = self.loading;
             if v.loading {
                 v.set_open(false, window, cx);
@@ -539,21 +547,12 @@ impl<T: Clone + PartialEq + 'static> RenderOnce for Select<T> {
             .when_some(self.error, |v, (e, show)| v.error(e, show))
     }
 }
-impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        if self.focus_out.is_none() {
-            self.focus_out =
-                Some(
-                    cx.on_focus_out(&self.content.clone(), window, |v, _, window, cx| {
-                        if v.open
-                            && !v.trigger.is_focused(window)
-                            && !v.content.contains_focused(window, cx)
-                        {
-                            v.set_open(false, window, cx);
-                        }
-                    }),
-                );
-        }
+impl<T: Clone + PartialEq + 'static> SelectState<T> {
+    fn trigger_element(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl gpui_kit::Element {
         let t = theme(cx).clone();
         let (height, padding, radius, style) = crate::input::metrics(self.size, &t);
         let display = self.display();
@@ -711,6 +710,33 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
                 .inset_0()
                 .size_full(),
             );
+        semantics::Control {
+            inner: trigger.render(window, cx).into_element(),
+            disabled,
+            read_only: self.read_only,
+            invalid: self.invalid,
+            description: self.description.clone(),
+        }
+    }
+}
+impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if self.focus_out.is_none() {
+            self.focus_out =
+                Some(
+                    cx.on_focus_out(&self.content.clone(), window, |v, _, window, cx| {
+                        if v.open
+                            && !v.trigger.is_focused(window)
+                            && !v.content.contains_focused(window, cx)
+                        {
+                            v.set_open(false, window, cx);
+                        }
+                    }),
+                );
+        }
+        let t = theme(cx).clone();
+        let open = self.open;
+        let trigger = self.trigger_element(window, cx);
         let root = div()
             .relative()
             .w_full()
@@ -777,89 +803,98 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
             let id = option.id.clone();
             let select_id = id.clone();
             let hover_id = id.clone();
+            let accessible_id = id.clone();
             let selected = self.selected(&option.value);
             let unavailable = option.disabled;
             let highlighted = self.highlighted.as_ref() == Some(&id);
-            list =
-                list.child(
-                    div()
-                        .id(id)
-                        .test_support()
-                        .role(Role::ListBoxOption)
-                        .aria_label(option.label.clone())
-                        .aria_selected(selected)
-                        .a11y_synthetic_children(move |builder| {
-                            if unavailable {
-                                builder.parent_node().set_disabled();
-                            }
+            list = list.child(
+                div()
+                    .id(id)
+                    .test_support()
+                    .role(Role::ListBoxOption)
+                    .aria_label(option.label.clone())
+                    .aria_selected(selected)
+                    .a11y_synthetic_children(move |builder| {
+                        if unavailable {
+                            builder.parent_node().set_disabled();
+                        }
+                    })
+                    .when(highlighted, |v| v.aria_active_descendant())
+                    .relative()
+                    .flex()
+                    .items_center()
+                    .gap(px(8.))
+                    .mx(px(6.))
+                    .px(px(8.))
+                    .py(px(6.))
+                    .rounded(px(4.))
+                    .bg(if highlighted {
+                        t.colors.tint
+                    } else {
+                        t.colors.base
+                    })
+                    .opacity(if unavailable { 0.5 } else { 1. })
+                    .on_hover(cx.listener(move |v, hovered, _, cx| {
+                        if *hovered && !unavailable {
+                            v.highlighted = Some(hover_id.clone());
+                            cx.notify();
+                        }
+                    }))
+                    .when(!unavailable, |v| {
+                        let owner = cx.entity().downgrade();
+                        v.on_a11y_action(gpui_kit::AccessibleAction::Click, move |_, window, cx| {
+                            let _ = owner.update(cx, |v, cx| v.commit(&accessible_id, window, cx));
                         })
-                        .when(highlighted, |v| v.aria_active_descendant())
-                        .relative()
-                        .flex()
-                        .items_center()
-                        .gap(px(8.))
-                        .mx(px(6.))
-                        .px(px(8.))
-                        .py(px(6.))
-                        .rounded(px(4.))
-                        .bg(if highlighted {
-                            t.colors.tint
-                        } else {
-                            t.colors.base
-                        })
-                        .opacity(if unavailable { 0.5 } else { 1. })
-                        .on_hover(cx.listener(move |v, hovered, _, cx| {
-                            if *hovered && !unavailable {
-                                v.highlighted = Some(hover_id.clone());
-                                cx.notify();
-                            }
-                        }))
-                        .on_mouse_down(
-                            MouseButton::Left,
-                            cx.listener(move |v, _, window, cx| {
-                                v.commit(&select_id, window, cx);
-                                cx.stop_propagation();
-                            }),
-                        )
-                        .child(div().min_w_0().flex_1().child(
-                            if let Some(factory) = &option.content {
+                    })
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(move |v, _, window, cx| {
+                            v.commit(&select_id, window, cx);
+                            cx.stop_propagation();
+                        }),
+                    )
+                    .child(
+                        div()
+                            .min_w_0()
+                            .flex_1()
+                            .child(if let Some(factory) = &option.content {
                                 factory(window, cx)
                             } else {
                                 div().child(option.label.clone()).into_any_element()
-                            },
-                        ))
-                        .child(div().size(px(14.)).flex_shrink_0().when(selected, |v| {
-                            v.child(
-                                svg()
-                                    .data(include_bytes!("../assets/empty-check.svg").as_slice())
-                                    .size_full()
-                                    .text_color(t.text.default),
+                            }),
+                    )
+                    .child(div().size(px(14.)).flex_shrink_0().when(selected, |v| {
+                        v.child(
+                            svg()
+                                .data(include_bytes!("../assets/empty-check.svg").as_slice())
+                                .size_full()
+                                .text_color(t.text.default),
+                        )
+                    }))
+                    .when(highlighted, |v| {
+                        let brand = t.colors.brand;
+                        v.child(
+                            canvas(
+                                |_, _, _| (),
+                                move |bounds, _, window, _| {
+                                    if window.last_input_was_keyboard() {
+                                        window.paint_quad(gpui_kit::quad(
+                                            bounds,
+                                            px(4.),
+                                            brand.alpha(0.),
+                                            px(2.),
+                                            brand,
+                                            Default::default(),
+                                        ));
+                                    }
+                                },
                             )
-                        }))
-                        .when(highlighted, |v| {
-                            let brand = t.colors.brand;
-                            v.child(
-                                canvas(
-                                    |_, _, _| (),
-                                    move |bounds, _, window, _| {
-                                        if window.last_input_was_keyboard() {
-                                            window.paint_quad(gpui_kit::quad(
-                                                bounds,
-                                                px(4.),
-                                                brand.alpha(0.),
-                                                px(2.),
-                                                brand,
-                                                Default::default(),
-                                            ));
-                                        }
-                                    },
-                                )
-                                .absolute()
-                                .inset_0()
-                                .size_full(),
-                            )
-                        }),
-                );
+                            .absolute()
+                            .inset_0()
+                            .size_full(),
+                        )
+                    }),
+            );
         }
         let surface = div()
             .id("surface")
