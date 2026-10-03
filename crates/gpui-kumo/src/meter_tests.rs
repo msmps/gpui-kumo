@@ -221,3 +221,58 @@ fn native_formatting_and_spoken_override_keep_numeric_range_authoritative(cx: &m
         assert!(window.try_find("value").is_none());
     });
 }
+
+#[gpui_kit::test]
+fn caller_track_and_fill_styles_change_paint_without_changing_value(cx: &mut TestAppContext) {
+    struct StyledMeter;
+    impl Render for StyledMeter {
+        fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+            let t = theme(cx);
+            div().w(gpui_kit::px(160.)).child(
+                Meter::new("styled", "Quota café", 25.)
+                    .track_style(
+                        StyleRefinement::default()
+                            .h(gpui_kit::px(12.))
+                            .rounded(gpui_kit::px(4.))
+                            .bg(t.colors.tint),
+                    )
+                    .indicator_style(
+                        StyleRefinement::default()
+                            .rounded(gpui_kit::px(4.))
+                            .bg(t.colors.success),
+                    ),
+            )
+        }
+    }
+    cx.update(crate::init);
+    let (_, cx) = cx.add_window_view(|_, _| StyledMeter);
+    cx.update(|window, cx| {
+        cx.set_reduce_motion(true);
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            window.render_frame(cx);
+            let fill = window.find("indicator").bounds();
+            assert_eq!(
+                fill.size,
+                gpui_kit::size(gpui_kit::px(40.), gpui_kit::px(12.))
+            );
+            assert_eq!(window.find("styled").value(), Some("25%"));
+            let t = theme(cx);
+            let quads = window.painted_quads();
+            let track = quads
+                .iter()
+                .find(|q| q.background == gpui_kit::Background::from(t.colors.tint))
+                .unwrap();
+            let paint = quads
+                .iter()
+                .find(|q| q.background == gpui_kit::Background::from(t.colors.success))
+                .unwrap();
+            assert_eq!(paint.bounds, fill.scale(window.scale_factor()));
+            assert_eq!(
+                track.bounds.size.width.as_f32(),
+                160. * window.scale_factor()
+            );
+            assert_eq!(track.corner_radii, paint.corner_radii);
+        }
+    });
+}

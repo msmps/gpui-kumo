@@ -29,3 +29,9 @@ Review findings: Medium forced value nonshrink fixed by normal shrinkable header
 Remaining: arbitrary web track/indicator class overrides translate only to typed semantic indicator colors; no generic styled track slots yet. Browser comparison and OS screen-reader checks remain unrun. Native locale formatting is an explicit caller callback; no Intl runtime is bundled. Platform reduced-motion delivery remains separate from tested GPUI policy. Keep #25 open for these acceptance gaps.
 
 Rust gate: `cargo test --locked --workspace --all-features` passes129 tests/nine doctests; `cargo clippy --locked --workspace --all-targets --all-features -- -D warnings`, all-target/all-feature build and formatting check pass. Logs `/tmp/meter-final-{test,clippy,build,fmt}.log`. Pre-existing upstream profiler AtomicUsize deprecation remains visible; no warnings suppressed. Native testing gallery closed after review. No CI configuration exists; Actions acceptance is not claimed.
+
+## Quick-win completion — 2026-10-03
+
+Meter now accepts `track_style(StyleRefinement)` and `indicator_style(StyleRefinement)`, applied after the semantic default recipe. The normalized animated width remains on its private owner-driven wrapper. A rendered regression checks custom height, fill/radii paint and unchanged numeric meaning in both themes. Existing numeric normalization, formatting and motion regressions pass.
+
+This supersedes the historical implementation gaps above. Issue #25 is resolved for its bounded implementation scope. Catalog/browser and OS reduced-motion delivery remain #10; speech remains #2–#4. [New native matrix, source fixture and review](evidence/quick-wins/README.md). Full locked workspace/adapter gate passes232library/1gallery/9doctests and adapter12/14, formatting, warnings-denied Clippy and builds.

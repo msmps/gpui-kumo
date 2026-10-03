@@ -1,4 +1,6 @@
-use gpui_kit::{Context, IntoElement, ParentElement, Render, Styled, Window, div};
+use gpui_kit::{
+    Context, IntoElement, ParentElement, Render, StyleRefinement, Styled, Window, div, px,
+};
 use gpui_kumo::{Button, Meter, meter::IndicatorColor, theme};
 
 pub struct Meters {
@@ -14,6 +16,20 @@ impl Render for Meters {
         let theme = theme(cx);
         crate::panel(theme, "Meter · measured quotas and owner-driven updates")
             .child(Meter::new("meter-storage", "Storage used", self.value))
+            .child(
+                Meter::new("meter-styled", "Caller-styled track and fill", self.value)
+                    .track_style(
+                        StyleRefinement::default()
+                            .h(px(12.))
+                            .rounded(px(4.))
+                            .bg(theme.colors.tint),
+                    )
+                    .indicator_style(
+                        StyleRefinement::default()
+                            .rounded(px(4.))
+                            .bg(theme.colors.success),
+                    ),
+            )
             .child(
                 Meter::new("meter-requests", "API requests", 750.)
                     .range(0.0..=1000.0)

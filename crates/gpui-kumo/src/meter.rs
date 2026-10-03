@@ -4,9 +4,9 @@
 use crate::{Text, text, theme};
 use base::TestSupportExt;
 use gpui_kit::{
-    App, ElementId, FontFeatures, InteractiveElement, IntoElement, ParentElement, RenderOnce, Role,
-    SharedString, StatefulInteractiveElement, Styled, Window, base, div, prelude::FluentBuilder,
-    relative,
+    App, ElementId, FontFeatures, InteractiveElement, IntoElement, ParentElement, Refineable,
+    RenderOnce, Role, SharedString, StatefulInteractiveElement, StyleRefinement, Styled, Window,
+    base, div, prelude::FluentBuilder, relative,
 };
 use std::{ops::RangeInclusive, sync::Arc, time::Duration};
 
@@ -74,6 +74,8 @@ pub struct Meter {
     color: IndicatorColor,
     format: Option<Formatter>,
     value_text: Option<ValueText>,
+    track_style: StyleRefinement,
+    indicator_style: StyleRefinement,
 }
 impl Meter {
     /// Create a named measurement with a unique stable ID and default0–100 range.
@@ -90,6 +92,8 @@ impl Meter {
             color: IndicatorColor::Brand,
             format: None,
             value_text: None,
+            track_style: StyleRefinement::default(),
+            indicator_style: StyleRefinement::default(),
         }
     }
     /// Set a finite ordered range. Equal endpoints follow the source normalization.
@@ -114,6 +118,16 @@ impl Meter {
     /// Select an indicator fill from the shared semantic palette.
     pub fn indicator_color(mut self, color: IndicatorColor) -> Self {
         self.color = color;
+        self
+    }
+    /// Refine the track's default presentation, equivalent to trackClassName.
+    pub fn track_style(mut self, style: StyleRefinement) -> Self {
+        self.track_style = style;
+        self
+    }
+    /// Refine the fill's default presentation. Normalized width remains owner-driven.
+    pub fn indicator_style(mut self, style: StyleRefinement) -> Self {
+        self.indicator_style = style;
         self
     }
     /// Native equivalent of Intl formatting. Default is a whole percentage.
@@ -229,6 +243,10 @@ impl RenderOnce for Meter {
                     .rounded_full()
                     .bg(theme.colors.fill)
                     .overflow_hidden()
+                    .map(|mut track| {
+                        track.style().refine(&self.track_style);
+                        track
+                    })
                     .child(
                         div()
                             .id("indicator")
@@ -242,7 +260,11 @@ impl RenderOnce for Meter {
                                 base::ProgressIndicator::new()
                                     .size_full()
                                     .rounded_full()
-                                    .bg(color),
+                                    .bg(color)
+                                    .map(|mut indicator| {
+                                        indicator.style().refine(&self.indicator_style);
+                                        indicator
+                                    }),
                             ),
                     ),
             )
