@@ -26,6 +26,6 @@ gpui-pre = { path = "vendor/gpui-pre-0.3.7" }
 # Exact0.7.0 source plus the documented display-map row reconciliation.
 gpui-base = { path = "vendor/gpui-base-0.7.0" }
 
-# Preserve disabled Enabled/Sensitive and authored busy states on Linux.
+# Preserve disabled availability, Busy and authored expansion states on Linux.
 # Exact0.19.1 source plus the documented state-mapping corrections.
 accesskit_atspi_common = { path = "vendor/accesskit_atspi_common-0.19.1" }

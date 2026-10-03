@@ -96,6 +96,6 @@ Shared follow-up: [KUMO-054 — authored busy-state export on Linux](054-linux-b
 
 Necessary example repair: [KUMO-055 — Button gallery narrow composition](055-button-gallery-narrow-layout.md) ([#40](https://github.com/msmps/gpui-kumo/issues/40)), Resolved. Intrinsic Button geometry preserved; counter, variant and size-row wrapping verified natively in all four combinations.
 
-[ KUMO-056 — Linux expansion export](056-linux-expansion-state.md) ([#41](https://github.com/msmps/gpui-kumo/issues/41)), Open. Native PageSize popup opens but pinned adapter omits Expanded/Expandable; selected after PageSize checkpoint.
+[ KUMO-056 — Linux expansion export](056-linux-expansion-state.md) ([#41](https://github.com/msmps/gpui-kumo/issues/41)), Resolved. Exact pinned adapter exports authored optional expansion; actual Adapter regressions and strict native both-theme wide/narrow checks pass.
 
 [KUMO-057 — narrow foundation gallery](057-foundation-gallery-narrow-layout.md) ([#42](https://github.com/msmps/gpui-kumo/issues/42)), Open. Actual swatch-column overflow below Button panels remains a separate gallery repair.

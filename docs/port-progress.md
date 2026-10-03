@@ -2,6 +2,12 @@
 
 Updated 2026-10-03. Task branch: `work`. This is the continuation checkpoint and dependency-aware backlog; individual first-slice issues remain in [issues](issues/README.md).
 
+## Current resume checkpoint
+
+Task branch `work`; latest published checkpoint `f9d592edf2d2ae82340c49b842c202566bccf8f3` (controlled Pagination PageSize). This checkpoint resolves #41/KUMO-056: exact pinned Linux AT-SPI adapter exports authored optional Expandable/Expanded without altering availability, Busy, focus or source presentation.169workspace tests/nine doctests;12default/14all-feature upstream tests; required fmt/lint/build and strict native Light/Dark1040/520 passed. [Acceptance, review and limitations](linux-expansion-state-validation.md), [24 final captures/raw native states](evidence/linux-expansion-state/README.md). Earlier failed probes and fixture repairs are recorded rather than counted as passes. Shared review checks centres/baselines/gaps/padding, rounded clipping, borders/rings/layers and arrow joins in both themes.
+
+Next selected: #26 Pagination dropdown Controls, leveraging retained controlled Base Select, authoritative Base Pagination page state and existing InputGroup joined-border machinery. Define mode/bounds/proposal/focus/owner-transition acceptance before coding; source full-known mode only, all pages without allocating for Input/Simple/Unknown. Test once-only accepted/rejected proposals, stale options, mode/availability changes, keyboard/focus and native joined seams in both themes and widths. #26 stays open; #38 rich font and #42 narrow foundation gallery remain independent gaps. Coverage27/43 working with documented gaps,16 unported. No speech/IME/macOS/Windows fidelity claim; continue the ordered issue backlog after this milestone.
+
 ## Baseline and scope
 
 Kumo source `3fd5b648df578cb1ba214dedd30f475009f6a668`; GPUI Kit/Base 0.7.0; GPUI snapshot family 0.3.7; Rust 1.99.0. Keep these pinned. Public APIs own Kumo semantics and presentation; Base supplies suitable behavior. Styled Component and bundled assets are excluded. The selected GPUI snapshot derives from Zed `1a28cff4b409169bac058bca40dfbfeb7621d19b`.
@@ -35,7 +41,7 @@ On macOS 26.6.2 / aarch64-apple-darwin, MacBookPro18,1, 10 CPUs, 16 GiB RAM, Rus
 - Same target directory after changing Button/Input metadata: successful incremental rebuild, 2.769 seconds wall (Python monotonic timer), Cargo reports 2.71 seconds.
 - `cargo tree --locked --workspace --edges normal --prefix none --format '{p}' --offline`: 374 unique package/version entries, including the two workspace packages. No `gpui-component` or bundled component assets in this active host graph. This is host normal dependencies, not every target or the larger lockfile inventory.
 
-## Current checkpoint
+## Earlier checkpoint history
 
 Published InputGroup checkpoints `7bb8783f6454834a8f25bb54059412e71a74c58d` (joined zones) and `d722f5c83013805110d2cf9e9d14b50b0d5c39cb` (optional labels/hidden errors, disabled label focus). Both exact validated trees are on `work`. 96 workspace tests/nine doctests, Rust gates and native light/dark wide/narrow checks passed; see [InputGroup matrix](input-group-validation.md).
 

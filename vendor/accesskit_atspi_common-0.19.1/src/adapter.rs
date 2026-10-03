@@ -976,4 +976,63 @@ mod tests {
             }
         }
     }
+    #[test]
+    fn authored_expansion_exports_states_and_events_independently() {
+        use atspi_common::State;
+        for role in [Role::Button, Role::ComboBox, Role::TreeItem] {
+            for disabled in [false, true] {
+                let mut node = Node::new(role);
+                node.add_action(accesskit::Action::Focus);
+                node.set_busy(); // Other authored states must remain untouched.
+                if disabled {
+                    node.set_disabled();
+                }
+                let mut initial = initial_tree();
+                initial.nodes[1].1 = node.clone();
+                let (mut adapter, events) = state_adapter(initial);
+                let id = adapter
+                    .context
+                    .read_tree()
+                    .state()
+                    .root()
+                    .children()
+                    .next()
+                    .unwrap()
+                    .id();
+                let baseline = adapter.platform_node(id).state();
+                assert!(!baseline.contains(State::Expandable));
+                assert!(!baseline.contains(State::Expanded));
+                let mut expected = baseline;
+                for (expanded, changed, value) in [
+                    (Some(false), State::Expandable, true),
+                    (Some(true), State::Expanded, true),
+                    (Some(false), State::Expanded, false),
+                    (None, State::Expandable, false),
+                ] {
+                    if let Some(expanded) = expanded {
+                        node.set_expanded(expanded);
+                    } else {
+                        node.clear_expanded();
+                    }
+                    adapter.update(update(vec![(LocalNodeId(1), node.clone())]));
+                    if value {
+                        expected.insert(changed);
+                    } else {
+                        expected.remove(changed);
+                    }
+                    assert_eq!(
+                        adapter.platform_node(id).state(),
+                        expected,
+                        "{role:?}, disabled={disabled}, authored={expanded:?}"
+                    );
+                    assert_eq!(*events.lock().unwrap(), vec![(changed, value)]);
+                    events.lock().unwrap().clear();
+                    // Reauthoring an equal snapshot must not duplicate notification.
+                    adapter.update(update(vec![(LocalNodeId(1), node.clone())]));
+                    assert!(events.lock().unwrap().is_empty());
+                }
+                assert_eq!(adapter.platform_node(id).state(), baseline);
+            }
+        }
+    }
 }

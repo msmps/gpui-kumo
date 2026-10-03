@@ -15,6 +15,7 @@ import time
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--binary', type=Path, default=Path('target/debug/kumo-gallery'))
 parser.add_argument('--output', type=Path, default=Path('/tmp'))
+parser.add_argument('--require-expansion-state', action='store_true', help='Require authored Expandable/Expanded export and shared disclosure checks (#41)')
 args = parser.parse_args()
 from gi.repository import Gio, GLib
 import pyatspi
@@ -49,6 +50,9 @@ def size(index):
 
 
 def bounds(node):
+    # Reacquire current identities after scroll/remount rather than retaining an
+    # Accessible proxy whose bounds can refer to an earlier rendered subtree.
+    node = find(node.name, node.getRoleName())
     r = node.queryComponent().getExtents(pyatspi.DESKTOP_COORDS)
     return [r.x, r.y, r.width, r.height]
 
@@ -57,7 +61,9 @@ def show(node):
     for _ in range(25):
         x, y, w, h = bounds(node)
         if 200 <= y <= 500:
-            return
+            time.sleep(.8)
+            if 200 <= bounds(node)[1] <= 500:
+                return
         clicks = max(1, min(100, abs(y - 320) // 42))
         subprocess.run(['xdotool', 'mousemove', '200', '700', 'click', '--repeat',
                         str(clicks), '--delay', '10', '5' if y > 500 else '4'], check=True)
@@ -91,6 +97,17 @@ def counter():
 
 def is_open():
     return any(n.getRoleName() == 'list item' and n.name in ('10', '20', '25', '50', '100', '250') for n in walk(gallery))
+
+
+def expansion(node, opened):
+    node = find(node.name, node.getRoleName())
+    node.clearCache()
+    state = node.getState()
+    actual = {'expandable': state.contains(pyatspi.STATE_EXPANDABLE),
+              'expanded': state.contains(pyatspi.STATE_EXPANDED)}
+    if args.require_expansion_state:
+        assert actual == {'expandable': True, 'expanded': opened}, (node.name, actual, opened)
+    return actual
 
 
 def selected(value):
@@ -128,8 +145,10 @@ try:
         click(find('Reset size datasets', 'button'))
         show(size(5))
         original = counter()
+        transitions = [expansion(size(5), False)]
         pointer(size(5))
         assert is_open()
+        transitions.append(expansion(size(5), True))
         selected(25)
         for value in (25, 50, 100, 250):
             assert bounds(find(str(value), 'list item'))[3] == 32, (value, bounds(find(str(value), 'list item')))
@@ -138,6 +157,7 @@ try:
         assert counter() == original + 1
         assert size(5).getState().contains(pyatspi.STATE_FOCUSED)
         assert not is_open()
+        transitions.append(expansion(size(5), False))
         assert find('Dataset 5 page number', 'entry').queryText().getText(0, -1) == '1'
         find('Showing 1-50 of 500', 'label')
         key('space')
@@ -151,10 +171,13 @@ try:
         key('Return')  # Confirming current owner size is a no-op.
         assert counter() == original + 2
         key('space')
+        transitions.append(expansion(size(5), True))
         key('Escape')
+        transitions.append(expansion(size(5), False))
         assert size(5).getState().contains(pyatspi.STATE_FOCUSED)
         key('space')
         key('Tab')
+        transitions.append(expansion(size(5), False))
         assert not is_open()
         assert not size(5).getState().contains(pyatspi.STATE_FOCUSED)
         capture(theme, width, 'accepted')
@@ -176,8 +199,28 @@ try:
         assert counter() == original + 4
         assert find('Dataset 7 page number', 'entry').queryText().getText(0, -1) == '2'
         find('Showing 21-40 of 200', 'label')
-        show(find('Toggle size availability', 'button'))
+        # Both controls must be painted: offscreen AT actions can be acknowledged
+        # without an installed handler in this GPUI version. Keep the popup open
+        # through the owner action so closure is attributable to disabled state.
+        show(size(5))
+        for _ in range(20):
+            a = bounds(size(5))
+            b = bounds(find('Toggle size availability', 'button'))
+            if a[1] >= 16 and b[1] + b[3] <= 984:
+                break
+            distance = b[1] + b[3] - 950 if b[1] + b[3] > 984 else 32 - a[1]
+            subprocess.run(['xdotool', 'mousemove', '200', '700', 'click', '--repeat',
+                            str(max(1, min(30, distance // 42 + 1))), '--delay', '10',
+                            '5' if b[1] + b[3] > 984 else '4'], check=True)
+            time.sleep(.5)
+        else:
+            raise AssertionError(('owner and trigger not visible together', a, b))
+        click(size(5))
+        assert is_open()
+        transitions.append(expansion(size(5), True))
         click(find('Toggle size availability', 'button'))
+        assert not is_open()
+        transitions.append(expansion(size(5), False))
         disabled = size(5)
         assert not disabled.getState().contains(pyatspi.STATE_ENABLED)
         assert not disabled.getState().contains(pyatspi.STATE_SENSITIVE)
@@ -194,6 +237,29 @@ try:
         assert size(5).getState().contains(pyatspi.STATE_ENABLED)
         assert size(5).getState().contains(pyatspi.STATE_SENSITIVE)
         assert has_click(size(5))
+        transitions.append(expansion(size(5), False))
+        if args.require_expansion_state:
+            ordinary = find('Reset size datasets', 'button').getState()
+            assert not ordinary.contains(pyatspi.STATE_EXPANDABLE)
+            assert not ordinary.contains(pyatspi.STATE_EXPANDED)
+            disclosure = find('What is Kumo? Uncontrolled disclosure', 'button')
+            show(disclosure)
+            expansion(disclosure, False)
+            pointer(disclosure)
+            expansion(disclosure, True)
+            capture(theme, width, 'collapsible-open')
+            pointer(disclosure)
+            expansion(disclosure, False)
+            expansion(find('Disabled disclosure', 'button'), False)
+            popover = find('Project settings', 'button')
+            show(popover)
+            expansion(popover, False)
+            pointer(popover)
+            expansion(popover, True)
+            capture(theme, width, 'popover-open')
+            key('Escape')
+            expansion(popover, False)
+            assert popover.getState().contains(pyatspi.STATE_FOCUSED)
         rectangles = [bounds(size(i)) for i in (5, 6, 7)]
         for x, y, w, h in rectangles:
             assert x >= 57 and x + w <= width - 57 and h == 36, (width, rectangles)
@@ -202,7 +268,9 @@ try:
                   'hidden_label_keeps_page': True, 'escape_tab_focus': True,
                   'disabled_guard_and_restoration': True, 'bounds': rectangles,
                   'combo_interfaces': pyatspi.listInterfaces(size(5)),
-                  'expanded_export': 'not mapped by pinned adapter; actual popup queried'}
+                  'expansion_transitions': transitions,
+                  'shared_disclosures_checked': args.require_expansion_state,
+                  'expanded_export': 'passed' if args.require_expansion_state else 'not required; actual popup queried'}
         results.append(result)
         print('COMBINATION PASS', json.dumps(result), flush=True)
     (args.output / 'page-size-results.json').write_text(json.dumps(results, indent=2) + '\n')

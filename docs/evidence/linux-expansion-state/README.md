@@ -1,0 +1,7 @@
+# Linux authored expansion evidence
+
+Pinned AccessKit AT-SPI common0.19.1. `adapter-baseline.txt` is the actual failing compiled Adapter regression before mapping. `page-size-results.json` records the final public `scripts/validate-pagination-page-size.py --require-expansion-state` run: Light/Dark1040/520 all pass.24 fresh PNGs cover each open/accepted/rejected/disabled page-size state and open Collapsible/Popover in each combination.
+
+Each combination records nine actual Select Expandable/Expanded snapshots covering initial/open/commit/Escape/Tab/owner-disable/restoration. Ordinary Button remains unmarked; authored disabled Collapsible is Expandable and collapsed; enabled Collapsible opens/closes; Popover opens/Escape-closes/restores focus. Owner availability action is invoked only after both controls are painted and popup is confirmed open. Bounds are reacquired after scrolling and settled before pointer activation.
+
+Raw initial diagnostic bounds in JSON precede scrolling and may be offscreen; pointer actions use refreshed settled bounds. ComboBox exposes Accessible/Action/Component/Selection, without invented numeric Value or Text. Screenshots establish reviewed alignment/corners/layers, not speech. Linux software Vulkan/Xvfb only; no speech/IME/macOS/Windows claim. Earlier failed native probes and fixture findings are documented in [the validation matrix](../../linux-expansion-state-validation.md).

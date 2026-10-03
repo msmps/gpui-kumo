@@ -72,3 +72,5 @@ Readable text: [Label value authoring and native evidence](readable-label-valida
 Linux availability: [pinned disabled-state patch and consumer setup](linux-disabled-state-patch.md).
 
 Linux loading semantics: [authored Busy acceptance and evidence](linux-busy-state-validation.md).
+
+Linux disclosures: [authored expansion acceptance and evidence](linux-expansion-state-validation.md).
