@@ -2,6 +2,10 @@
 
 ## Current checkpoint — 2026-10-03
 
+Repeat CI run [37115097659](https://github.com/msmps/gpui-kumo/actions/runs/37115097659) at documentation-onlye06c866 failed:168 passes/one Switch animation intermediate-color failure. **#43 reopened; #45/KUMO-060 in progress.** Ordinary pinned GPUI duration animations bypassed the executor clock; a40ms host sleep could resume after the150ms transition. Narrow candidate changes only AnimationElement initialization/elapsed/chained restart to the existing executor clock, retains every Switch/Loader paint assertion, adds host-stall and actual chained-rendered-width regressions, and documents root patch obligations. Local workspace/adapter formatting passes; Linux dependency/proxy blocker remains. Remote Rust acceptance and repeat run are pending. #42/#26/#38 remain open.
+
+### Earlier CI acceptance (superseded by the repeat failure)
+
 Cloud continuation inspected actual remote `work` at `c7fd5541cf8627303936eaae07c4e94165c5c870`. **#43 accepted:** successor remote run [37114390570](https://github.com/msmps/gpui-kumo/actions/runs/37114390570) passed the complete pinned macOS gate; the first run was cancelled. See [remote evidence and exact Linux blocker](evidence/cloud-continuation-2026-10-03/README.md). #42/#26/#38 remain open. The cloud host has pinned Rust and native tools under `/workspace/.kumo-setup/activate.sh`; the shell did not activate them automatically. A separate source snapshot restored 636 source/configuration/document blobs, each verified against the remote Git SHA; the stale original checkout remains clean at `31d2c54`. Workspace and adapter formatting pass. Linux tests are blocked before execution by missing cached dependency metadata/package downloads (`hdrhistogram`, adapter `endi 1.1.0`); ordinary Cargo fetch and Git fetch both fail because the configured `proxy:8080` is unreachable. No Linux/native acceptance is claimed. Restore managed proxy connectivity, fetch latest `work`, activate the setup, run `bash scripts/check-rust.sh`, then finish #42 native acceptance and recover/recreate #26.
 
 ### Earlier published handoff (historical)
@@ -40,4 +44,4 @@ Pinned catalog inventory: **43 in-scope component families,27 implemented with d
 
 Checkboxes in an issue are evidence, not a coverage guarantee. Button, Input and Popover are implemented but still have documented parity gaps. Their initial metadata, activation, editing, nesting, geometry and theme behavior have automated tests; native/browser evidence is narrower and linked from component recipes and issues.
 
-Remote CI acceptance: [37114390570](https://github.com/msmps/gpui-kumo/actions/runs/37114390570) passed at c7fd554; first run 37114282490 was cancelled. #43 is resolved with the successor-run evidence. #44 closed with744354a evidence; #42/#26/#38 remain open.
+Earlier remote CI acceptance: [37114390570](https://github.com/msmps/gpui-kumo/actions/runs/37114390570) passed at c7fd554; first run37114282490 was cancelled. Repeat run37115097659 subsequently exposed the Switch timing regression; #43 is reopened pending #45 and repeat validation. #44 closed with744354a evidence; #42/#26/#38 remain open.

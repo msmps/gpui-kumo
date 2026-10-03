@@ -32,8 +32,9 @@ Audited `work` at33ab7668f71ec36359164dc34ceed0e6ce8233b2. GitHub REST inventory
 | #39–#40 | KUMO-054–055 | Complete recorded Busy/narrow Button repairs e1c38b8; native owner/action and containment evidence present |
 | #41 | KUMO-056 | Complete recorded authored expansion repair33ab766; optional state and exact events plus native transitions present |
 | #42 | KUMO-057 | Narrow foundation overflow, local repair/visual gate in progress |
-| #43 | KUMO-058 | Complete: workflow/script published744354a; full successor CI run37114390570 passed at c7fd554. See continuation evidence |
+| #43 | KUMO-058 | Reopened: full successor run37114390570 passed, but unchanged-code repeat37115097659 exposed a Switch wall-clock test failure; #45 repairs repeatability |
 | #44 | KUMO-059 | Complete: test-only native shortcut repair published744354a; local and successor CI regressions pass |
+| #45 | KUMO-060 | New bounded duration-animation executor-clock repair and consumer regressions; remote gate pending |
 
 No family closure justified from rendering/count alone. No audit-supported reopening or duplicate closure found. Existing five resolution checklists reconciled against their published evidence, without claiming new platform measurements. GitHub remains the queue; local acceptance documents retain detailed contracts.
 

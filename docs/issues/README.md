@@ -100,6 +100,8 @@ Necessary example repair: [KUMO-055 — Button gallery narrow composition](055-b
 
 [KUMO-057 — narrow foundation gallery](057-foundation-gallery-narrow-layout.md) ([#42](https://github.com/msmps/gpui-kumo/issues/42)), Open. Actual swatch-column overflow below Button panels remains a separate gallery repair.
 
-[KUMO-058 — reproducible CI](058-reproducible-ci.md) ([#43](https://github.com/msmps/gpui-kumo/issues/43)), Resolved — remote run 37114390570 passed at c7fd554.
+[KUMO-058 — reproducible CI](058-reproducible-ci.md) ([#43](https://github.com/msmps/gpui-kumo/issues/43)), Reopened — repeat run37115097659 exposed a Switch wall-clock test failure; KUMO-060 repairs the clock boundary.
 
 [KUMO-059 — native InputArea test shortcuts](059-input-area-platform-shortcuts.md) ([#44](https://github.com/msmps/gpui-kumo/issues/44)), Resolved in744354a.
+
+[KUMO-060 — duration-animation clock](060-animation-clock.md) ([#45](https://github.com/msmps/gpui-kumo/issues/45)), In progress — narrowly use the executor clock and preserve consumer paint assertions; remote acceptance pending.

@@ -104,3 +104,6 @@ pub use pagination::{
 
 #[cfg(test)]
 mod readable_label_tests;
+
+#[cfg(test)]
+mod animation_clock_tests;

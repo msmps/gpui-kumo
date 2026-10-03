@@ -186,7 +186,13 @@ fn thumb_travel_reversal_and_reduced_motion_are_observable(cx: &mut TestAppConte
             cx.notify();
         });
         window.render_frame(cx);
-        std::thread::sleep(std::time::Duration::from_millis(40));
+        // A delayed host thread must not advance the test animation clock.
+        std::thread::sleep(std::time::Duration::from_millis(180));
+        window.render_frame(cx);
+        assert_eq!(thumb(window).0, left);
+        assert_eq!(thumb(window).3, off_color);
+        cx.background_executor()
+            .advance_clock(std::time::Duration::from_millis(40));
         window.render_frame(cx);
         let (mid, _, _, mid_color) = thumb(window);
         assert_ne!(mid_color, off_color);
@@ -205,7 +211,8 @@ fn thumb_travel_reversal_and_reduced_motion_are_observable(cx: &mut TestAppConte
             (reversed - mid).0.abs() < px(2.).scale(window.scale_factor()).0,
             "reversal must preserve presented position"
         );
-        std::thread::sleep(std::time::Duration::from_millis(180));
+        cx.background_executor()
+            .advance_clock(std::time::Duration::from_millis(180));
         window.render_frame(cx);
         assert_eq!(thumb(window).0, left);
         cx.set_reduce_motion(true);
