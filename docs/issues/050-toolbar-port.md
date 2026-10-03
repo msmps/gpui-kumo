@@ -1,12 +1,18 @@
 # KUMO-050: Port Toolbar with Kumo fidelity over GPUI Base
 
-Status: Open — action/link core implemented; hosted editing/composition remains
+Status: Open — action/link and retained editor core implemented; richer composition remains
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/35
 
 ## Goal and status
 
-Port the supported **Toolbar** Kumo family to Rust/GPUI. The action/link core is implemented and validated; hosted Input/InputGroup, popup replacement/composition, RTL and full-gallery/platform/speech acceptance remain.
+Port the supported **Toolbar** Kumo family to Rust/GPUI. The action/link core is implemented and validated; plain Input/passive InputGroup are also implemented; embedded actions, popup/richer composition, RTL and full-gallery/platform/speech acceptance remain.
+
+## Toolbar retained editor continuation — 2026-10-03
+
+Plain Input and passive InputGroup now join the existing Toolbar core using application-retained InputState entities. Source caret-boundary navigation, Unicode selection, unavailable-focus/skip policy, current root/owner edit guards, read-only copying, stable reordered focus, removal/reinsertion and narrow reveal are implemented. Source-opaque disabled Input presentation is preserved. Native action captures fill the action-before-key dispatch boundary without replacing the editing engine. Shared gallery/focused editor host are integrated. [Contract/adaptations](../toolbar-validation.md#retained-editor-continuation--2026-10-03), [source/native evidence](../evidence/toolbar/editors/README.md).
+
+Source and actual native Light/Dark1040/520 matrices pass. Full locked gate passes196library/1gallery/9doctests, adapter12/14, fmt/warning-denied lint/builds. Coverage stays29/43 working,14 unported. **Next Toolbar slice: embedded InputGroup actions and popup trigger replacement**; Combobox remains a missing family dependency. Richer field/descendant composition, RTL and full-gallery/platform/speech/OS IME acceptance remain explicit. Prior entries below preserve historical checkpoints.
 
 ## Pushed action/link milestone — 2026-10-03
 

@@ -1,10 +1,10 @@
 //! Joined Kumo action/link controls over retained native Base behavior.
 use crate::link::NavigationRequest;
-use crate::{Button, Icon, theme};
+use crate::{Button, Icon, Input, InputEvent, InputGroup, InputGroupAddon, InputState, theme};
 use gpui_kit::{
-    App, ClickEvent, Context, ElementId, Entity, EventEmitter, FocusHandle, FontWeight,
+    App, ClickEvent, Context, ElementId, Entity, EventEmitter, FocusHandle, Focusable, FontWeight,
     InteractiveElement, IntoElement, ParentElement, Render, RenderOnce, SharedString,
-    StatefulInteractiveElement, Styled, Window, accesskit, base, canvas, div,
+    StatefulInteractiveElement, Styled, Subscription, Window, accesskit, base, canvas, div,
     prelude::FluentBuilder, px, quad,
 };
 use std::{cell::Cell, rc::Rc};
@@ -19,8 +19,21 @@ pub enum Orientation {
 enum Kind {
     Button,
     Link(SharedString),
+    Input(Editor),
 }
-/// A stable, named action or native navigation destination. IDs are unique per list.
+#[derive(Clone)]
+struct Editor {
+    state: Entity<InputState>,
+    width: gpui_kit::Pixels,
+    group: Option<EditorGroup>,
+}
+#[derive(Clone, Default)]
+struct EditorGroup {
+    start: Option<InputGroupAddon>,
+    end: Option<InputGroupAddon>,
+    suffix: Option<SharedString>,
+}
+/// A stable action, native destination or retained editor. IDs are unique per list.
 #[derive(Clone)]
 pub struct ToolbarItem {
     id: ElementId,
@@ -60,8 +73,78 @@ impl ToolbarItem {
         item.kind = Kind::Link(href.into());
         item
     }
+    /// Mount one application-retained single-line editor. Width is the whole control.
+    /// The editor owns its value, selection, history, readable name and notifications.
+    pub fn input(
+        id: impl Into<ElementId>,
+        state: &Entity<InputState>,
+        width: gpui_kit::Pixels,
+    ) -> Self {
+        assert!(
+            f32::from(width).is_finite() && width > px(0.),
+            "Toolbar editor width must be finite and positive"
+        );
+        let mut item = Self::button(id, "Editor");
+        item.kind = Kind::Input(Editor {
+            state: state.clone(),
+            width,
+            group: None,
+        });
+        item
+    }
+    /// A shared editor with passive addons. Embedded actions/popup replacement follow separately.
+    pub fn input_group(
+        id: impl Into<ElementId>,
+        state: &Entity<InputState>,
+        width: gpui_kit::Pixels,
+    ) -> Self {
+        let mut item = Self::input(id, state, width);
+        if let Kind::Input(editor) = &mut item.kind {
+            editor.group = Some(EditorGroup::default());
+        }
+        item
+    }
+    fn group_mut(&mut self) -> &mut EditorGroup {
+        let Kind::Input(editor) = &mut self.kind else {
+            panic!("addons require Toolbar InputGroup")
+        };
+        editor
+            .group
+            .as_mut()
+            .expect("addons require Toolbar InputGroup")
+    }
+    /// Passive text/icon addons; nested parts are supported. Embedded actions are a separate slice.
+    pub fn start(mut self, addon: InputGroupAddon) -> Self {
+        Self::passive(&addon);
+        self.group_mut().start = Some(addon);
+        self
+    }
+    /// Passive trailing addons under the same InputGroup contract as `start`.
+    pub fn end(mut self, addon: InputGroupAddon) -> Self {
+        Self::passive(&addon);
+        self.group_mut().end = Some(addon);
+        self
+    }
+    /// A suffix follows the displayed editor text using the existing InputGroup recipe.
+    pub fn suffix(mut self, text: impl Into<SharedString>) -> Self {
+        self.group_mut().suffix = Some(text.into());
+        self
+    }
+    fn passive(addon: &InputGroupAddon) {
+        match addon {
+            InputGroupAddon::Action(_) => {
+                panic!("Toolbar embedded addon actions require the later composition slice")
+            }
+            InputGroupAddon::Parts(parts) => parts.iter().for_each(Self::passive),
+            _ => {}
+        }
+    }
     /// Decorative SVG using the application's AssetSource. Icon-only controls keep `name`.
     pub fn icon(mut self, path: impl Into<SharedString>, icon_only: bool) -> Self {
+        assert!(
+            !matches!(self.kind, Kind::Input(_)),
+            "use InputGroup addons for editor icons"
+        );
         self.icon = Some(path.into());
         self.icon_only = icon_only;
         self
@@ -79,10 +162,10 @@ impl ToolbarItem {
         self.loading = loading;
         self
     }
-    /// Source Buttons default to focusable when unavailable. Disabled native links leave traversal.
+    /// Source Buttons/Inputs default to focusable when unavailable. Disabled native links leave traversal.
     pub fn focusable_when_disabled(mut self, focusable: bool) -> Self {
         assert!(
-            matches!(self.kind, Kind::Button),
+            !matches!(self.kind, Kind::Link(_)),
             "Toolbar.Link has no focusableWhenDisabled prop"
         );
         self.focusable_when_disabled = focusable;
@@ -115,18 +198,19 @@ pub struct ToolbarState {
     loop_focus: bool,
     name: SharedString,
     scroll: gpui_kit::ScrollHandle,
+    subscriptions: Vec<Subscription>,
 }
 impl EventEmitter<ToolbarEvent> for ToolbarState {}
 impl ToolbarState {
     pub fn new(items: Vec<ToolbarItem>, cx: &mut Context<Self>) -> Self {
         Self::validate(&items);
-        Self {
+        let mut state = Self {
             active: None,
             items: items
                 .into_iter()
                 .map(|control| Item {
+                    focus: Self::control_focus(&control, cx),
                     control,
-                    focus: cx.focus_handle(),
                     bounds: Rc::new(Cell::new(None)),
                 })
                 .collect(),
@@ -135,38 +219,91 @@ impl ToolbarState {
             loop_focus: true,
             name: "Toolbar".into(),
             scroll: gpui_kit::ScrollHandle::new(),
-        }
+            subscriptions: Vec::new(),
+        };
+        state.watch_inputs(cx);
+        state
     }
     /// Initial group availability. Runtime changes use `set_disabled` for focus recovery.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
+    fn control_focus(control: &ToolbarItem, cx: &mut Context<Self>) -> FocusHandle {
+        match &control.kind {
+            Kind::Input(editor) => editor.state.read(cx).focus_handle(cx),
+            _ => cx.focus_handle(),
+        }
+    }
+    fn sync_inputs(&self, cx: &mut Context<Self>) {
+        for item in &self.items {
+            if let Kind::Input(editor) = &item.control.kind {
+                editor.state.update(cx, |s, cx| {
+                    s.set_toolbar_disabled(self.disabled || item.control.disabled, cx)
+                });
+            }
+        }
+    }
+    fn watch_inputs(&mut self, cx: &mut Context<Self>) {
+        self.subscriptions.clear();
+        for item in &self.items {
+            if let Kind::Input(editor) = &item.control.kind {
+                self.subscriptions
+                    .push(cx.observe(&editor.state, |_, _, cx| cx.notify()));
+                let id = item.control.id.clone();
+                self.subscriptions.push(cx.subscribe(
+                    &editor.state,
+                    move |s, _, event: &InputEvent, cx| {
+                        if matches!(event, InputEvent::Focus) {
+                            s.active = Some(id.clone());
+                            cx.notify();
+                        }
+                    },
+                ));
+            }
+        }
+        self.sync_inputs(cx);
+    }
     fn validate(items: &[ToolbarItem]) {
         for (index, item) in items.iter().enumerate() {
+            if let Kind::Input(editor) = &item.kind {
+                assert!(
+                    !items[..index].iter().any(
+                        |old| matches!(&old.kind, Kind::Input(other) if other.state == editor.state)
+                    ),
+                    "one retained editor may only mount once in a Toolbar"
+                );
+            }
             assert!(
                 !items[..index].iter().any(|old| old.id == item.id),
                 "Toolbar IDs must be unique"
             );
         }
     }
-    fn unavailable(&self, item: &ToolbarItem) -> bool {
-        item.disabled || item.loading || (self.disabled && matches!(item.kind, Kind::Button))
+    fn unavailable(&self, item: &ToolbarItem, cx: &App) -> bool {
+        item.disabled
+            || item.loading
+            || (self.disabled && !matches!(item.kind, Kind::Link(_)))
+            || matches!(&item.kind, Kind::Input(editor) if editor.state.read(cx).is_disabled())
     }
-    fn eligible(&self, item: &ToolbarItem) -> bool {
-        !self.unavailable(item)
-            || (matches!(item.kind, Kind::Button) && item.focusable_when_disabled)
+    fn eligible(&self, item: &ToolbarItem, cx: &App) -> bool {
+        !self.unavailable(item, cx)
+            || (!matches!(item.kind, Kind::Link(_)) && item.focusable_when_disabled)
     }
-    fn entry(&self, window: &Window) -> Option<usize> {
+    fn entry(&self, window: &Window, cx: &App) -> Option<usize> {
         self.items
             .iter()
-            .position(|i| self.eligible(&i.control) && i.focus.is_focused(window))
+            .position(|i| self.eligible(&i.control, cx) && i.focus.is_focused(window))
             .or_else(|| {
                 self.items.iter().position(|i| {
-                    self.eligible(&i.control) && Some(&i.control.id) == self.active.as_ref()
+                    self.eligible(&i.control, cx) && Some(&i.control.id) == self.active.as_ref()
                 })
             })
-            .or_else(|| self.items.iter().position(|i| self.eligible(&i.control)))
+            .or_else(|| {
+                self.items
+                    .iter()
+                    .position(|i| self.eligible(&i.control, cx))
+            })
     }
     fn leave(&self, window: &mut Window, cx: &mut Context<Self>, removed: &[Item]) {
         for _ in 0..self.items.len() + removed.len() + 2 {
@@ -186,18 +323,19 @@ impl ToolbarState {
         if self
             .items
             .iter()
-            .any(|i| i.focus.is_focused(window) && !self.eligible(&i.control))
+            .any(|i| i.focus.is_focused(window) && !self.eligible(&i.control, cx))
         {
-            if let Some(index) = self.entry(window) {
+            if let Some(index) = self.entry(window, cx) {
                 self.focus_item(&self.items[index].control.id.clone(), window, cx);
             } else {
                 self.leave(window, cx, &[]);
             }
         }
     }
-    /// Root disabled propagates to Buttons, matching the source. Links retain routing availability.
+    /// Root disabled gates Buttons and editors. Links retain source routing availability.
     pub fn set_disabled(&mut self, disabled: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.disabled = disabled;
+        self.sync_inputs(cx);
         self.recover(window, cx);
         cx.notify();
     }
@@ -214,38 +352,55 @@ impl ToolbarState {
             .iter()
             .find(|i| i.focus.is_focused(window))
             .map(|i| i.control.id.clone());
+        for item in &self.items {
+            if let Kind::Input(editor) = &item.control.kind {
+                editor
+                    .state
+                    .update(cx, |s, cx| s.set_toolbar_disabled(false, cx));
+            }
+        }
         let mut old = std::mem::take(&mut self.items);
         self.items = items
             .into_iter()
             .map(|control| {
                 if let Some(index) = old.iter().position(|i| i.control.id == control.id) {
                     let old = old.remove(index);
+                    let focus = match (&old.control.kind, &control.kind) {
+                        (_, Kind::Input(editor)) => editor.state.read(cx).focus_handle(cx),
+                        (Kind::Input(_), _) => cx.focus_handle(),
+                        _ => old.focus,
+                    };
                     Item {
                         control,
-                        focus: old.focus,
+                        focus,
                         bounds: Rc::new(Cell::new(None)),
                     }
                 } else {
                     Item {
+                        focus: Self::control_focus(&control, cx),
                         control,
-                        focus: cx.focus_handle(),
                         bounds: Rc::new(Cell::new(None)),
                     }
                 }
             })
             .collect();
         if let Some(id) = focused
-            && !self
+            && !self.items.iter().any(|i| {
+                i.control.id == id && self.eligible(&i.control, cx) && i.focus.is_focused(window)
+            })
+        {
+            if let Some(index) = self
                 .items
                 .iter()
-                .any(|i| i.control.id == id && self.eligible(&i.control))
-        {
-            if let Some(index) = self.entry(window) {
+                .position(|i| i.control.id == id && self.eligible(&i.control, cx))
+                .or_else(|| self.entry(window, cx))
+            {
                 self.focus_item(&self.items[index].control.id.clone(), window, cx);
             } else {
                 self.leave(window, cx, &old);
             }
         }
+        self.watch_inputs(cx);
         cx.notify();
     }
     fn reveal_focused(&self, window: &Window, cx: &mut Context<Self>) {
@@ -277,7 +432,7 @@ impl ToolbarState {
         if let Some(item) = self
             .items
             .iter()
-            .find(|i| &i.control.id == id && self.eligible(&i.control))
+            .find(|i| &i.control.id == id && self.eligible(&i.control, cx))
         {
             item.focus.focus(window, cx);
             self.active = Some(id.clone());
@@ -295,7 +450,7 @@ impl ToolbarState {
         let Some(control) = self
             .items
             .iter()
-            .find(|i| &i.control.id == id && !self.unavailable(&i.control))
+            .find(|i| &i.control.id == id && !self.unavailable(&i.control, cx))
             .map(|i| i.control.clone())
         else {
             return;
@@ -306,6 +461,7 @@ impl ToolbarState {
                 id: id.clone(),
                 activation: activation.clone(),
             }),
+            Kind::Input(_) => {}
             Kind::Link(href) => cx.emit(ToolbarEvent::Navigate {
                 id: id.clone(),
                 request: NavigationRequest {
@@ -315,16 +471,39 @@ impl ToolbarState {
             }),
         }
     }
+    fn editor_arrow(&mut self, key: &str, window: &mut Window, cx: &mut Context<Self>) {
+        let m = window.modifiers();
+        if m.control
+            || m.alt
+            || m.platform
+            || m.shift
+            || m.function
+            || !self.navigate(key, window, cx)
+        {
+            cx.propagate();
+        } else {
+            cx.stop_propagation();
+        }
+    }
     fn navigate(&mut self, key: &str, window: &mut Window, cx: &mut Context<Self>) -> bool {
         let forward = match (self.orientation, key) {
             (Orientation::Horizontal, "right") | (Orientation::Vertical, "down") => true,
             (Orientation::Horizontal, "left") | (Orientation::Vertical, "up") => false,
             _ => return false,
         };
+        if let Some(item) = self.items.iter().find(|i| i.focus.is_focused(window))
+            && let Kind::Input(editor) = &item.control.kind
+            && !self.unavailable(&item.control, cx)
+            && !editor
+                .state
+                .update(cx, |s, cx| s.toolbar_arrow_at_boundary(forward, window, cx))
+        {
+            return false;
+        }
         let eligible: Vec<_> = self
             .items
             .iter()
-            .filter(|i| self.eligible(&i.control))
+            .filter(|i| self.eligible(&i.control, cx))
             .collect();
         let Some(current) = eligible.iter().position(|i| i.focus.is_focused(window)) else {
             return false;
@@ -391,6 +570,13 @@ impl RenderOnce for Toolbar {
         div().id(self.id).flex().min_w_0().child(self.state)
     }
 }
+pub(crate) struct InputFocus {
+    pub tab_stop: bool,
+    pub first: bool,
+    pub last: bool,
+    pub rings: crate::button::JoinedRingQueue,
+    pub on_focus: FocusHandler,
+}
 pub(crate) struct ButtonFocus {
     pub tab_stop: bool,
     pub icon_width: Option<gpui_kit::Pixels>,
@@ -400,8 +586,10 @@ pub(crate) struct ButtonFocus {
 }
 impl Render for ToolbarState {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        self.sync_inputs(cx);
+        self.recover(window, cx);
         let theme = theme(cx).clone();
-        let entry = self.entry(window);
+        let entry = self.entry(window, cx);
         let total = self.items.len();
         let rings = crate::button::JoinedRingQueue::default();
         let mut root = base::Toolbar::new("toolbar")
@@ -414,13 +602,26 @@ impl Render for ToolbarState {
             .rounded(px(8.))
             .bg(theme.colors.control)
             .shadow(theme.effects.shadow_xs.clone())
-            .on_key_down(
+            .capture_action(
+                cx.listener(|s, _: &base::input::MoveLeft, w, cx| s.editor_arrow("left", w, cx)),
+            )
+            .capture_action(
+                cx.listener(|s, _: &base::input::MoveRight, w, cx| s.editor_arrow("right", w, cx)),
+            )
+            .capture_action(
+                cx.listener(|s, _: &base::input::MoveUp, w, cx| s.editor_arrow("up", w, cx)),
+            )
+            .capture_action(
+                cx.listener(|s, _: &base::input::MoveDown, w, cx| s.editor_arrow("down", w, cx)),
+            )
+            .capture_key_down(
                 cx.listener(|s, event: &gpui_kit::KeyDownEvent, window, cx| {
                     let m = &event.keystroke.modifiers;
                     if m.control || m.alt || m.platform || m.shift || m.function {
                         return;
                     }
                     if s.navigate(&event.keystroke.key, window, cx) {
+                        window.prevent_default();
                         cx.stop_propagation();
                     }
                 }),
@@ -434,7 +635,7 @@ impl Render for ToolbarState {
         });
         for (index, item) in self.items.iter().enumerate() {
             let control = &item.control;
-            let unavailable = self.unavailable(control);
+            let unavailable = self.unavailable(control, cx);
             let id = control.id.clone();
             let owner = cx.entity().downgrade();
             let focus_id = id.clone();
@@ -474,6 +675,37 @@ impl Render for ToolbarState {
                             let _ =
                                 owner.update(cx, |s, cx| s.activate(&id, activation, window, cx));
                         })
+                        .into_any_element()
+                }
+                Kind::Input(editor) => {
+                    let hooks = InputFocus {
+                        tab_stop: entry == Some(index),
+                        first: index == 0,
+                        last: index + 1 == total,
+                        rings: rings.clone(),
+                        on_focus,
+                    };
+                    let input = if let Some(group) = &editor.group {
+                        let mut input = InputGroup::new("editor", &editor.state);
+                        if let Some(start) = &group.start {
+                            input = input.start(start.clone());
+                        }
+                        if let Some(end) = &group.end {
+                            input = input.end(end.clone());
+                        }
+                        if let Some(suffix) = &group.suffix {
+                            input = input.suffix(suffix.clone());
+                        }
+                        input.toolbar_focus(hooks).into_any_element()
+                    } else {
+                        Input::new("editor", &editor.state)
+                            .toolbar_focus(hooks)
+                            .into_any_element()
+                    };
+                    div()
+                        .flex_none()
+                        .w((editor.width - px(if index > 0 { 1. } else { 0. })).max(px(0.)))
+                        .child(input)
                         .into_any_element()
                 }
                 Kind::Link(href) => LinkControl {

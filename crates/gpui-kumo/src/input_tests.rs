@@ -761,3 +761,74 @@ fn accessible_text_remains_complete_when_centred_input_scrolls(cx: &mut TestAppC
         });
     }
 }
+
+#[gpui_kit::test]
+fn toolbar_keeps_marked_composition_and_selection_in_the_existing_native_editor(
+    cx: &mut TestAppContext,
+) {
+    struct Composed {
+        input: Entity<InputState>,
+        toolbar: Entity<crate::ToolbarState>,
+    }
+    impl Render for Composed {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            crate::Toolbar::new("composed", "Composition", &self.toolbar)
+        }
+    }
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| {
+        let input = cx.new(|cx| InputState::new("Composition query", window, cx));
+        let toolbar = cx.new(|cx| {
+            crate::ToolbarState::new(
+                vec![
+                    crate::ToolbarItem::input("query", &input, px(180.)),
+                    crate::ToolbarItem::button("after", "After composition"),
+                ],
+                cx,
+            )
+        });
+        Composed { input, toolbar }
+    });
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        let input = view.read(cx).input.clone();
+        input.read(cx).focus_handle(cx).focus(window, cx);
+        let editor = input.read(cx).editor.clone();
+        editor.update(cx, |s, cx| {
+            s.replace_and_mark_text_in_range(None, "日本", Some(2..2), window, cx)
+        });
+        window.render_frame(cx);
+        window.press("right", cx);
+        window.render_frame(cx);
+        assert!(
+            input.read(cx).focus_handle(cx).is_focused(window),
+            "marked text must not hand an edge arrow to Toolbar"
+        );
+        assert_eq!(input.read(cx).value(cx).as_ref(), "日本");
+        editor.update(cx, |s, cx| s.unmark_text(window, cx));
+        window.press("end", cx);
+        window.press("right", cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("after").focused(), Some(true));
+        assert_eq!(input.read(cx).value(cx).as_ref(), "日本");
+    });
+}
+
+#[gpui_kit::test]
+fn ordinary_input_preserves_caller_tab_policy_across_theme_rerender(cx: &mut TestAppContext) {
+    let (input, cx) = harness(cx);
+    cx.update(|window, cx| {
+        input.read(cx).focus_handle(cx).tab_stop(false);
+        crate::set_appearance(crate::Appearance::Dark, cx);
+        window.render_frame(cx);
+        window.click("before", cx);
+        window.focus_next(cx);
+        window.render_frame(cx);
+        assert_eq!(
+            window.find("after").focused(),
+            Some(true),
+            "ordinary Input rerender must preserve a caller's traversal policy"
+        );
+        assert!(!input.read(cx).focus_handle(cx).is_focused(window));
+    });
+}

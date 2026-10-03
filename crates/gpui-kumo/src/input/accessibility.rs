@@ -128,7 +128,7 @@ impl InputState {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if self.disabled {
+        if self.effectively_disabled() {
             return;
         }
         match data {
@@ -172,7 +172,7 @@ impl InputState {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if self.disabled || self.read_only {
+        if self.effectively_disabled() || self.read_only {
             return;
         }
         if let Some(accesskit::ActionData::Value(value)) = data {

@@ -1,0 +1,686 @@
+[
+  {
+    "case": "light-1040",
+    "result": "PASS",
+    "geometry": {
+      "bounds": {
+        "x": 57,
+        "y": 102,
+        "width": 788.40625,
+        "height": 36,
+        "top": 102,
+        "right": 845.40625,
+        "bottom": 138,
+        "left": 57
+      },
+      "children": [
+        {
+          "name": "Before",
+          "bounds": {
+            "x": 57,
+            "y": 102,
+            "width": 69.78125,
+            "height": 36,
+            "top": 102,
+            "right": 126.78125,
+            "bottom": 138,
+            "left": 57
+          },
+          "border": "0px",
+          "radius": "8px 0px 0px 8px"
+        },
+        {
+          "name": "Query",
+          "bounds": {
+            "x": 126.78125,
+            "y": 102,
+            "width": 180,
+            "height": 36,
+            "top": 102,
+            "right": 306.78125,
+            "bottom": 138,
+            "left": 126.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Paused query",
+          "bounds": {
+            "x": 306.78125,
+            "y": 102,
+            "width": 130,
+            "height": 36,
+            "top": 102,
+            "right": 436.78125,
+            "bottom": 138,
+            "left": 306.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Skipped query",
+          "bounds": {
+            "x": 436.78125,
+            "y": 102,
+            "width": 130,
+            "height": 36,
+            "top": 102,
+            "right": 566.78125,
+            "bottom": 138,
+            "left": 436.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Filter",
+          "bounds": {
+            "x": 566.78125,
+            "y": 102,
+            "width": 220,
+            "height": 36,
+            "top": 102,
+            "right": 786.78125,
+            "bottom": 138,
+            "left": 566.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "After",
+          "bounds": {
+            "x": 786.78125,
+            "y": 102,
+            "width": 58.625,
+            "height": 36,
+            "top": 102,
+            "right": 845.40625,
+            "bottom": 138,
+            "left": 786.78125
+          },
+          "border": "1px",
+          "radius": "0px 8px 8px 0px"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "Query",
+          "disabled": false,
+          "aria": null,
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Paused query",
+          "disabled": false,
+          "aria": "true",
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Skipped query",
+          "disabled": false,
+          "aria": "true",
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Filter query",
+          "disabled": false,
+          "aria": null,
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px 0px 8px",
+          "background": "rgba(0, 0, 0, 0)"
+        }
+      ],
+      "icon": {
+        "x": 575.78125,
+        "y": 111,
+        "width": 18,
+        "height": 18,
+        "top": 111,
+        "right": 593.78125,
+        "bottom": 129,
+        "left": 575.78125
+      }
+    },
+    "removedFocus": {
+      "role": null,
+      "name": null,
+      "tag": "BODY"
+    },
+    "actions": [
+      "caret edges and unicode selection",
+      "disabled focusable edit guard",
+      "skip unavailable",
+      "Tab exit/last reentry",
+      "read-only owner update",
+      "group availability without dimming",
+      "vertical caret boundary",
+      "focused editor removal observed"
+    ]
+  },
+  {
+    "case": "light-520",
+    "result": "PASS",
+    "geometry": {
+      "bounds": {
+        "x": 57,
+        "y": 102,
+        "width": 788.40625,
+        "height": 36,
+        "top": 102,
+        "right": 845.40625,
+        "bottom": 138,
+        "left": 57
+      },
+      "children": [
+        {
+          "name": "Before",
+          "bounds": {
+            "x": 57,
+            "y": 102,
+            "width": 69.78125,
+            "height": 36,
+            "top": 102,
+            "right": 126.78125,
+            "bottom": 138,
+            "left": 57
+          },
+          "border": "0px",
+          "radius": "8px 0px 0px 8px"
+        },
+        {
+          "name": "Query",
+          "bounds": {
+            "x": 126.78125,
+            "y": 102,
+            "width": 180,
+            "height": 36,
+            "top": 102,
+            "right": 306.78125,
+            "bottom": 138,
+            "left": 126.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Paused query",
+          "bounds": {
+            "x": 306.78125,
+            "y": 102,
+            "width": 130,
+            "height": 36,
+            "top": 102,
+            "right": 436.78125,
+            "bottom": 138,
+            "left": 306.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Skipped query",
+          "bounds": {
+            "x": 436.78125,
+            "y": 102,
+            "width": 130,
+            "height": 36,
+            "top": 102,
+            "right": 566.78125,
+            "bottom": 138,
+            "left": 436.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Filter",
+          "bounds": {
+            "x": 566.78125,
+            "y": 102,
+            "width": 220,
+            "height": 36,
+            "top": 102,
+            "right": 786.78125,
+            "bottom": 138,
+            "left": 566.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "After",
+          "bounds": {
+            "x": 786.78125,
+            "y": 102,
+            "width": 58.625,
+            "height": 36,
+            "top": 102,
+            "right": 845.40625,
+            "bottom": 138,
+            "left": 786.78125
+          },
+          "border": "1px",
+          "radius": "0px 8px 8px 0px"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "Query",
+          "disabled": false,
+          "aria": null,
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Paused query",
+          "disabled": false,
+          "aria": "true",
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Skipped query",
+          "disabled": false,
+          "aria": "true",
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Filter query",
+          "disabled": false,
+          "aria": null,
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px 0px 8px",
+          "background": "rgba(0, 0, 0, 0)"
+        }
+      ],
+      "icon": {
+        "x": 575.78125,
+        "y": 111,
+        "width": 18,
+        "height": 18,
+        "top": 111,
+        "right": 593.78125,
+        "bottom": 129,
+        "left": 575.78125
+      }
+    },
+    "removedFocus": {
+      "role": null,
+      "name": null,
+      "tag": "BODY"
+    },
+    "actions": [
+      "caret edges and unicode selection",
+      "disabled focusable edit guard",
+      "skip unavailable",
+      "Tab exit/last reentry",
+      "read-only owner update",
+      "group availability without dimming",
+      "vertical caret boundary",
+      "focused editor removal observed"
+    ]
+  },
+  {
+    "case": "dark-1040",
+    "result": "PASS",
+    "geometry": {
+      "bounds": {
+        "x": 57,
+        "y": 102,
+        "width": 788.40625,
+        "height": 36,
+        "top": 102,
+        "right": 845.40625,
+        "bottom": 138,
+        "left": 57
+      },
+      "children": [
+        {
+          "name": "Before",
+          "bounds": {
+            "x": 57,
+            "y": 102,
+            "width": 69.78125,
+            "height": 36,
+            "top": 102,
+            "right": 126.78125,
+            "bottom": 138,
+            "left": 57
+          },
+          "border": "0px",
+          "radius": "8px 0px 0px 8px"
+        },
+        {
+          "name": "Query",
+          "bounds": {
+            "x": 126.78125,
+            "y": 102,
+            "width": 180,
+            "height": 36,
+            "top": 102,
+            "right": 306.78125,
+            "bottom": 138,
+            "left": 126.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Paused query",
+          "bounds": {
+            "x": 306.78125,
+            "y": 102,
+            "width": 130,
+            "height": 36,
+            "top": 102,
+            "right": 436.78125,
+            "bottom": 138,
+            "left": 306.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Skipped query",
+          "bounds": {
+            "x": 436.78125,
+            "y": 102,
+            "width": 130,
+            "height": 36,
+            "top": 102,
+            "right": 566.78125,
+            "bottom": 138,
+            "left": 436.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Filter",
+          "bounds": {
+            "x": 566.78125,
+            "y": 102,
+            "width": 220,
+            "height": 36,
+            "top": 102,
+            "right": 786.78125,
+            "bottom": 138,
+            "left": 566.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "After",
+          "bounds": {
+            "x": 786.78125,
+            "y": 102,
+            "width": 58.625,
+            "height": 36,
+            "top": 102,
+            "right": 845.40625,
+            "bottom": 138,
+            "left": 786.78125
+          },
+          "border": "1px",
+          "radius": "0px 8px 8px 0px"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "Query",
+          "disabled": false,
+          "aria": null,
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Paused query",
+          "disabled": false,
+          "aria": "true",
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Skipped query",
+          "disabled": false,
+          "aria": "true",
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Filter query",
+          "disabled": false,
+          "aria": null,
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px 0px 8px",
+          "background": "rgba(0, 0, 0, 0)"
+        }
+      ],
+      "icon": {
+        "x": 575.78125,
+        "y": 111,
+        "width": 18,
+        "height": 18,
+        "top": 111,
+        "right": 593.78125,
+        "bottom": 129,
+        "left": 575.78125
+      }
+    },
+    "removedFocus": {
+      "role": null,
+      "name": null,
+      "tag": "BODY"
+    },
+    "actions": [
+      "caret edges and unicode selection",
+      "disabled focusable edit guard",
+      "skip unavailable",
+      "Tab exit/last reentry",
+      "read-only owner update",
+      "group availability without dimming",
+      "vertical caret boundary",
+      "focused editor removal observed"
+    ]
+  },
+  {
+    "case": "dark-520",
+    "result": "PASS",
+    "geometry": {
+      "bounds": {
+        "x": 57,
+        "y": 102,
+        "width": 788.40625,
+        "height": 36,
+        "top": 102,
+        "right": 845.40625,
+        "bottom": 138,
+        "left": 57
+      },
+      "children": [
+        {
+          "name": "Before",
+          "bounds": {
+            "x": 57,
+            "y": 102,
+            "width": 69.78125,
+            "height": 36,
+            "top": 102,
+            "right": 126.78125,
+            "bottom": 138,
+            "left": 57
+          },
+          "border": "0px",
+          "radius": "8px 0px 0px 8px"
+        },
+        {
+          "name": "Query",
+          "bounds": {
+            "x": 126.78125,
+            "y": 102,
+            "width": 180,
+            "height": 36,
+            "top": 102,
+            "right": 306.78125,
+            "bottom": 138,
+            "left": 126.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Paused query",
+          "bounds": {
+            "x": 306.78125,
+            "y": 102,
+            "width": 130,
+            "height": 36,
+            "top": 102,
+            "right": 436.78125,
+            "bottom": 138,
+            "left": 306.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Skipped query",
+          "bounds": {
+            "x": 436.78125,
+            "y": 102,
+            "width": 130,
+            "height": 36,
+            "top": 102,
+            "right": 566.78125,
+            "bottom": 138,
+            "left": 436.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "Filter",
+          "bounds": {
+            "x": 566.78125,
+            "y": 102,
+            "width": 220,
+            "height": 36,
+            "top": 102,
+            "right": 786.78125,
+            "bottom": 138,
+            "left": 566.78125
+          },
+          "border": "1px",
+          "radius": "0px"
+        },
+        {
+          "name": "After",
+          "bounds": {
+            "x": 786.78125,
+            "y": 102,
+            "width": 58.625,
+            "height": 36,
+            "top": 102,
+            "right": 845.40625,
+            "bottom": 138,
+            "left": 786.78125
+          },
+          "border": "1px",
+          "radius": "0px 8px 8px 0px"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "Query",
+          "disabled": false,
+          "aria": null,
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Paused query",
+          "disabled": false,
+          "aria": "true",
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Skipped query",
+          "disabled": false,
+          "aria": "true",
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "name": "Filter query",
+          "disabled": false,
+          "aria": null,
+          "opacity": "1",
+          "font": "14px",
+          "padding": "0px 12px 0px 8px",
+          "background": "rgba(0, 0, 0, 0)"
+        }
+      ],
+      "icon": {
+        "x": 575.78125,
+        "y": 111,
+        "width": 18,
+        "height": 18,
+        "top": 111,
+        "right": 593.78125,
+        "bottom": 129,
+        "left": 575.78125
+      }
+    },
+    "removedFocus": {
+      "role": null,
+      "name": null,
+      "tag": "BODY"
+    },
+    "actions": [
+      "caret edges and unicode selection",
+      "disabled focusable edit guard",
+      "skip unavailable",
+      "Tab exit/last reentry",
+      "read-only owner update",
+      "group availability without dimming",
+      "vertical caret boundary",
+      "focused editor removal observed"
+    ]
+  }
+]

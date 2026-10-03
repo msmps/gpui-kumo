@@ -1,9 +1,9 @@
 //! Single-line Input with retained editing state and Kumo-owned presentation.
 
 use gpui_kit::{
-    App, AppContext, Context, ElementId, Entity, EventEmitter, FocusHandle, Focusable, FontWeight,
-    InteractiveElement, IntoElement, ParentElement, Render, RenderOnce, SharedString,
-    StatefulInteractiveElement, Styled, Subscription, Window, base, canvas, div,
+    App, AppContext, Context, ElementId, Entity, EntityInputHandler, EventEmitter, FocusHandle,
+    Focusable, FontWeight, InteractiveElement, IntoElement, ParentElement, Render, RenderOnce,
+    SharedString, StatefulInteractiveElement, Styled, Subscription, Window, base, canvas, div,
     prelude::FluentBuilder, px, quad,
 };
 
@@ -71,6 +71,7 @@ pub struct InputState {
     name: SharedString,
     disabled: bool,
     read_only: bool,
+    toolbar_disabled: bool,
     presentation: Presentation,
     accessibility: accessibility::Bridge,
     group_focus: Option<FocusHandle>,
@@ -109,6 +110,7 @@ impl InputState {
             name,
             disabled: false,
             read_only: false,
+            toolbar_disabled: false,
             presentation: Presentation::default(),
             accessibility: accessibility::Bridge::default(),
             group_focus: None,
@@ -179,20 +181,54 @@ impl InputState {
             return;
         }
         self.disabled = disabled;
-        self.editor
-            .update(cx, |editor, cx| editor.set_disabled(disabled, cx));
+        self.sync_editing_availability(cx);
         self.focus_handle(cx).tab_stop(!disabled);
         cx.notify();
     }
 
+    pub(crate) fn set_toolbar_disabled(&mut self, disabled: bool, cx: &mut Context<Self>) {
+        if self.toolbar_disabled != disabled {
+            self.toolbar_disabled = disabled;
+            self.sync_editing_availability(cx);
+            cx.notify();
+        }
+    }
+    fn sync_editing_availability(&self, cx: &mut Context<Self>) {
+        let unavailable = self.effectively_disabled();
+        let toolbar = self.presentation.toolbar.is_some();
+        // Source's focusable aria-disabled Inputs remain opaque. Use Base's
+        // existing edit guard and keep authored disabled semantics on the facade.
+        self.editor.update(cx, |editor, cx| {
+            editor.set_disabled(unavailable && !toolbar, cx);
+            editor.set_readonly(self.read_only || (unavailable && toolbar), cx);
+        });
+    }
+    pub(super) fn effectively_disabled(&self) -> bool {
+        self.disabled || self.toolbar_disabled
+    }
+    pub(crate) fn toolbar_arrow_at_boundary(
+        &mut self,
+        forward: bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        self.editor.update(cx, |editor, cx| {
+            editor.marked_text_range(window, cx).is_none()
+                && editor.selected_range().is_empty()
+                && if forward {
+                    editor.cursor() == editor.value().len()
+                } else {
+                    editor.cursor() == 0
+                }
+        })
+    }
     /// Preserve focus, selection and copying while rejecting user edits.
     pub fn set_read_only(&mut self, read_only: bool, cx: &mut Context<Self>) {
         if self.read_only == read_only {
             return;
         }
         self.read_only = read_only;
-        self.editor
-            .update(cx, |editor, cx| editor.set_readonly(read_only, cx));
+        self.sync_editing_availability(cx);
         cx.notify();
     }
 }
@@ -214,6 +250,7 @@ struct Presentation {
     group: Option<crate::input_group::Container>,
     end_reserve: gpui_kit::Pixels,
     focus_scope: Option<FocusHandle>,
+    toolbar: Option<crate::toolbar::InputFocus>,
 }
 
 /// Consumed presentation over an application-retained `Entity<InputState>`.
@@ -234,6 +271,10 @@ impl Input {
             state: state.clone(),
             presentation: Presentation::default(),
         }
+    }
+    pub(crate) fn toolbar_focus(mut self, hooks: crate::toolbar::InputFocus) -> Self {
+        self.presentation.toolbar = Some(hooks);
+        self
     }
     pub(crate) fn group(mut self, group: crate::input_group::Container) -> Self {
         self.presentation.group = Some(group);
@@ -295,7 +336,13 @@ impl RenderOnce for Input {
             {
                 old.update(cx, |tooltip, cx| tooltip.set_open(false, cx));
             }
+            let leaving_toolbar =
+                state.presentation.toolbar.is_some() && self.presentation.toolbar.is_none();
             state.presentation = self.presentation;
+            state.sync_editing_availability(cx);
+            if leaving_toolbar {
+                state.focus_handle(cx).tab_stop(!state.disabled);
+            }
             if !state.presentation.label
                 && let Some((tooltip, _)) = &state.presentation.tooltip
             {
@@ -308,6 +355,15 @@ impl RenderOnce for Input {
 
 impl Render for InputState {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if self.presentation.toolbar.is_none() {
+            self.set_toolbar_disabled(false, cx);
+        }
+        let disabled = self.effectively_disabled();
+        let toolbar = self.presentation.toolbar.as_ref();
+        let focus = self.focus_handle(cx);
+        if let Some(hooks) = toolbar {
+            focus.tab_stop(hooks.tab_stop);
+        }
         let theme = theme(cx).clone();
         let (mut height, padding, radius, text) = metrics(self.presentation.size, &theme);
         if self.presentation.group.is_some() && self.group_focus.is_none() {
@@ -503,7 +559,7 @@ impl Render for InputState {
             base::input::Input::new(&self.editor).into_any_element()
         };
         let focus = self.focus_handle(cx);
-        let focused = !self.disabled
+        let focused = (!disabled || toolbar.is_some())
             && (if joined {
                 zone_focus.as_ref()
             } else {
@@ -528,7 +584,7 @@ impl Render for InputState {
         } else {
             theme.effects.control_ring_width
         };
-        let foreground = if self.disabled {
+        let foreground = if disabled && toolbar.is_none() {
             theme.native.disabled_input_foreground
         } else {
             theme.text.default
@@ -562,7 +618,6 @@ impl Render for InputState {
         .collect::<Vec<_>>()
         .join(". ");
         let label_focus = focus.clone();
-        let disabled = self.disabled;
         let read_only = self.read_only;
         let accessibility = self.accessibility.clone();
         let text_prepaint = accessibility.clone();
@@ -671,6 +726,7 @@ impl Render for InputState {
         } else {
             (leading_buttons, Vec::new())
         };
+        let toolbar_ring = toolbar.map(|hooks| (hooks.first, hooks.last, hooks.rings.clone()));
         let surface = div()
             .id("surface")
             .test_support()
@@ -682,14 +738,26 @@ impl Render for InputState {
             .items_center()
             .rounded(radius)
             .relative()
-            .bg(theme.colors.control)
+            .bg(if toolbar.is_some() {
+                gpui_kit::transparent_black()
+            } else {
+                theme.colors.control
+            })
+            .when_some(toolbar, |this, hooks| {
+                this.rounded_l(if hooks.first { radius } else { px(0.) })
+                    .rounded_r(if hooks.last { radius } else { px(0.) })
+            })
             .text_color(foreground)
             .font_family(theme.typography.font_family.clone())
             .text_size(text.size)
             .line_height(text.line_height)
             .font_weight(FontWeight::NORMAL)
             .when(group.is_some() && !joined, |this| {
-                this.opacity(if disabled { 0.5 } else { 1. })
+                this.opacity(if disabled && toolbar.is_none() {
+                    0.5
+                } else {
+                    1.
+                })
             })
             .when(joined, |this| {
                 this.flex_1()
@@ -706,6 +774,57 @@ impl Render for InputState {
                 this.flex_initial().w(width).max_w_full()
             })
             .when_some(zone_focus, |this, focus| this.track_focus(&focus))
+            .when_some(toolbar, |this, hooks| {
+                let on_focus = hooks.on_focus.clone();
+                this.on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
+                    if !disabled {
+                        on_focus(window, cx);
+                    }
+                })
+            })
+            .capture_any_mouse_down(move |_, window, cx| {
+                if disabled {
+                    window.prevent_default();
+                    cx.stop_propagation();
+                }
+            })
+            .when(toolbar.is_some(), |mut this| {
+                // GPUI resolves bound editor actions before raw key events. Guard
+                // the actual action path as well as text insertion; Tab remains host-owned.
+                macro_rules! guard {
+                    ($($action:ty),* $(,)?) => { $( {
+                        let owner = cx.entity().downgrade();
+                        this = this.capture_action(move |_: &$action, _, cx| {
+                            if owner.upgrade().is_some_and(|state| !state.read(cx).effectively_disabled()) { cx.propagate(); } else { cx.stop_propagation(); }
+                        });
+                    } )* };
+                }
+                guard!(
+                    base::input::Backspace, base::input::Delete,
+                    base::input::DeleteToBeginningOfLine, base::input::DeleteToEndOfLine,
+                    base::input::DeleteToPreviousWordStart, base::input::DeleteToNextWordEnd,
+                    base::input::MoveLeft, base::input::MoveRight, base::input::MoveUp, base::input::MoveDown,
+                    base::input::MoveHome, base::input::MoveEnd, base::input::MovePageUp, base::input::MovePageDown,
+                    base::input::MoveToStartOfLine, base::input::MoveToEndOfLine,
+                    base::input::MoveToStart, base::input::MoveToEnd,
+                    base::input::MoveToPreviousWord, base::input::MoveToNextWord,
+                    base::input::SelectAll, base::actions::SelectLeft, base::actions::SelectRight,
+                    base::actions::SelectUp, base::actions::SelectDown,
+                    base::input::SelectToStartOfLine, base::input::SelectToEndOfLine,
+                    base::input::SelectToStart, base::input::SelectToEnd,
+                    base::input::SelectToPreviousWordStart, base::input::SelectToNextWordEnd,
+                    base::input::Copy, base::input::Cut, base::input::Paste,
+                    base::input::Undo, base::input::Redo, base::input::Enter,
+                    base::input::Escape, base::input::ShowCharacterPalette,
+                );
+                this
+            })
+            .capture_key_down(move |event, window, cx| {
+                if disabled && event.keystroke.key != "tab" {
+                    window.prevent_default();
+                    cx.stop_propagation();
+                }
+            })
             .on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
                 if !disabled {
                     target.focus(window, cx);
@@ -755,6 +874,45 @@ impl Render for InputState {
                         {
                             let _ = paint_state.update(cx, |_, cx| cx.notify());
                         }
+                        if let Some((first, last, rings)) = &toolbar_ring {
+                            if focused {
+                                let corners = gpui_kit::Corners {
+                                    top_left: if *first {
+                                        radius + ring_width
+                                    } else {
+                                        ring_width
+                                    },
+                                    bottom_left: if *first {
+                                        radius + ring_width
+                                    } else {
+                                        ring_width
+                                    },
+                                    top_right: if *last {
+                                        radius + ring_width
+                                    } else {
+                                        ring_width
+                                    },
+                                    bottom_right: if *last {
+                                        radius + ring_width
+                                    } else {
+                                        ring_width
+                                    },
+                                };
+                                rings.borrow_mut().push((
+                                    true,
+                                    quad(
+                                        bounds.dilate(ring_width),
+                                        corners,
+                                        ring_color.alpha(0.),
+                                        ring_width,
+                                        ring_color,
+                                        Default::default(),
+                                    ),
+                                    window.content_mask(),
+                                ));
+                            }
+                            return;
+                        }
                         if joined {
                             let radii = gpui_kit::Corners {
                                 top_left: if leading_count == 0 { radius } else { px(0.) },
@@ -795,7 +953,11 @@ impl Render for InputState {
             div()
                 .w_full()
                 .min_w_0()
-                .opacity(if disabled { 0.5 } else { 1. })
+                .opacity(if disabled && toolbar.is_none() {
+                    0.5
+                } else {
+                    1.
+                })
                 .child(crate::input_group::Zoned {
                     body: div()
                         .flex()

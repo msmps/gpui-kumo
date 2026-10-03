@@ -38,6 +38,7 @@ mod skeletons;
 mod switches;
 mod tabs;
 mod texts;
+mod toolbar_editors;
 mod toolbars;
 mod tooltips;
 
@@ -104,6 +105,7 @@ struct Gallery {
     paginations: gpui_kit::Entity<paginations::Paginations>,
     tabs: gpui_kit::Entity<tabs::TabExamples>,
     toolbars: gpui_kit::Entity<toolbars::Toolbars>,
+    toolbar_editors: gpui_kit::Entity<toolbar_editors::ToolbarEditors>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -214,6 +216,7 @@ impl Render for Gallery {
         .child(self.paginations.clone())
         .child(self.tabs.clone())
         .child(self.toolbars.clone())
+        .child(self.toolbar_editors.clone())
         .child(self.input_groups.clone())
         .child(self.selects.clone())
         .child(self.breadcrumbs.clone())
@@ -328,6 +331,8 @@ fn main() {
                             paginations: cx.new(|cx| paginations::Paginations::new(window, cx)),
                             tabs: cx.new(tabs::TabExamples::new),
                             toolbars: cx.new(toolbars::Toolbars::new),
+                            toolbar_editors: cx
+                                .new(|cx| toolbar_editors::ToolbarEditors::new(window, cx)),
                             activations: 0,
                             disabled: false,
                             loading: false,

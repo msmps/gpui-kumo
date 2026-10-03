@@ -217,6 +217,10 @@ impl InputGroup {
             container: Container::default(),
         }
     }
+    pub(crate) fn toolbar_focus(mut self, hooks: crate::toolbar::InputFocus) -> Self {
+        self.input = self.input.toolbar_focus(hooks);
+        self
+    }
     pub fn size(mut self, size: Size) -> Self {
         self.input = self.input.size(size);
         self

@@ -1,5 +1,11 @@
 # Kumo native port progress
 
+## Toolbar retained editor continuation — 2026-10-03
+
+Plain Input and passive InputGroup now join the existing Toolbar core using application-retained InputState entities. Source caret-boundary navigation, Unicode selection, unavailable-focus/skip policy, current root/owner edit guards, read-only copying, stable reordered focus, removal/reinsertion and narrow reveal are implemented. Source-opaque disabled Input presentation is preserved. Native action captures fill the action-before-key dispatch boundary without replacing the editing engine. Shared gallery/focused editor host are integrated. [Contract/adaptations](toolbar-validation.md#retained-editor-continuation--2026-10-03), [source/native evidence](evidence/toolbar/editors/README.md).
+
+Source and actual native Light/Dark1040/520 matrices pass. Full locked gate passes196library/1gallery/9doctests, adapter12/14, fmt/warning-denied lint/builds. Coverage stays29/43 working,14 unported. **Next Toolbar slice: embedded InputGroup actions and popup trigger replacement**; Combobox remains a missing family dependency. Richer field/descendant composition, RTL and full-gallery/platform/speech/OS IME acceptance remain explicit. Prior entries below preserve historical checkpoints.
+
 ## Toolbar action/link checkpoint — 2026-10-03
 
 Toolbar #35 now has a working retained native action/link core (pushed da6ff47; remote CI37128708107 succeeds): joined quiet controls, roving Tab entry/last-focus reentry, source disabled/loading behavior, horizontal/vertical arrows, configurable looping, stable reordered focus, removal recovery, current-target navigation and narrow focused-control reveal. A narrow Base0.7.0 Link patch fixes its overwritten caller focus handle; versions stay pinned. Shared gallery section and focused preview are implemented. Coverage advances to **29/43 working families,14 unported**.

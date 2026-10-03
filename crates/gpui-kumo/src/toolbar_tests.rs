@@ -350,3 +350,390 @@ fn group_availability_preserves_source_ghost_hover_and_original_disabled_opacity
         );
     });
 }
+
+struct Editors {
+    toolbar: Entity<ToolbarState>,
+    inputs: Vec<Entity<InputState>>,
+    vertical: bool,
+    standalone: bool,
+    events: Vec<InputEvent>,
+    _subscriptions: Vec<gpui_kit::Subscription>,
+}
+fn editor_items(inputs: &[Entity<InputState>]) -> Vec<ToolbarItem> {
+    vec![
+        ToolbarItem::button("first", "Before"),
+        ToolbarItem::input("query", &inputs[0], px(180.)),
+        ToolbarItem::input("paused", &inputs[1], px(130.)).disabled(true),
+        ToolbarItem::input("skipped", &inputs[2], px(130.))
+            .disabled(true)
+            .focusable_when_disabled(false),
+        ToolbarItem::input_group("filter", &inputs[3], px(220.))
+            .start(InputGroupAddon::text("Filter"))
+            .end(InputGroupAddon::text("units"))
+            .suffix("ms"),
+        ToolbarItem::button("last", "After"),
+    ]
+}
+impl Render for Editors {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .tab_group()
+            .flex()
+            .flex_col()
+            .w(px(300.))
+            .child(Button::new("outside-before", "Outside before"))
+            .child(
+                Toolbar::new("editors", "Editors", &self.toolbar).orientation(if self.vertical {
+                    Orientation::Vertical
+                } else {
+                    Orientation::Horizontal
+                }),
+            )
+            .when(self.standalone, |v| {
+                v.child(Input::new("standalone", &self.inputs[0]))
+            })
+            .child(Button::new("outside-after", "Outside after"))
+    }
+}
+fn editors(cx: &mut TestAppContext) -> (Entity<Editors>, &mut VisualTestContext) {
+    cx.update(crate::init);
+    cx.add_window_view(|window, cx| {
+        let inputs: Vec<_> = [
+            ("Query", "café 🦀"),
+            ("Paused query", "locked"),
+            ("Skipped query", "skip"),
+            ("Filter query", "status"),
+        ]
+        .into_iter()
+        .map(|(name, value)| {
+            cx.new(|cx| {
+                let mut s = InputState::new(name, window, cx);
+                s.set_value(value, window, cx);
+                s
+            })
+        })
+        .collect();
+        let toolbar = cx.new(|cx| ToolbarState::new(editor_items(&inputs), cx));
+        let subscription =
+            cx.subscribe(&inputs[0], |s: &mut Editors, _, event: &InputEvent, cx| {
+                s.events.push(event.clone());
+                cx.notify();
+            });
+        Editors {
+            toolbar,
+            inputs,
+            vertical: false,
+            standalone: false,
+            events: vec![],
+            _subscriptions: vec![subscription],
+        }
+    })
+}
+fn focused_editor(view: &Entity<Editors>, index: usize, window: &Window, cx: &App) -> bool {
+    view.read(cx).inputs[index]
+        .read(cx)
+        .focus_handle(cx)
+        .is_focused(window)
+}
+#[gpui_kit::test]
+fn editor_arrows_preserve_unicode_selection_and_exit_only_at_text_edges(cx: &mut TestAppContext) {
+    let (view, cx) = editors(cx);
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        window.click("outside-before", cx);
+        window.focus_next(cx);
+        window.render_frame(cx);
+        window.press("right", cx);
+        window.render_frame(cx);
+        assert!(focused_editor(&view, 0, window, cx));
+        assert_eq!(
+            window.within("query").find("control").role(),
+            Some(gpui_kit::Role::TextInput)
+        );
+        window.press("home", cx);
+        window.press("right", cx);
+        window.render_frame(cx);
+        assert!(
+            focused_editor(&view, 0, window, cx),
+            "inside text, Right edits the caret"
+        );
+        window.press("end", cx);
+        window.press("shift-left", cx);
+        window.render_frame(cx);
+        assert_eq!(
+            view.read(cx).inputs[0].read(cx).selected_value(cx).as_ref(),
+            "🦀"
+        );
+        window.press("right", cx);
+        window.render_frame(cx);
+        assert!(
+            focused_editor(&view, 0, window, cx),
+            "a selected range first collapses in the editor"
+        );
+        window.press("right", cx);
+        window.render_frame(cx);
+        assert!(focused_editor(&view, 1, window, cx));
+        window.press("backspace", cx);
+        window.press("enter", cx);
+        window.render_frame(cx);
+        assert_eq!(
+            view.read(cx).inputs[1].read(cx).value(cx).as_ref(),
+            "locked"
+        );
+        window.press("right", cx);
+        window.render_frame(cx);
+        assert!(
+            focused_editor(&view, 3, window, cx),
+            "skip unavailable editor with focusableWhenDisabled=false"
+        );
+        window.press("home", cx);
+        window.press("left", cx);
+        window.render_frame(cx);
+        assert!(focused_editor(&view, 1, window, cx));
+        window.press("left", cx);
+        window.render_frame(cx);
+        assert!(
+            focused_editor(&view, 0, window, cx),
+            "focus {:?}, active {:?}",
+            view.read(cx)
+                .toolbar
+                .read(cx)
+                .items
+                .iter()
+                .map(|i| (&i.control.id, i.focus.is_focused(window)))
+                .collect::<Vec<_>>(),
+            view.read(cx).toolbar.read(cx).active
+        );
+        window.press("home", cx);
+        window.press("left", cx);
+        window.render_frame(cx);
+        assert!(
+            view.read(cx).toolbar.read(cx).items[0]
+                .focus
+                .is_focused(window)
+        );
+        window.press("right", cx);
+        window.render_frame(cx);
+        window.focus_next(cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("outside-after").focused(), Some(true));
+        window.focus_prev(cx);
+        window.render_frame(cx);
+        assert!(
+            focused_editor(&view, 0, window, cx),
+            "last editor is the only reentry tab stop"
+        );
+    });
+    cx.simulate_input("!");
+    cx.update(|window, cx| {
+        assert!(view.read(cx).inputs[0].read(cx).value(cx).contains('!'));
+        window.press("enter", cx);
+    });
+    cx.update(|_, cx| {
+        assert_eq!(
+            view.read(cx)
+                .events
+                .iter()
+                .filter(|e| matches!(e, InputEvent::Change))
+                .count(),
+            1
+        );
+        assert_eq!(
+            view.read(cx)
+                .events
+                .iter()
+                .filter(|e| matches!(e, InputEvent::Submit { .. }))
+                .count(),
+            1
+        );
+    });
+}
+#[gpui_kit::test]
+fn editor_owner_availability_recovery_and_group_disabled_edit_guard_are_current(
+    cx: &mut TestAppContext,
+) {
+    let (view, cx) = editors(cx);
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        let state = view.read(cx).toolbar.clone();
+        state.update(cx, |s, cx| {
+            let mut items = editor_items(&view.read(cx).inputs);
+            items[1] = items[1].clone().focusable_when_disabled(false);
+            s.set_items(items, window, cx);
+            s.focus_item(&"query".into(), window, cx);
+        });
+        window.render_frame(cx);
+        view.read(cx).inputs[0]
+            .clone()
+            .update(cx, |s, cx| s.set_disabled(true, cx));
+        window.render_frame(cx);
+        assert!(
+            state.read(cx).items[0].focus.is_focused(window),
+            "owner availability is observed and recovers skipped focus"
+        );
+        view.read(cx).inputs[0]
+            .clone()
+            .update(cx, |s, cx| s.set_disabled(false, cx));
+        window.render_frame(cx);
+        state.update(cx, |s, cx| {
+            s.focus_item(&"filter".into(), window, cx);
+            s.set_disabled(true, window, cx);
+        });
+        window.render_frame(cx);
+        assert!(
+            focused_editor(&view, 3, window, cx),
+            "disabled default-focusable editor keeps focus"
+        );
+        assert!(
+            !view.read(cx).inputs[3].read(cx).is_disabled(),
+            "group availability does not mutate the editor owner's disabled prop"
+        );
+        assert_eq!(
+            window.within("filter").find("surface").bounds().size.height,
+            px(36.)
+        );
+        window.press("shift-left", cx);
+        #[cfg(target_os = "macos")]
+        let select_all = "cmd-a";
+        #[cfg(not(target_os = "macos"))]
+        let select_all = "ctrl-a";
+        window.press(select_all, cx);
+        assert_eq!(
+            view.read(cx).inputs[3].read(cx).selected_value(cx).as_ref(),
+            ""
+        );
+        window.press("backspace", cx);
+        window.press("enter", cx);
+    });
+    cx.simulate_input("blocked");
+    cx.update(|window, cx| {
+        assert_eq!(
+            view.read(cx).inputs[3].read(cx).value(cx).as_ref(),
+            "status"
+        );
+        let state = view.read(cx).toolbar.clone();
+        state.update(cx, |s, cx| s.set_disabled(false, window, cx));
+        window.render_frame(cx);
+    });
+    cx.simulate_input("!");
+    cx.update(|_, cx| {
+        assert_eq!(
+            view.read(cx).inputs[3].read(cx).value(cx).as_ref(),
+            "status!"
+        )
+    });
+}
+#[gpui_kit::test]
+fn grouped_editor_reorder_removal_vertical_boundary_and_standalone_remount_preserve_state(
+    cx: &mut TestAppContext,
+) {
+    let (view, cx) = editors(cx);
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        let state = view.read(cx).toolbar.clone();
+        state.update(cx, |s, cx| s.focus_item(&"filter".into(), window, cx));
+        window.render_frame(cx);
+        let bounds = window.within("filter").find("surface").bounds();
+        let viewport = state.read(cx).scroll.bounds();
+        assert!(
+            bounds.left() >= viewport.left() && bounds.right() <= viewport.right(),
+            "actual grouped editor is revealed in narrow viewport"
+        );
+        window.press("home", cx);
+        window.press("shift-right", cx);
+        window.render_frame(cx);
+        let selected = view.read(cx).inputs[3].read(cx).selected_value(cx);
+        state.update(cx, |s, cx| {
+            let mut items = editor_items(&view.read(cx).inputs);
+            items.rotate_right(2);
+            s.set_items(items, window, cx);
+        });
+        window.render_frame(cx);
+        assert!(focused_editor(&view, 3, window, cx));
+        assert_eq!(
+            view.read(cx).inputs[3].read(cx).selected_value(cx),
+            selected
+        );
+        view.update(cx, |s, cx| {
+            s.vertical = true;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        window.press("down", cx);
+        window.render_frame(cx);
+        assert!(
+            focused_editor(&view, 3, window, cx),
+            "selection stays in editor even on navigation axis"
+        );
+        window.press("end", cx);
+        window.press("down", cx);
+        window.render_frame(cx);
+        assert!(
+            !focused_editor(&view, 3, window, cx),
+            "vertical navigation exits at the text end"
+        );
+        state.update(cx, |s, cx| {
+            s.set_disabled(true, window, cx);
+            s.focus_item(&"query".into(), window, cx);
+            s.set_items(vec![], window, cx);
+        });
+        view.update(cx, |s, cx| {
+            s.standalone = true;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        let input = view.read(cx).inputs[0].clone();
+        input.read(cx).focus_handle(cx).focus(window, cx);
+        assert!(!input.read(cx).is_disabled());
+    });
+    cx.simulate_input("restored");
+    cx.update(|_, cx| {
+        assert!(
+            view.read(cx).inputs[0]
+                .read(cx)
+                .value(cx)
+                .contains("restored")
+        )
+    });
+}
+
+#[gpui_kit::test]
+fn toolbar_disabled_clipboard_guard_reads_current_owner_before_rerender(cx: &mut TestAppContext) {
+    let (view, cx) = editors(cx);
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        let toolbar = view.read(cx).toolbar.clone();
+        let input = view.read(cx).inputs[3].clone();
+        toolbar.update(cx, |s, cx| s.focus_item(&"filter".into(), window, cx));
+        input.update(cx, |s, cx| s.set_read_only(true, cx));
+        window.render_frame(cx);
+        #[cfg(target_os = "macos")]
+        let (select, copy) = ("cmd-a", "cmd-c");
+        #[cfg(not(target_os = "macos"))]
+        let (select, copy) = ("ctrl-a", "ctrl-c");
+        window.press(select, cx);
+        assert_eq!(input.read(cx).selected_value(cx).as_ref(), "status");
+        window.press(copy, cx);
+        assert_eq!(
+            cx.read_from_clipboard().unwrap().text().unwrap(),
+            "status",
+            "available read-only editors can copy"
+        );
+        cx.write_to_clipboard(gpui_kit::ClipboardItem::new_string("sentinel".into()));
+        toolbar.update(cx, |s, cx| s.set_disabled(true, window, cx));
+        // Deliberately keep the preceding rendered action callback alive.
+        window.press(copy, cx);
+        assert_eq!(
+            cx.read_from_clipboard().unwrap().text().unwrap(),
+            "sentinel",
+            "current unavailable policy rejects the old copy callback"
+        );
+        assert_eq!(input.read(cx).selected_value(cx).as_ref(), "status");
+        assert!(input.read(cx).is_read_only());
+        assert!(!input.read(cx).is_disabled());
+        toolbar.update(cx, |s, cx| s.set_disabled(false, window, cx));
+        window.render_frame(cx);
+        window.press(copy, cx);
+        assert_eq!(cx.read_from_clipboard().unwrap().text().unwrap(), "status");
+    });
+}
