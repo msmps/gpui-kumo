@@ -1,8 +1,12 @@
 # Kumo native port progress
 
-## Active dropdown recreation — 2026-10-03
+## Current dropdown checkpoint — 2026-10-03
 
-#26's missing candidate is recreated over verified6c316ab. Typed page selector, retained controlled page Select, allocation/mode/owner/lifecycle guards and five rendered regressions are implemented; source-derived42×36/214/83 geometry, Select gap6/33px rows and disabled joined borders are reconciled. Local formatting/probe syntax pass; remote CI is pending. Linux/native/browser remain blocked by unreachable proxy and missing dependency cache. #26/#42/#38 stay open. [Exact contract/checkpoint](pagination-dropdown-checkpoint.md). Finish remote CI and repair measured failures; then restore connectivity and complete native#42/#26, followed by#38. Coverage remains27/43 working,16 unported.
+#26's missing dropdown candidate is recreated and published: implementation 46f919e, test corrections dfbbdc06/d3bfbe96, final source shadow correction 033ccfde78c5fdf1f925fc3e03ba8a9671f45278. Full remote macOS gates [37117625758](https://github.com/msmps/gpui-kumo/actions/runs/37117625758) and [37117805585](https://github.com/msmps/gpui-kumo/actions/runs/37117805585) pass 175 library / 1 gallery / 9 doctests, workspace/adapter formatting and warning-denied lint, locked builds/default gallery, and 12 default / 14 all-feature adapter tests. [Contract and evidence](pagination-dropdown-checkpoint.md).
+
+Typed Input/Dropdown controls, retained controlled page Select, Full+Known+Dropdown-only allocation, activation-time owner revisions, changed totals/options, availability/focus/removal/unmount, and both-theme geometry/border regressions are implemented. Source-derived 42×36 navigation, 214px input / 83px simple, trigger gap 6, 33px numeric rows and the middle Select's retained shadow are reconciled. No versions/vendor patches changed. Coverage remains 27/43 working, 16 unported; implementation is not full fidelity.
+
+Linux tests still stop at missing hdrhistogram metadata; configured proxy:8080 refuses connections despite enforced policy. Native/browser execution remains blocked. #26/#42/#38 stay open. Next: restore managed connectivity, run local locked gate, finish #42 native foundation matrix, then #26 native Light/Dark1040/520 and PageSize/browser matrix, followed by #38 glyph reproduction. Do not repeat the missing-candidate search/recreation or reuse its older native/browser evidence.
 
 
 ## Current checkpoint — 2026-10-03

@@ -1,17 +1,21 @@
 # Continue the GPUI Kumo migration from the pushed handoff checkpoint
 
-## Active dropdown recreation — 2026-10-03
-
-#26's missing candidate is recreated over verified6c316ab. Typed page selector, retained controlled page Select, allocation/mode/owner/lifecycle guards and five rendered regressions are implemented; source-derived42×36/214/83 geometry, Select gap6/33px rows and disabled joined borders are reconciled. Local formatting/probe syntax pass; remote CI is pending. Linux/native/browser remain blocked by unreachable proxy and missing dependency cache. #26/#42/#38 stay open. [Exact contract/checkpoint](pagination-dropdown-checkpoint.md). Finish remote CI and repair measured failures; then restore connectivity and complete native#42/#26, followed by#38. Coverage remains27/43 working,16 unported.
-
-
 Continue `msmps/gpui-kumo` on branch `work`. Goal: migrate the supported, recommended Kumo design system to native Rust/GPUI, using GPUI Kit's `gpui-base` as the behaviour foundation and preserving Kumo appearance, capabilities and composability.
 
 Read the actual latest `origin/work` before acting. This handoff is a partial, reviewable checkpoint, not a completed milestone or permission to reset to an older tree. Read applicable `AGENTS.md`, `docs/README.md`, `CONTEXT.md`, `docs/port-progress.md`, `docs/issue-audit-2026-10-03.md`, component acceptance documents and relevant GitHub issues.
 
 Use the managed-cloud runtime skill at startup. Establish the environment's network policy, toolchain, native rendering/input and accessibility tools. Preserve pinned versions: Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, Kit/Base `0.7.0`, GPUI family `0.3.7`, Rust `1.99.0`. Preserve exact workspace GPUI/Base/AccessKit patches, their provenance, boundaries, regression coverage, removal conditions and downstream Cargo-root obligations. Keep styled Component excluded.
 
-## Current continuation — 2026-10-03
+## Current dropdown checkpoint — 2026-10-03
+
+#26's missing dropdown candidate is recreated and published: implementation 46f919e, test corrections dfbbdc06/d3bfbe96, final source shadow correction 033ccfde78c5fdf1f925fc3e03ba8a9671f45278. Full remote macOS gates [37117625758](https://github.com/msmps/gpui-kumo/actions/runs/37117625758) and [37117805585](https://github.com/msmps/gpui-kumo/actions/runs/37117805585) pass 175 library / 1 gallery / 9 doctests, workspace/adapter formatting and warning-denied lint, locked builds/default gallery, and 12 default / 14 all-feature adapter tests. [Contract and evidence](pagination-dropdown-checkpoint.md).
+
+Typed Input/Dropdown controls, retained controlled page Select, Full+Known+Dropdown-only allocation, activation-time owner revisions, changed totals/options, availability/focus/removal/unmount, and both-theme geometry/border regressions are implemented. Source-derived 42×36 navigation, 214px input / 83px simple, trigger gap 6, 33px numeric rows and the middle Select's retained shadow are reconciled. No versions/vendor patches changed. Coverage remains 27/43 working, 16 unported; implementation is not full fidelity.
+
+Linux tests still stop at missing hdrhistogram metadata; configured proxy:8080 refuses connections despite enforced policy. Native/browser execution remains blocked. #26/#42/#38 stay open. Next: restore managed connectivity, run local locked gate, finish #42 native foundation matrix, then #26 native Light/Dark1040/520 and PageSize/browser matrix, followed by #38 glyph reproduction. Do not repeat the missing-candidate search/recreation or reuse its older native/browser evidence.
+
+
+## Earlier animation continuation — 2026-10-03 (historical)
 
 Code85871b7689f987d3cdb035572e9f4b17687523f9 (clock repair9ef600b plus test import) and documentation/evidence5ea81bb7f8ff6a26adb1e02b0228d3fdac2865a8 are published. #45/#43 are resolved after full remote runs37115645935 and37116002411 both pass170library/1gallery/9doctests and complete workspace/adapter fmt/lint/locked builds/default gallery/12default/14all-feature adapter tests. [Evidence](evidence/animation-clock/README.md). Preserve the additional narrow duration-animation clock correction and its provenance, boundaries, regression/removal/downstream-root obligations with earlier Tab/Base/AccessKit patches. Native production remains on its existing monotonic clock; no new native pixels/input/speech/IME acceptance is inferred.
 
@@ -39,11 +43,11 @@ The session started with clean local and remote `work` at `33ab7668f71ec36359164
 
 Independently reproduced macOS validation:169 library tests, one gallery regression, nine doctests, workspace and standalone-adapter formatting, warning-denied Clippy, all-target/all-feature build/default gallery; adapter12default/14all-feature tests. Raw before/after gates: `docs/evidence/resume-checkpoint/`. Existing profiler deprecation and block future-compatibility notices remain visible. Linux native, speech, OS IME and remote CI passes were not reproduced in the local session. Read the final recorded gate and issue updates for exact final outcomes.
 
-## Missing Pagination candidate: explicitly authorized recovery/recreation
+## Historical missing Pagination candidate and recreation authorization
 
 Issue#26 describes an uncommitted/unpushed Dropdown candidate with174 workspace tests/nine doctests, pinned-source browser comparisons and native validation finishing. That candidate DOES NOT exist in this handoff tree. The local search found no branch/worktree/stash containing it and the available earlier task record did not have it. The user explicitly authorized: “it's likely in a codex cloud session somewhere or missing! if you cannot locate it in a checkpoint branch codex cloud then you should recreate it”.
 
-Search accessible cloud checkpoint branches/session artifacts first. Preserve useful recovered work. If unavailable, recreate over the current pushed branch, preserving existing Input/Simple/Info/Separator/PageSize. Do not represent the old174-test/native evidence as independently reproduced or published implementation. No Dropdown code was recreated in the handoff session.
+The candidate has since been recreated under the current checkpoint above; the following records its original recovery authorization. Search accessible cloud checkpoint branches/session artifacts first. Preserve useful recovered work. If unavailable, recreate over the current pushed branch, preserving existing Input/Simple/Info/Separator/PageSize. Do not represent the old174-test/native evidence as independently reproduced or published implementation. No Dropdown code was recreated in the handoff session.
 
 Issue#26's missing-candidate report contains source geometry corrections to independently verify: observed source42×36 navigation Buttons,214px input group,83px simple join; three dropdown overlaps with no leading Select overlap; Base gap6;33px option rows; selected-only checks. Source BaseUI reportedly authors `data-popup-open` while its `data-state=open` override does not match; verify actual hovered/open paint instead of assuming intended CSS. Existing source documents/tests use older36px/190px/71px assumptions and need reconciliation against the pinned browser renderer. Do not globally change Button geometry from these leads.
 
@@ -53,7 +57,7 @@ Acceptance for recreation: typed Input/Dropdown controls; one authoritative reta
 
 1. Inspect actual branch/tree and latest issues/CI; #45/#43 are resolved with two full passing remote gates after clock repair85871b7. Check for new CI regressions. Restore this cloud workspace’s managed proxy and fetch current work; do not use the stale checkout as the implementation baseline. Run `bash scripts/check-rust.sh` on the selected host, distinguishing measured failures from platform limits. Linux CI/native prerequisites may need cloud-specific setup; do not weaken pinned versions or assertions.
 2. Finish#42 candidate's native visual gate and repair findings, preserving published source recipes. The rendered regression checks panels and effect-column rectangles, not painted labels/shadows. Explicitly inspect both themes, wide/narrow, corners/fills/borders/shadows, swatch/text alignment, label offsets/gaps/padding and resize transitions. Commit/push and close only after acceptance.
-3. Recover/recreate and finish#26 as above. This remains the primary library milestone;#42/#43 cleanup can proceed independently.
+3. Validate the published #26 recreation in the native and pinned browser matrix above. Preserve its controlled model, revision/mount guards and source corrections. This remains the primary library milestone; #42 cleanup can proceed independently. The missing-candidate search/recreation is complete.
 4. Address#38 rich highlighted Text font discrepancy. Inspect pinned Kumo Text and installed StyledText highlight/run/font resolution, available faces and actual painted glyphs. Preserve caller-owned rich content, inherited custom fonts and source weights. Distinguish font fallback/environment from library defects. Both-theme1040/520 visual and meaningful rendered regression gate required.
 5. Select highest-value remaining issue by dependencies, severity, consumer value and existing incomplete work. Do not ask which component to implement.
 

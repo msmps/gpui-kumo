@@ -65,4 +65,4 @@ Next selected #41 expansion export, then retained dropdown Controls #26. PageSiz
 
 ## Recreated dropdown checkpoint
 
-See [current contract, source corrections, validation and limits](pagination-dropdown-checkpoint.md). It supersedes the old36px/190px/71px and32px assumptions for current code; historical results above retain their original measured scope. Remote CI is pending; native/browser gates remain unverified.
+See [current contract, source corrections, validation and limits](pagination-dropdown-checkpoint.md). It supersedes the old36px/190px/71px and32px assumptions for current code; historical results above retain their original measured scope. Both repaired remote full Rust gates pass 175 library tests; native/browser gates remain unverified.

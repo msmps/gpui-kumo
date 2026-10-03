@@ -6,7 +6,7 @@ GitHub issue: https://github.com/msmps/gpui-kumo/issues/26
 
 ## Goal and status
 
-Port the supported **Pagination** Kumo family to Rust/GPUI. Input/simple controls, Info/Separator and controlled native editing are implemented; PageSize is now implemented; dropdown Controls and fidelity acceptance are in progress; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Pagination** Kumo family to Rust/GPUI. Input/simple controls, Info/Separator and controlled native editing are implemented; PageSize is now implemented; Dropdown Controls are recreated with passing remote Rust gates; native/browser/platform fidelity acceptance remains open; the issue covers its supported parts and public API, not just a static default-state demo.
 
 ## GPUI Kit/Base foundation
 
@@ -60,4 +60,4 @@ Retained controlled Select, PageSize proposals, explicit owner acceptance/reset,
 
 ## Recreated dropdown continuation
 
-Typed retained Dropdown controls and owner/mode/allocation/focus/paint regressions are recreated over6c316ab. [Current acceptance/checkpoint](../pagination-dropdown-checkpoint.md); formatting passes, remote CI pending, Linux/native/browser blocked by proxy/cache. Family stays open; no earlier missing-candidate evidence is reused as acceptance.
+Typed retained Dropdown controls and owner/mode/allocation/focus/paint regressions are recreated over6c316ab. [Current acceptance/checkpoint](../pagination-dropdown-checkpoint.md); formatting and complete remote gates pass (175 library tests); Linux/native/browser blocked by proxy/cache. Family stays open; no earlier missing-candidate evidence is reused as acceptance.
