@@ -1,6 +1,6 @@
 # KUMO-058: Reproducible Rust validation
 
-GitHub: [#43](https://github.com/msmps/gpui-kumo/issues/43). Milestone: Reproducible migration validation. Status: Repaired — [KUMO-060](060-animation-clock.md) corrects the scheduling-sensitive clock boundary; full run37115645935 passes at85871b7. Close after the final documentation push repeats the complete unchanged-source gate; resolution comments record that run.
+GitHub: [#43](https://github.com/msmps/gpui-kumo/issues/43). Milestone: Reproducible migration validation. Status: Resolved — [KUMO-060](060-animation-clock.md) corrects the scheduling-sensitive clock boundary; full runs37115645935 at85871b7 and37116002411 at5ea81bb pass. [Repeated acceptance evidence](../evidence/animation-clock/README.md); resolution comments record the final documentation SHA.
 
 No workflows existed at published33ab766. Implement locked formatting, workspace all-feature tests/doctests, warnings-denied Clippy/all-target builds and default gallery build; exact excluded AccessKit adapter default/all-feature tests, formatting and warnings-denied Clippy. Record host/toolchain and retain root patches. The successful remote run below is retained evidence; repeatability requires the KUMO-060 repair and new passing gates.
 
