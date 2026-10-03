@@ -23,7 +23,7 @@ The matching normal-motion theme redraw sample is about 4.6 times faster in rele
 
 The idle sample represents approximately 6.7 seconds spent inside draw across 13.4 seconds elapsed. That is about half the elapsed interval in draw work, not a measured process CPU percentage. It is a concrete efficiency concern for the demo and warrants isolated animation/culling profiling.
 
-[Raw selected histogram results](https://github.com/msmps/gpui-kumo/blob/97281d4/docs/fixtures/performance-samples.csv) include the remaining percentiles and metric sample counts. Zero samples mean no evidence for that metric, not zero latency.
+[Raw selected histogram results](https://github.com/msmps/gpui-kumo/blob/838062e/docs/fixtures/performance-samples.csv) include the remaining percentiles and metric sample counts. Zero samples mean no evidence for that metric, not zero latency.
 
 ## Implementation costs and attribution
 

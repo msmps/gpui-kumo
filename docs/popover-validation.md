@@ -47,7 +47,7 @@ The runnable native example places the trigger at the selected window edge. Thes
 | Left | Right | 8px | Left → right (capture removed) |
 | Right | Left | 8px | Right → left (capture removed) |
 
-[Raw measurements](https://github.com/msmps/gpui-kumo/blob/97281d4/docs/evidence/popover-flips.json) include trigger/popup bounds and capture environment. For example, the bottom-requested trigger spans y=428–464 while its popup spans y=316–420: the popup is entirely above the trigger with an 8px gap. The right-requested trigger starts at x=490 while its popup ends at x=482, proving a left-side placement with the same gap.
+[Raw measurements](https://github.com/msmps/gpui-kumo/blob/838062e/docs/evidence/popover-flips.json) include trigger/popup bounds and capture environment. For example, the bottom-requested trigger spans y=428–464 while its popup spans y=316–420: the popup is entirely above the trigger with an 8px gap. The right-requested trigger starts at x=490 while its popup ends at x=482, proving a left-side placement with the same gap.
 
 Reproduce using [the edge example](../apps/gallery/examples/popover_edges.rs):
 
