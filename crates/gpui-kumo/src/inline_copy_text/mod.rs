@@ -315,9 +315,9 @@ impl RenderOnce for InlineCopyText {
                     .child(
                         svg()
                             .data(if copied {
-                                include_bytes!("../assets/empty-check.svg").as_slice()
+                                include_bytes!("../../assets/empty-check.svg").as_slice()
                             } else {
-                                include_bytes!("../assets/copy-simple.svg").as_slice()
+                                include_bytes!("../../assets/copy-simple.svg").as_slice()
                             })
                             .size(px(14.))
                             .text_color(foreground),

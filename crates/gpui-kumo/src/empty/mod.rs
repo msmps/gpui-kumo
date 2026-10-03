@@ -222,9 +222,9 @@ impl RenderOnce for Empty {
                                 },
                                 svg()
                                     .data(if copied {
-                                        include_bytes!("../assets/empty-check.svg")
+                                        include_bytes!("../../assets/empty-check.svg")
                                     } else {
-                                        include_bytes!("../assets/empty-copy.svg")
+                                        include_bytes!("../../assets/empty-copy.svg")
                                     })
                                     .size(px(16.))
                                     .text_color(if copied {

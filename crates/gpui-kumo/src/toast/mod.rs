@@ -527,10 +527,10 @@ impl RenderOnce for ToastViewport {
 fn icon(variant: ToastVariant) -> Option<&'static [u8]> {
     match variant {
         ToastVariant::Default => None,
-        ToastVariant::Success => Some(include_bytes!("../assets/toast-success.svg")),
-        ToastVariant::Error => Some(include_bytes!("../assets/toast-error.svg")),
-        ToastVariant::Warning => Some(include_bytes!("../assets/toast-warning.svg")),
-        ToastVariant::Info => Some(include_bytes!("../assets/toast-info.svg")),
+        ToastVariant::Success => Some(include_bytes!("../../assets/toast-success.svg")),
+        ToastVariant::Error => Some(include_bytes!("../../assets/toast-error.svg")),
+        ToastVariant::Warning => Some(include_bytes!("../../assets/toast-warning.svg")),
+        ToastVariant::Info => Some(include_bytes!("../../assets/toast-info.svg")),
     }
 }
 impl Render for ToastState {
@@ -609,7 +609,7 @@ impl Render for ToastState {
                 "close",
                 "Close",
                 gpui_kit::svg()
-                    .data(include_bytes!("../assets/toast-close.svg"))
+                    .data(include_bytes!("../../assets/toast-close.svg"))
                     .size(px(12.))
                     .text_color(close_color),
             )

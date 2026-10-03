@@ -170,9 +170,9 @@ impl RenderOnce for BreadcrumbClipboard {
                 if copied { "Copied" } else { "Copy" },
                 svg()
                     .data(if copied {
-                        include_bytes!("../assets/checkbox-check.svg").as_slice()
+                        include_bytes!("../../assets/checkbox-check.svg").as_slice()
                     } else {
-                        include_bytes!("../assets/empty-copy.svg").as_slice()
+                        include_bytes!("../../assets/empty-copy.svg").as_slice()
                     })
                     .size(px(16.))
                     .text_color(if copied {

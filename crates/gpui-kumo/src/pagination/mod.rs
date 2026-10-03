@@ -744,7 +744,7 @@ impl PaginationState {
                         Direction::First,
                         self.labels.first_page.clone(),
                         0,
-                        include_bytes!("../assets/pagination-first.svg"),
+                        include_bytes!("../../assets/pagination-first.svg"),
                         true,
                         false,
                     ))
@@ -753,7 +753,7 @@ impl PaginationState {
                         Direction::Previous,
                         self.labels.previous_page.clone(),
                         1,
-                        include_bytes!("../assets/pagination-previous.svg"),
+                        include_bytes!("../../assets/pagination-previous.svg"),
                         false,
                         false,
                     )))
@@ -768,7 +768,7 @@ impl PaginationState {
                         Direction::Next,
                         self.labels.next_page.clone(),
                         2,
-                        include_bytes!("../assets/pagination-next.svg"),
+                        include_bytes!("../../assets/pagination-next.svg"),
                         false,
                         false,
                     )))
@@ -777,7 +777,7 @@ impl PaginationState {
                         Direction::Last,
                         self.labels.last_page.clone(),
                         3,
-                        include_bytes!("../assets/pagination-last.svg"),
+                        include_bytes!("../../assets/pagination-last.svg"),
                         false,
                         true,
                     )))
@@ -801,7 +801,7 @@ impl PaginationState {
                                 Direction::First,
                                 self.labels.first_page.clone(),
                                 0,
-                                include_bytes!("../assets/pagination-first.svg"),
+                                include_bytes!("../../assets/pagination-first.svg"),
                                 cx,
                             ),
                         )
@@ -814,7 +814,7 @@ impl PaginationState {
                                 Direction::Previous,
                                 self.labels.previous_page.clone(),
                                 1,
-                                include_bytes!("../assets/pagination-previous.svg"),
+                                include_bytes!("../../assets/pagination-previous.svg"),
                                 cx,
                             ),
                         )
@@ -827,7 +827,7 @@ impl PaginationState {
                                 Direction::Next,
                                 self.labels.next_page.clone(),
                                 2,
-                                include_bytes!("../assets/pagination-next.svg"),
+                                include_bytes!("../../assets/pagination-next.svg"),
                                 cx,
                             ),
                         )
@@ -840,7 +840,7 @@ impl PaginationState {
                                 Direction::Last,
                                 self.labels.last_page.clone(),
                                 3,
-                                include_bytes!("../assets/pagination-last.svg"),
+                                include_bytes!("../../assets/pagination-last.svg"),
                                 cx,
                             ),
                         ),
@@ -854,7 +854,7 @@ impl PaginationState {
                     Direction::Previous,
                     self.labels.previous_page.clone(),
                     1,
-                    include_bytes!("../assets/pagination-previous.svg"),
+                    include_bytes!("../../assets/pagination-previous.svg"),
                     cx,
                 )
                 .input_group_zone(
@@ -873,7 +873,7 @@ impl PaginationState {
                     Direction::Next,
                     self.labels.next_page.clone(),
                     2,
-                    include_bytes!("../assets/pagination-next.svg"),
+                    include_bytes!("../../assets/pagination-next.svg"),
                     cx,
                 )
                 .input_group_zone(

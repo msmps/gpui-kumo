@@ -271,7 +271,7 @@ impl RenderOnce for Collapsible {
                         .justify_center()
                         .child(
                             svg()
-                                .data(include_bytes!("../assets/caret-down-bold.svg").as_slice())
+                                .data(include_bytes!("../../assets/caret-down-bold.svg").as_slice())
                                 .size(px(12.))
                                 .text_color(theme.text.default)
                                 .with_transformation(Transformation::rotate(radians(if open {

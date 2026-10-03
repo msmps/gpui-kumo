@@ -185,8 +185,10 @@ impl RenderOnce for Checkbox {
         .size_full();
         let icon = match self.state {
             State::Unchecked => None,
-            State::Checked => Some(include_bytes!("../assets/checkbox-check.svg").as_slice()),
-            State::Indeterminate => Some(include_bytes!("../assets/checkbox-minus.svg").as_slice()),
+            State::Checked => Some(include_bytes!("../../assets/checkbox-check.svg").as_slice()),
+            State::Indeterminate => {
+                Some(include_bytes!("../../assets/checkbox-minus.svg").as_slice())
+            }
         };
         let indicator = base::CheckboxIndicator::new()
             .state(self.state.base())

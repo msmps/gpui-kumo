@@ -321,9 +321,9 @@ impl RenderOnce for ExternalIcon {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let style = window.text_style();
         let data = if crate::theme(cx).appearance == crate::Appearance::Dark {
-            include_bytes!("../assets/link-external-dark.svg").as_slice()
+            include_bytes!("../../assets/link-external-dark.svg").as_slice()
         } else {
-            include_bytes!("../assets/link-external-light.svg").as_slice()
+            include_bytes!("../../assets/link-external-light.svg").as_slice()
         };
         div()
             .id("external-icon")

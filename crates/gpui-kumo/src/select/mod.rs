@@ -1000,7 +1000,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
                     )
                     .child(
                         svg()
-                            .data(include_bytes!("../assets/caret-up-down.svg").as_slice())
+                            .data(include_bytes!("../../assets/caret-up-down.svg").as_slice())
                             .size(px(match self.size {
                                 Size::Xs => 12.,
                                 Size::Sm => 14.,
@@ -1450,7 +1450,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
                 v.child(
                     div().size(px(14.)).flex_shrink_0().child(
                         svg()
-                            .data(include_bytes!("../assets/empty-check.svg").as_slice())
+                            .data(include_bytes!("../../assets/empty-check.svg").as_slice())
                             .size_full()
                             .text_color(t.text.default),
                     ),

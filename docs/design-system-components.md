@@ -2,6 +2,10 @@
 
 Read when proposing a component API, token recipe, or state ownership boundary. This document is **Design-system guidance**; it proposes a working approach and does not record a selected palette, API, or dependency.
 
+## Module layout
+
+Keep components with tests or private helpers together in `src/<component>/`: the implementation and public API live in `mod.rs`, rendered regressions in `tests.rs`, and helpers in named sibling modules. For example, `button/mod.rs` and `button/tests.rs` both belong to the `button` module. Standalone modules can remain single files. This filesystem choice preserves public Rust paths such as `gpui_kumo::button::Button`.
+
 ## Define the contract first
 
 For a new component, write a compact contract covering:

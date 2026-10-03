@@ -476,9 +476,9 @@ impl Render for SensitiveInputState {
                         .child(
                             svg()
                                 .data(if self.mode == Mode::Revealed {
-                                    include_bytes!("../assets/eye-slash.svg").as_slice()
+                                    include_bytes!("../../assets/eye-slash.svg").as_slice()
                                 } else {
-                                    include_bytes!("../assets/eye.svg").as_slice()
+                                    include_bytes!("../../assets/eye.svg").as_slice()
                                 })
                                 .size(px(icon))
                                 .text_color(
