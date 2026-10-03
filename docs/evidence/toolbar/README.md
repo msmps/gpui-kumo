@@ -4,6 +4,8 @@ Pinned Kumo3fd5b648df578cb1ba214dedd30f475009f6a668, Kit/Base0.7.0, GPUI0.3.7, R
 
 ## Passed
 
+[Remote macOS Rust gate37128708107](https://github.com/msmps/gpui-kumo/actions/runs/37128708107) succeeds for implementation da6ff47. The implementation SHA and local/source/native results below identify the tested tree.
+
 - Pinned source browser fixture: Chromium151, React19.2, Base UI1.8, Tailwind4.3.3 and Phosphor2.1.10. Light/Dark1040/520 functional/geometry matrix: [results](browser/results.json), [measured source](browser/source-measurements.json), [availability presentation](browser/source-states.json), screenshots and runnable fixture/probe/lock beside them.
 - Real native focused preview using the actual gallery Toolbar section: Xvfb :100, Vulkan lavapipe, D-Bus/AT-SPI and xdotool. Light/Dark1040/520: [results](linux/results.json), [probe](linux/probe.py), [raw probe output](linux/probe.log), initial/focused/removed screenshots and per-case application logs. Pointer-before-Space, disabled/loading gating, native Link focus/navigation, entry/exit/reentry, vertical/nonloop, source Home/End policy, group availability, focused removal and narrow reveal pass. After visiting the vertical Paused action, subsequent Tab entry correctly restores Paused; the probe preserves that expectation.
 - Five rendered regressions cover stale owner actions/current destination/modifiers, retained actual link pointer focus, collection reorder/removal/empty focus, orientation/looping/reveal and source ghost hover/disabled opacity. [Test output](toolbar-tests.log).

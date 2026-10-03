@@ -1,18 +1,24 @@
 # KUMO-050: Port Toolbar with Kumo fidelity over GPUI Base
 
-Status: Open
+Status: Open — action/link core implemented; hosted editing/composition remains
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/35
 
 ## Goal and status
 
-Port the supported **Toolbar** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Toolbar** Kumo family to Rust/GPUI. The action/link core is implemented and validated; hosted Input/InputGroup, popup replacement/composition, RTL and full-gallery/platform/speech acceptance remain.
+
+## Pushed action/link milestone — 2026-10-03
+
+Implementation/evidence [da6ff47](https://github.com/msmps/gpui-kumo/commit/da6ff4795c00455bdee1425e9a8e45c1b3210e2d) is pushed. [Remote macOS Rust gate37128708107](https://github.com/msmps/gpui-kumo/actions/runs/37128708107) succeeds for implementation da6ff47. [Contract/parts matrix/adaptations](../toolbar-validation.md), [browser/native results](../evidence/toolbar/README.md), [retained Base Link focus patch](../gpui-base-link-focus-patch.md). Full local gate passes190library/1gallery/9doctests, adapter12/14 and fmt/lint/builds. Browser/native Light/Dark1040/520 input/semantic/geometry matrices and visual review pass. Coverage is29/43 working families,14 unported.
+
+Next slice: Toolbar Input/InputGroup editing and caret-boundary navigation, then popup replacement. Full-family criteria below remain open for missing parts; passed action/link evidence does not establish speech, other platforms or arbitrary composition acceptance.
 
 ## GPUI Kit/Base foundation
 
 **Match: Direct counterpart.**
 
-Use/evaluate: Toolbar/ToolbarGroup + Button/Toggle/ToggleGroup and other hosted Base controls as source requires.
+Source exports Root/Button/Link/Input/InputGroup; Group and Separator are not public source parts. The action/link core uses Base Toolbar/Button/Link with retained owner navigation filling verified Base gaps.
 
 Limits: Base supports horizontal arrow focus among rendered descendants. Its disabled flag suppresses its own navigation only; the owner must disable hosted controls. Check source orientation/loop/entry/exit rules rather than claiming full roving-tabindex behavior.
 
@@ -45,4 +51,4 @@ Build on: Button, Switch/Checkbox, Dropdown where menu compositions require. The
 
 - [Kumo Toolbar source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/toolbar/toolbar.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
 - GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
-- Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+- Original tracker checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444` was43 scoped/18 implemented/25 unported; the current milestone above supersedes those counts. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.

@@ -2,7 +2,7 @@
 
 ## Toolbar action/link checkpoint — 2026-10-03
 
-Toolbar #35 now has a working retained native action/link core: joined quiet controls, roving Tab entry/last-focus reentry, source disabled/loading behavior, horizontal/vertical arrows, configurable looping, stable reordered focus, removal recovery, current-target navigation and narrow focused-control reveal. A narrow Base0.7.0 Link patch fixes its overwritten caller focus handle; versions stay pinned. Shared gallery section and focused preview are implemented. Coverage advances to **29/43 working families,14 unported**.
+Toolbar #35 now has a working retained native action/link core (pushed da6ff47; remote CI37128708107 succeeds): joined quiet controls, roving Tab entry/last-focus reentry, source disabled/loading behavior, horizontal/vertical arrows, configurable looping, stable reordered focus, removal recovery, current-target navigation and narrow focused-control reveal. A narrow Base0.7.0 Link patch fixes its overwritten caller focus handle; versions stay pinned. Shared gallery section and focused preview are implemented. Coverage advances to **29/43 working families,14 unported**.
 
 [Contract and remaining work](toolbar-validation.md), [browser/native evidence](evidence/toolbar/README.md). Source and native Light/Dark1040/520 matrices pass; full locked Rust gate passes190library/1gallery/9doctests plus adapter12/14, fmt, warning-denied lint and builds. Tabs edge-opacity checkpoint e96fa6b passes remote CI37125897947. #35 remains open. **Next slice: Toolbar Input/InputGroup editing and caret-boundary navigation**, followed by popup replacement/composition; RTL, full-gallery/platform/speech and existing family gaps remain explicit. Earlier entries below are historical.
 
