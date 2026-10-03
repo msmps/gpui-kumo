@@ -10,7 +10,7 @@ Port the supported **Dropdown** Kumo family to Rust/GPUI. The flat action-menu c
 
 ## Action core checkpoint — 2026-10-03
 
-Retained DropdownState/typed action parts/operation events, source keyboard-focusable disabled rows, arrow/Home/End/typeahead, once-only activation, Escape/Tab/outside lifecycle, reorder/removal/unmount recovery and bounded scrolling are implemented over Base Popup. Shared gallery Save actions and focused native preview are integrated. Six rendered regressions and browser/native Light/Dark1040/520 evidence cover the flat action core. [Contract/adaptations](../dropdown-validation.md), [evidence](../evidence/dropdown/README.md). Coverage30/43 working,13 unported is not full fidelity; #20 remains open. No version/vendor changes.
+Published implementation **e560a2d52e5ee3997c97de6e47017c7a272ecd92** passes the [remote macOS Rust gate37135561747](https://github.com/msmps/gpui-kumo/actions/runs/37135561747). Retained DropdownState/typed action parts/operation events, source keyboard-focusable disabled rows, arrow/Home/End/typeahead, once-only activation, Escape/Tab/outside lifecycle, reorder/removal/unmount recovery and bounded scrolling are implemented over Base Popup. Shared gallery Save actions and focused native preview are integrated. Six rendered regressions and browser/native Light/Dark1040/520 evidence cover the flat action core. [Contract/adaptations](../dropdown-validation.md), [evidence](../evidence/dropdown/README.md). Coverage30/43 working,13 unported is not full fidelity; #20 remains open. No version/vendor changes.
 
 ## GPUI Kit/Base foundation
 

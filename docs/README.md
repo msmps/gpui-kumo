@@ -82,3 +82,5 @@ Tabs: [core contract, native acceptance and remaining overflow/motion work](tabs
 Toolbar: [retained actions/links/editors, source/native evidence and remaining composition](toolbar-validation.md).
 
 Dropdown: [retained action-menu contract, evidence and remaining composition](dropdown-validation.md).
+
+Dialog: [source audit for the next announcement slice](dialog-validation.md) (unported).

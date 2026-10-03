@@ -1,5 +1,7 @@
 # Dropdown action-menu evidence
 
+Published implementation **e560a2d52e5ee3997c97de6e47017c7a272ecd92** passes the [remote macOS Rust gate37135561747](https://github.com/msmps/gpui-kumo/actions/runs/37135561747).
+
 Actual pinned Kumo Dropdown/Button imports and the retained native `kumo-gallery --example dropdown` Save actions demo. Exact dependency pins and patch provenance are unchanged. This is the flat action-menu core, not full family acceptance.
 
 Browser fixture: install `browser/package-lock.json`, provide the pinned reference at `/workspace/.kumo-reference`, run `node build.cjs` and Tailwind `-i input.css -o app.css`, serve port4183, then `node probe.cjs`. Playwright uses system Chromium. Generated bundles/node_modules are ignored. `browser/results.json` retains actual geometry and passing input outcomes.
