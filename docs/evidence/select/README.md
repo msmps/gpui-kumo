@@ -1,0 +1,7 @@
+# Select native evidence
+
+Pinned Kumo3fd5b648 / Kit-Base0.7.0 / GPUI0.3.7. Debian Linux, Xvfb:99/software Vulkan,1040×1000 and520×1000, light/dark. Gallery retained values, rejected proposals, disabled option02, long Unicode option00, read-only compact control, helper/optional label, invalid control, loading and30-option scroll.
+
+Closed/open/End/selected/loading captures record both themes and narrow layout. End scroll shows the last option with its inset brand ring, Enter commits29 and restores trigger; Home/Enter restores long option00. Multiple stays open with two checks. Dark narrow focus records the source inset focus ring. Inspect caret/check centre, multiline option centre, text/label/helper spacing, truncated current value and full option wrapping,6px inset popup backgrounds/8px corners and layer border/shadow continuity. Ordinary partial rows at a scroll viewport edge are expected; arbitrary rounded descendant clipping remains #5.
+
+Nine rendered tests plus full gate pass:144 tests/nine doctests, cargo fmt --all -- --check, cargo clippy --workspace --all-targets --all-features -- -D warnings, cargo build --workspace --all-targets --all-features. Pre-existing profiler warning remains visible. Detailed matrix/review/gaps: ../../select-validation.md. Screenshots do not establish browser pixels, native accessibility export/spoken behavior or keyboard callback counts; those are recorded separately.

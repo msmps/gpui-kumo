@@ -29,6 +29,7 @@ mod loaders;
 mod meters;
 mod popovers;
 mod radios;
+mod selects;
 mod sensitive_inputs;
 mod skeletons;
 mod switches;
@@ -91,6 +92,7 @@ struct Gallery {
     skeletons: gpui_kit::Entity<skeletons::Skeletons>,
     meters: gpui_kit::Entity<meters::Meters>,
     breadcrumbs: gpui_kit::Entity<breadcrumbs::Trails>,
+    selects: gpui_kit::Entity<selects::Selects>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -198,6 +200,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.selects.clone())
         .child(self.breadcrumbs.clone())
         .child(self.meters.clone())
         .child(self.skeletons.clone())
@@ -449,6 +452,7 @@ fn main() {
                             collapsibles: cx.new(|cx| collapsibles::Collapsibles::new(window, cx)),
                             meters: cx.new(|_| meters::Meters::default()),
                             breadcrumbs: cx.new(|_| breadcrumbs::Trails::default()),
+                            selects: cx.new(|cx| selects::Selects::new(window, cx)),
                             activations: 0,
                             disabled: false,
                             loading: false,

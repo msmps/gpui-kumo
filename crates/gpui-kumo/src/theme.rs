@@ -205,6 +205,8 @@ pub struct Effects {
     pub popover_outline_offset: Pixels,
     pub shadow_xs: Vec<BoxShadow>,
     pub shadow_md: Vec<BoxShadow>,
+    /// Pinned Tailwind shadow-lg used by Kumo selection popups.
+    pub shadow_lg: Vec<BoxShadow>,
     pub transition: Duration,
     pub popover_transition: Duration,
     pub easing: [f32; 4],
@@ -543,6 +545,14 @@ impl Theme {
                         .spread_radius(px(-2.)),
                 ],
                 transition: Duration::from_millis(100),
+                shadow_lg: vec![
+                    BoxShadow::new(px(0.), px(10.), black.alpha(0.1))
+                        .blur_radius(px(15.))
+                        .spread_radius(px(-3.)),
+                    BoxShadow::new(px(0.), px(4.), black.alpha(0.1))
+                        .blur_radius(px(6.))
+                        .spread_radius(px(-4.)),
+                ],
                 popover_transition: Duration::from_millis(150),
                 easing: [0.4, 0., 0.2, 1.],
             },

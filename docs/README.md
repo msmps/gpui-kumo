@@ -62,3 +62,5 @@ SkeletonLine: [acceptance/evidence](skeleton-line-validation.md).
 Meter: [acceptance/evidence/native adaptations](meter-validation.md).
 
 Breadcrumbs: [acceptance/evidence/native adaptations](breadcrumbs-validation.md).
+
+Select: [core acceptance, remaining composition and native evidence](select-validation.md).

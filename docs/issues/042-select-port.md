@@ -6,7 +6,7 @@ GitHub issue: https://github.com/msmps/gpui-kumo/issues/27
 
 ## Goal and status
 
-Port the supported **Select** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Select** Kumo family to Rust/GPUI. A validated core is implemented; groups/value composition and integration remain in progress; the issue covers its supported parts and public API, not just a static default-state demo.
 
 ## GPUI Kit/Base foundation
 
@@ -33,7 +33,7 @@ Build on: Button, Popover. These are dependencies, not a claim that every depend
 
 ## Shared fidelity and validation gate
 
-- [ ] Before coding, inspect the complete pinned Kumo source, styles, matching documentation/demos/tests and installed Base APIs; define a parts/variants/sizes/states/keyboard/focus/semantics parity matrix, explicitly marking N/A.
+- [x] Before coding, inspect the complete pinned Kumo source, styles, matching documentation/demos/tests and installed Base APIs; define a parts/variants/sizes/states/keyboard/focus/semantics parity matrix, explicitly marking N/A.
 - [ ] Keep Kumo semantic tokens, presentation and light/dark behavior authoritative. Use suitable Base behavior; avoid gpui-component default styling, duplicate state/listeners and entities recreated during render.
 - [ ] Add a realistic gallery example, observable regression tests and skeptical diff/render review. Run required formatting, tests, warning-denied workspace linting, builds and affected examples.
 - [ ] Inspect both themes at wide/narrow sizes: actual icon/control centres, text baselines, spacing/padding, clipping, rounded edges and agreement of fills/borders/rings/shadows across layers.
@@ -55,3 +55,8 @@ Selected after Breadcrumbs391113a. Complete pinned source/docs/tests/demos inspe
 Complete pinned Select source/docs/demos/tests and installed Base APIs inspected; [acceptance matrix](select-validation.md) established. Actual rendered Base regression exposed confirmation overwriting consumer-restored focus after popup closure. Narrow [Select focus repair](gpui-base-select-focus-patch.md) retains closed-to-open transfer and preserves trigger/outside focus after confirmation. Original fails, patched passes; independent review and135 tests/nine doctests, formatting, warning-denied all-target/all-feature Clippy/build pass. Existing profiler deprecation remains visible. No Select gallery/visual acceptance yet;25/43 implemented,18 unported unchanged. #27 remains active.
 
 Exact next action: implement typed retained option/selection/highlight ownership and Kumo-painted Base Select root/deferred list; validate actual input/callback/focus before extending rich/group/multiple compositions. Keep all source-theme/layout/platform criteria open until measured.
+
+
+## Core checkpoint
+
+144 tests/nine doctests and required Rust gates pass; native both-theme wide/narrow checks and reviewer findings/fixes are recorded in [Select acceptance](../select-validation.md). Core single/multiple selection is usable; full parts criteria remain open. Next: named groups/separators, custom value content, placements, native state metadata and parent Popover integration.26 working families/43 scoped;17 unported.

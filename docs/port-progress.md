@@ -10,7 +10,7 @@ Continue the component library beyond the first Button/Input/Popover evaluation.
 
 ## Coverage and ordered backlog
 
-Pinned catalog inventory: **43 in-scope component families,25 implemented with documented gaps,18 unported**. [Complete family list and counting rules](component-coverage.md). This is coverage, not a full-fidelity completion claim. Deprecated MenuBar/DateRangePicker/Surface are excluded; use segmented Tabs/DatePicker range/LayerCard. InputArea and SkeletonLine are supported catalog entries omitted by the earlier coarse backlog and now tracked explicitly.
+Pinned catalog inventory: **43 in-scope component families,26 implemented with documented gaps,17 unported**. [Complete family list and counting rules](component-coverage.md). This is coverage, not a full-fidelity completion claim. Deprecated MenuBar/DateRangePicker/Surface are excluded; use segmented Tabs/DatePicker range/LayerCard. InputArea and SkeletonLine are supported catalog entries omitted by the earlier coarse backlog and now tracked explicitly.
 
 | Priority | Components or work | Status / dependencies |
 | --- | --- | --- |
@@ -259,3 +259,10 @@ Next selected: Select #27. Highest-value collection primitive unlocks Pagination
 Complete pinned Select source/docs/demos/tests and installed Base APIs inspected; [acceptance matrix](select-validation.md) established. Actual rendered Base regression exposed confirmation overwriting consumer-restored focus after popup closure. Narrow [Select focus repair](gpui-base-select-focus-patch.md) retains closed-to-open transfer and preserves trigger/outside focus after confirmation. Original fails, patched passes; independent review and135 tests/nine doctests, formatting, warning-denied all-target/all-feature Clippy/build pass. Existing profiler deprecation remains visible. No Select gallery/visual acceptance yet;25/43 implemented,18 unported unchanged. #27 remains active.
 
 Exact next action: implement typed retained option/selection/highlight ownership and Kumo-painted Base Select root/deferred list; validate actual input/callback/focus before extending rich/group/multiple compositions. Keep all source-theme/layout/platform criteria open until measured.
+
+
+## Select core checkpoint / next milestone — 2026-10-03
+
+Typed retained Base Select core, single/multiple local/controlled proposals, custom equality/rich options, source four sizes/Field/loading/invalid paint, keyboard/typeahead/scroll/popup lifecycle implemented.144 tests/nine doctests and required Rust gates pass; nine new rendered regressions include actual controlled acceptance, disabled/outside focus, word-search Space, collision and weak factory unmount. Native both-theme1040/520 alignment/long text/caret/check/rings/rounded layers/End scroll and Enter/Escape reviewed. [Acceptance/evidence/gaps](select-validation.md). Base's disabled ComboBox metadata is also corrected in the same existing vendor source file; no version/API churn. Review fixes recorded in the matrix.26 working/43 scoped families;17 unported. #27 remains in progress.
+
+Exact next milestone: finish Select named groups/separators, custom value content, placements and native metadata; integrate child Select overlay boundaries with Popover, validate grouped scrolling and nested focus/owner removal, then review/gate/commit/non-force push. Full source/browser/platform acceptance remains open; do not skip to Pagination before this supported composition work.

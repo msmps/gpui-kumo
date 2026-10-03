@@ -41,6 +41,7 @@ pub fn init(cx: &mut App) {
     gpui_kit::init(cx);
     popover::init(cx);
     tooltip::init(cx);
+    select::init(cx);
     set_theme(Theme::new(Appearance::Light), cx);
 }
 
@@ -88,3 +89,6 @@ pub use breadcrumbs::{BreadcrumbClipboard, BreadcrumbCurrent, Breadcrumbs};
 
 #[cfg(test)]
 mod select_base_tests;
+
+pub mod select;
+pub use select::{Select, SelectEvent, SelectOption, SelectState, SelectValue};
