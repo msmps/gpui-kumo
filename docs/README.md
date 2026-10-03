@@ -50,3 +50,5 @@ The first slice has pinned Kumo references, an application-owned typed theme, a 
 For current catalog counts and explicit exclusions, see [component coverage](component-coverage.md).
 
 SensitiveInput: [acceptance, native adaptations and evidence](sensitive-input-validation.md).
+
+InputArea: [acceptance/evidence](input-area-validation.md), [Base growth patch](gpui-base-textarea-growth-patch.md).

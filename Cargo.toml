@@ -20,3 +20,7 @@ unsafe_code = "forbid"
 # Exact0.3.7 source plus the documented TabStopMap correction.
 [patch.crates-io]
 gpui-pre = { path = "vendor/gpui-pre-0.3.7" }
+
+# Preserve Textarea intrinsic growth when policy, width or font changes.
+# Exact0.7.0 source plus the documented display-map row reconciliation.
+gpui-base = { path = "vendor/gpui-base-0.7.0" }

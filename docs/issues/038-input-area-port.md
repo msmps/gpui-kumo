@@ -1,12 +1,12 @@
 # KUMO-038: Port InputArea with Kumo fidelity over GPUI Base
 
-Status: Open
+Status: Working implementation; acceptance gaps remain open
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/23
 
 ## Goal and status
 
-Port the supported **InputArea** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **InputArea** Kumo family to Rust/GPUI. The working native implementation is present; the issue covers its supported parts and public API, not just a static default-state demo.
 
 ## GPUI Kit/Base foundation
 
@@ -44,3 +44,7 @@ Build on: Input, Field, Tooltip. These are dependencies, not a claim that every 
 - [Kumo InputArea source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/input/input-area.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
 - GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
 - Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+
+## Validated implementation checkpoint — 2026-10-03
+
+Retained Textarea/Field integration, row bounds and four sizes implemented.113 tests/nine doctests and Rust gate pass; native light/dark wide/narrow cap/shrink/clipboard/policy/Tab reviewed. Narrow Base row-growth defect repaired without text resets, dependency versions unchanged. [Detailed matrix and remaining resize/scrollbar/rich/platform accessibility gaps](../input-area-validation.md); [consumer root patch](../gpui-base-textarea-growth-patch.md). Keep open until remaining acceptance items resolved.

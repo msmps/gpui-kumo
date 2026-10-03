@@ -23,3 +23,5 @@ cargo clippy --workspace --all-targets -- -D warnings
 Choose Light or Dark, or press Command-L, to switch appearance. Close the window or press Command-Q to quit. Linux headless gallery checks are recorded per component; platform accessibility and macOS checks remain separately tracked.
 
 Read the [implementation plan](docs/implementation-plan.md) for milestones and the [docs index](docs/README.md) before implementing components.
+
+The retained Textarea uses a narrow [gpui-base0.7.0 growth patch](docs/gpui-base-textarea-growth-patch.md). Downstream Cargo roots must include both documented patches to reproduce this workspace behavior.

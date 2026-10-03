@@ -67,3 +67,6 @@ pub use tooltip::{Tooltip, TooltipEvent, TooltipProvider, TooltipState};
 
 pub mod sensitive_input;
 pub use sensitive_input::{SensitiveInput, SensitiveInputEvent, SensitiveInputState};
+
+pub mod input_area;
+pub use input_area::{InputArea, InputAreaEvent, InputAreaState, Textarea};
