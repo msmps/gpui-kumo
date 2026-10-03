@@ -408,6 +408,7 @@ impl RenderOnce for Banner {
                     .test_support()
                     .role(Role::Label)
                     .aria_label(title.clone())
+                    .aria_value(title.clone())
                     .min_w_0()
                     .whitespace_normal()
                     .font_weight(FontWeight::MEDIUM)
@@ -423,9 +424,11 @@ impl RenderOnce for Banner {
                 .line_height(relative(1.375))
                 .whitespace_normal();
             slot = match description {
-                Description::Text(text) => {
-                    slot.role(Role::Label).aria_label(text.clone()).child(text)
-                }
+                Description::Text(text) => slot
+                    .role(Role::Label)
+                    .aria_label(text.clone())
+                    .aria_value(text.clone())
+                    .child(text),
                 Description::Content(content) => slot.child(content),
             };
             content = content.child(slot);

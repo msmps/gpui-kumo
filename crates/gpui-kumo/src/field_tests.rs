@@ -36,6 +36,7 @@ fn labels_forward_focus_without_duplicating_control_value_and_errors_replace_hel
     cx.update(|window, cx| {
         window.render_frame(cx);
         assert_eq!(window.find("label").label(), Some("Phone (optional)"));
+        assert_eq!(window.find("label").value(), Some("Phone (optional)"));
         assert_eq!(
             window.find("message").label(),
             Some("Account recovery only")

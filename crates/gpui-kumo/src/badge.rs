@@ -168,6 +168,7 @@ impl<P> Badge<P> {
             .test_support()
             .role(Role::Label)
             .aria_label(self.label.clone())
+            .aria_value(self.label.clone())
             .flex()
             .flex_none()
             .self_start()

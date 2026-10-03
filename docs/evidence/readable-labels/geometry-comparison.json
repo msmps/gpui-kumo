@@ -1,0 +1,38 @@
+[
+  {
+    "theme": "Light",
+    "width": 1040,
+    "label_count": 143,
+    "unnamed_before": 139,
+    "unnamed_after": 0,
+    "identical_geometry": true,
+    "changed_bounds": 0
+  },
+  {
+    "theme": "Dark",
+    "width": 1040,
+    "label_count": 143,
+    "unnamed_before": 139,
+    "unnamed_after": 0,
+    "identical_geometry": true,
+    "changed_bounds": 0
+  },
+  {
+    "theme": "Dark",
+    "width": 520,
+    "label_count": 143,
+    "unnamed_before": 139,
+    "unnamed_after": 0,
+    "identical_geometry": true,
+    "changed_bounds": 0
+  },
+  {
+    "theme": "Light",
+    "width": 520,
+    "label_count": 143,
+    "unnamed_before": 139,
+    "unnamed_after": 0,
+    "identical_geometry": true,
+    "changed_bounds": 0
+  }
+]

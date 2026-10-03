@@ -82,10 +82,12 @@ All 25 unported families have one confirmed GitHub issue each (#11–#35), linke
 
 Shared follow-up: [KUMO-051 — disabled Buttons export Enabled/Sensitive on Linux](051-linux-disabled-button-state.md) ([#36](https://github.com/msmps/gpui-kumo/issues/36)), In progress. Found through Pagination's actual AT-SPI gate; applies to all Buttons.
 
-Selected first: [KUMO-052 — readable values on Label nodes](052-readable-label-values.md) ([#37](https://github.com/msmps/gpui-kumo/issues/37)), In progress. Same native gate exposed the distinction between authored aria_label and platform names; affects Text/Label/Badge/Banner/BreadcrumbCurrent.
+Completed foundation: [KUMO-052 — readable values on Label nodes](052-readable-label-values.md) ([#37](https://github.com/msmps/gpui-kumo/issues/37)), Resolved. Same native gate exposed the distinction between authored aria_label and platform names; affects Text/Label/Badge/Banner/BreadcrumbCurrent.
 
 - Keep IDs and filenames stable. Add new issues using the next unused ID.
 - Update the issue's status and this index together. Use Open, In progress, Blocked or Resolved; record the reason when blocked.
 - When resolving an issue, add the relevant commit or PR and verification evidence. Keep the file as history.
 - When GitHub access is restored, check for existing issues before publishing. Record the resulting URL in the individual file and keep its local ID in the GitHub issue body for traceability.
 - Continue tracking work here until publication is confirmed. A prepared draft or failed API request does not mean an issue exists on GitHub.
+
+Visual follow-up: [KUMO-053 — rich Text highlight font fidelity](053-rich-text-highlight-font.md) ([#38](https://github.com/msmps/gpui-kumo/issues/38)), Open. Native review discovered an existing serif-looking highlight; inspect pinned shaping/font resolution before changing typography.

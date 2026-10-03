@@ -94,7 +94,8 @@ impl RenderOnce for Label {
             .test_support()
             .when(!self.as_content, |this| {
                 this.role(Role::Label)
-                    .aria_label(name)
+                    .aria_label(name.clone())
+                    .aria_value(name)
                     .on_mouse_down(gpui_kit::MouseButton::Left, |_, window, _| {
                         window.prevent_default()
                     })

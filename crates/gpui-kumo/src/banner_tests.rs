@@ -218,6 +218,7 @@ fn structured_variants_and_sizes_keep_source_geometry_and_distinct_icon_roles(
                 assert_eq!(icon.origin.y - root.origin.y, px(12.));
                 assert!((f32::from(icon.size.height) - 19.25).abs() <= 0.5);
                 assert_eq!(title.label(), Some("Message"));
+                assert_eq!(title.value(), Some("Message"));
                 assert_eq!(title.role(), Some(Role::Label));
                 assert!(
                     (f32::from(description.origin.y - title.bounds().bottom()) - 2.).abs() <= 0.5

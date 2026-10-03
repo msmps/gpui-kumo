@@ -237,6 +237,9 @@ impl RenderOnce for Text {
         }
         if let Some(level) = self.heading_level {
             element = element.role(Role::Heading).aria_level(level as usize);
+        } else {
+            // AccessKit derives a Label's platform name from its readable value.
+            element = element.aria_value(self.content.clone());
         }
         if self.truncate {
             element = element.truncate();

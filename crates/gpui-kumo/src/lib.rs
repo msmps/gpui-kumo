@@ -101,3 +101,6 @@ pub use pagination::{
     Pagination, PaginationEvent, PaginationInfo, PaginationInfoValue, PaginationLabels,
     PaginationParts, PaginationSeparator, PaginationState, PaginationTotal,
 };
+
+#[cfg(test)]
+mod readable_label_tests;

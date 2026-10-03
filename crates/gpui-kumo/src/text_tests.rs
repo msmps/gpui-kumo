@@ -199,7 +199,9 @@ fn truncation_preserves_full_accessible_content_and_repeated_labels_keep_identit
         let body = window.find("body");
         let repeated = window.find("repeated");
         assert_eq!(body.label(), Some("Same text"));
+        assert_eq!(body.value(), Some("Same text"));
         assert_eq!(repeated.label(), Some("Same text"));
+        assert_eq!(repeated.value(), Some("Same text"));
         assert_ne!(body.path(), repeated.path());
         assert_eq!(window.find("heading").role(), Some(Role::Label));
         assert_eq!(window.find("large").role(), Some(Role::Heading));

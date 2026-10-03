@@ -3,8 +3,8 @@ use gpui_kit::{
     Window,
 };
 use gpui_kumo::{
-    Field, Input, InputGroup, InputGroupAddon, InputState, Theme, TooltipProvider, TooltipState,
-    theme,
+    Field, Input, InputGroup, InputGroupAddon, InputState, Label, Theme, TooltipProvider,
+    TooltipState, theme,
 };
 pub(super) struct Fields {
     input: Entity<InputState>,
@@ -39,7 +39,10 @@ impl Render for Fields {
         TooltipProvider::new(
             "field-tooltips",
             [self.tooltip.downgrade(), self.direct_help.downgrade(), self.group_help.downgrade()],
-            super::panel(theme(cx), "Field · shared and built-in contextual help").child(
+            super::panel(theme(cx), "Field · shared and built-in contextual help")
+            .child(Label::new("standalone-label", "Standalone label café 🦀")
+                .optional(true).focus_target(&focus))
+            .child(
                 Field::new(
                     "phone",
                     "Phone number",

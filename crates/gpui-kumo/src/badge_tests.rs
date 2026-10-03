@@ -76,6 +76,7 @@ fn filled_variants_preserve_content_width_typography_and_theme_roles(cx: &mut Te
                 );
                 assert_eq!(window.find(id).role(), Some(Role::Label));
                 assert_eq!(window.find(id).label(), Some(id));
+                assert_eq!(window.find(id).value(), Some(id));
                 let style = &styles.borrow()[id];
                 assert_eq!(style.font_family.as_ref(), "Consumer Font");
                 assert_eq!(style.font_size, px(12.).into());

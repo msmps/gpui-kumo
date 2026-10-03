@@ -62,6 +62,7 @@ impl RenderOnce for BreadcrumbCurrent {
             .when(!self.loading, |this| {
                 this.role(Role::Label)
                     .aria_label(self.label.clone())
+                    .aria_value(self.label.clone())
                     .font_weight(FontWeight::MEDIUM)
                     .a11y_synthetic_children(|builder| {
                         builder
