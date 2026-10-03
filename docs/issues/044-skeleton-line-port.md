@@ -1,12 +1,12 @@
 # KUMO-044: Port SkeletonLine with Kumo fidelity over GPUI Base
 
-Status: Open
+Status: Working checkpoint; open browser/platform acceptance
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/29
 
 ## Goal and status
 
-Port the supported **SkeletonLine** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **SkeletonLine** Kumo family to Rust/GPUI. Working implementation is available; the issue covers its supported parts and public API, not just a static default-state demo.
 
 ## GPUI Kit/Base foundation
 
@@ -44,3 +44,7 @@ Build on: Semantic tokens, Motion policy. These are dependencies, not a claim th
 - [Kumo SkeletonLine source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/loader/skeleton-line.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
 - GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
 - Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+
+## Checkpoint — 2026-10-03
+
+125 tests/nine doctests, required Rust gate and native wide/narrow animated/static both-theme review pass. [Matrix/evidence/native adaptations](../skeleton-line-validation.md). Browser comparison/OS policy delivery remain separate acceptance gates.

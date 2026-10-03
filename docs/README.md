@@ -56,3 +56,5 @@ InputArea: [acceptance/evidence](input-area-validation.md), [Base growth patch](
 InlineCopyText: [acceptance/evidence](inline-copy-text-validation.md).
 
 Collapsible: [acceptance/evidence](collapsible-validation.md).
+
+SkeletonLine: [acceptance/evidence](skeleton-line-validation.md).

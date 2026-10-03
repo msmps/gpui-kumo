@@ -28,6 +28,7 @@ mod loaders;
 mod popovers;
 mod radios;
 mod sensitive_inputs;
+mod skeletons;
 mod switches;
 mod texts;
 mod tooltips;
@@ -85,6 +86,7 @@ struct Gallery {
     input_areas: gpui_kit::Entity<input_areas::InputAreas>,
     inline_copies: gpui_kit::Entity<inline_copies::InlineCopies>,
     collapsibles: gpui_kit::Entity<collapsibles::Collapsibles>,
+    skeletons: gpui_kit::Entity<skeletons::Skeletons>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -192,6 +194,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.skeletons.clone())
         .child(self.collapsibles.clone())
         .child(self.inline_copies.clone())
         .child(self.input_areas.clone())
@@ -436,6 +439,7 @@ fn main() {
                                 .new(|cx| sensitive_inputs::SensitiveInputs::new(window, cx)),
                             input_areas: cx.new(|cx| input_areas::InputAreas::new(window, cx)),
                             inline_copies: cx.new(|_| inline_copies::InlineCopies::new()),
+                            skeletons: cx.new(|_| skeletons::Skeletons),
                             collapsibles: cx.new(|cx| collapsibles::Collapsibles::new(window, cx)),
                             activations: 0,
                             disabled: false,

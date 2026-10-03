@@ -112,6 +112,13 @@ pub struct SwitchColors {
     pub neutral_on_thumb: Hsla,
 }
 
+/// Pinned SkeletonLine CSS colors, distinct from neutral semantic surfaces.
+#[derive(Clone, Debug)]
+pub struct SkeletonColors {
+    pub base: Hsla,
+    pub shimmer: Hsla,
+}
+
 /// Native policies filling gaps in the web recipes, kept distinct from upstream.
 #[derive(Clone, Debug)]
 pub struct NativeColors {
@@ -252,6 +259,7 @@ pub struct Theme {
     pub native: NativeColors,
     pub badge: BadgeColors,
     pub switch: SwitchColors,
+    pub skeleton: SkeletonColors,
     pub banner: BannerAccents,
     pub typography: Typography,
     pub spacing: Spacing,
@@ -389,6 +397,18 @@ impl Theme {
         };
         Self {
             appearance,
+            skeleton: SkeletonColors {
+                base: if dark {
+                    white.alpha(0.06)
+                } else {
+                    rgb(0xf3f4f6).into()
+                },
+                shimmer: if dark {
+                    white.alpha(0.05)
+                } else {
+                    black.alpha(0.08)
+                },
+            },
             switch: SwitchColors {
                 off_track: neutral(0.922, 0.371),
                 off_ring: neutral(0.87, 0.439),

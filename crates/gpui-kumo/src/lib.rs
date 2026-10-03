@@ -76,3 +76,6 @@ pub use inline_copy_text::InlineCopyText;
 
 pub mod collapsible;
 pub use collapsible::{Collapsible, CollapsiblePanel};
+
+pub mod skeleton_line;
+pub use skeleton_line::SkeletonLine;
