@@ -3,8 +3,8 @@ use gpui_kit::{
     div, px,
 };
 use gpui_kumo::{
-    Button, Select, SelectEvent, SelectGroup, SelectOption, SelectPart, SelectState, SelectValue,
-    SelectValueContent,
+    Button, Popover, PopoverState, Select, SelectEvent, SelectGroup, SelectOption, SelectPart,
+    SelectState, SelectValue, SelectValueContent,
     select::{Align, Placement, Size},
     theme,
 };
@@ -16,6 +16,8 @@ pub struct Selects {
     proposals: usize,
     loading: bool,
     compact: Entity<SelectState<u32>>,
+    popover: Entity<PopoverState>,
+    nested_select: Entity<SelectState<u32>>,
     _subscription: Subscription,
 }
 fn options() -> Vec<SelectOption<u32>> {
@@ -122,6 +124,15 @@ impl Selects {
             disabled,
             proposals: 0,
             loading: false,
+            popover: cx.new(|cx| PopoverState::new("Nested region settings", cx)),
+            nested_select: cx.new(|cx| {
+                SelectState::new(
+                    "Nested deployment region",
+                    SelectValue::Single(Some(1)),
+                    options().into_iter().take(9).collect(),
+                    cx,
+                )
+            }),
             compact: cx.new(|cx| {
                 let mut s = SelectState::new(
                     "Compact read-only region",
@@ -138,6 +149,7 @@ impl Selects {
 }
 impl Render for Selects {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let nested_select = self.nested_select.clone();
         crate::panel(
             theme(cx),
             "Select · retained values, keyboard navigation and owner proposals",
@@ -179,6 +191,29 @@ impl Render for Selects {
                 v.loading = !v.loading;
                 cx.notify();
             })),
+        )
+        .child(
+            Popover::new(
+                "nested-region-settings",
+                &self.popover,
+                "Nested region settings",
+            )
+            .width(px(260.))
+            .content(move |parent, _, _| {
+                div()
+                    .flex()
+                    .flex_col()
+                    .gap(px(12.))
+                    .child(
+                        Select::new("nested-deployment-region", &nested_select)
+                            .parent(&parent)
+                            .label(true),
+                    )
+                    .child(
+                        Button::new("done-region-settings", "Done")
+                            .on_click(move |_, window, cx| parent.dismiss(window, cx)),
+                    )
+            }),
         )
         .child(div().h(px(8.)))
     }

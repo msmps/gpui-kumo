@@ -72,3 +72,7 @@ Exact next action: implement typed retained option/selection/highlight ownership
 ## Custom value / placement checkpoint
 
 150 tests/nine doctests and required Rust gates pass. Retained typed decorative selected content/readable metadata, null/None fallback, empty multiple/loading and four-side/three-align/gap controls are implemented. Weak factory lifetime and source cross-axis/collision adaptations documented; native both-theme wide/narrow Badge count2→1, ellipsis/right-end popup alignment/corners/layers reviewed. [Evidence/gaps](../select-validation.md). Next: nested Select/Popover boundary/focus/dismissal/unmount integration. Issue remains in progress.
+
+## Nested overlay / retained-state checkpoint
+
+Weak parent boundary/dismissal integration and mount-scoped cleanup implemented.156 tests/nine doctests and required Rust gates pass; six actual-render regressions and live Linux pointer/AT-SPI/two-stage Escape checks pass in both themes at1040/520. Review reproduced and fixed retained-state unmount leakage; remount preserves value. [Evidence/limitations](../select-validation.md). Remaining source API/browser/platform criteria stay open; next family Pagination #26.

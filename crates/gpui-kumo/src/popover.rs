@@ -44,6 +44,42 @@ impl PopoverClose {
     pub fn dismiss(&self, window: &mut Window, cx: &mut App) {
         let _ = self.state.update(cx, |state, cx| state.dismiss(window, cx));
     }
+    pub(crate) fn entity(&self) -> Option<Entity<PopoverState>> {
+        self.state.upgrade()
+    }
+    pub(crate) fn same_parent(&self, other: &Self) -> bool {
+        self.state.entity_id() == other.state.entity_id()
+    }
+    pub(crate) fn attach_overlay(&self, overlay: &Rc<ChildOverlay>, cx: &mut App) {
+        let _ = self.state.update(cx, |state, _| {
+            state.overlays.retain(|child| child.upgrade().is_some());
+            let child = Rc::downgrade(overlay);
+            if !state
+                .overlays
+                .iter()
+                .any(|existing| existing.ptr_eq(&child))
+            {
+                state.overlays.push(child);
+            }
+        });
+    }
+    pub(crate) fn detach_overlay(&self, overlay: &Rc<ChildOverlay>, cx: &mut App) {
+        let _ = self.state.update(cx, |state, _| {
+            let child = Rc::downgrade(overlay);
+            state
+                .overlays
+                .retain(|existing| !existing.ptr_eq(&child) && existing.upgrade().is_some());
+        });
+    }
+}
+
+type ContainsOverlay = dyn Fn(&gpui_kit::Point<Pixels>, &App) -> bool;
+type DismissOverlay = dyn Fn(&mut Window, &mut App);
+/// Concrete boundary/lifecycle capability for non-Popover child surfaces.
+/// The owner retains this capability; parent registrations retain only Weak.
+pub(crate) struct ChildOverlay {
+    pub contains: Box<ContainsOverlay>,
+    pub dismiss: Box<DismissOverlay>,
 }
 
 type ContentBuilder = Rc<dyn Fn(PopoverClose, &mut Window, &mut App) -> AnyElement>;
@@ -90,6 +126,7 @@ pub struct PopoverState {
     resolved_position: Rc<Cell<Option<base::ResolvedPosition>>>,
     parent: Option<gpui_kit::WeakEntity<PopoverState>>,
     children: Vec<gpui_kit::WeakEntity<PopoverState>>,
+    overlays: Vec<std::rc::Weak<ChildOverlay>>,
     _theme_subscription: Subscription,
 }
 
@@ -117,6 +154,7 @@ impl PopoverState {
             resolved_position: Rc::new(Cell::new(None)),
             parent: None,
             children: Vec::new(),
+            overlays: Vec::new(),
             _theme_subscription: cx.observe_global::<Theme>(|_, cx| cx.notify()),
         }
     }
@@ -152,6 +190,10 @@ impl PopoverState {
                 let _ = child.update(cx, |child, cx| child.dismiss(window, cx));
             }
             self.children.retain(|child| child.upgrade().is_some());
+            for child in self.overlays.iter().filter_map(std::rc::Weak::upgrade) {
+                (child.dismiss)(window, cx);
+            }
+            self.overlays.retain(|child| child.upgrade().is_some());
             self.deferred_context = None;
             if self.content_focus.contains_focused(window, cx) {
                 if let Some(previous) = self
@@ -174,18 +216,23 @@ impl PopoverState {
     // Deferred children paint beyond their ancestor's hitbox. Treat every open
     // descendant surface as inside the same dismissal boundary.
     fn contains_descendant(&self, point: &gpui_kit::Point<Pixels>, cx: &App) -> bool {
-        self.children
+        self.overlays
             .iter()
-            .filter_map(|child| child.upgrade())
-            .any(|child| {
-                let child = child.read(cx);
-                child.open
-                    && (child
-                        .resolved_position
-                        .get()
-                        .is_some_and(|position| position.bounds.contains(point))
-                        || child.contains_descendant(point, cx))
-            })
+            .filter_map(std::rc::Weak::upgrade)
+            .any(|child| (child.contains)(point, cx))
+            || self
+                .children
+                .iter()
+                .filter_map(|child| child.upgrade())
+                .any(|child| {
+                    let child = child.read(cx);
+                    child.open
+                        && (child
+                            .resolved_position
+                            .get()
+                            .is_some_and(|position| position.bounds.contains(point))
+                            || child.contains_descendant(point, cx))
+                })
     }
 
     pub fn dismiss(&mut self, window: &mut Window, cx: &mut Context<Self>) {

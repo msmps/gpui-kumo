@@ -1,4 +1,7 @@
 //! Retained typed Kumo Select over Base disclosure and deferred positioning.
+#[cfg(test)]
+#[path = "select_overlay_tests.rs"]
+mod overlay_tests;
 #[path = "select_semantics.rs"]
 mod semantics;
 #[cfg(test)]
@@ -28,7 +31,11 @@ pub(crate) fn init(cx: &mut App) {
             base::actions::Confirm { secondary: false },
             Some("KumoSelect"),
         ),
-        KeyBinding::new("escape", base::actions::Cancel, Some("KumoSelect")),
+        KeyBinding::new(
+            "escape",
+            base::actions::Cancel,
+            Some("KumoSelect && select_open"),
+        ),
     ]);
 }
 
@@ -193,6 +200,11 @@ pub struct SelectState<T: Clone + PartialEq + 'static> {
     hovered: bool,
     _theme: Subscription,
     focus_out: Option<Subscription>,
+    overlay: Rc<crate::popover::ChildOverlay>,
+    parent: Option<crate::popover::PopoverClose>,
+    parent_release: Option<Subscription>,
+    mount: std::rc::Weak<semantics::Mount>,
+    mounted_once: bool,
 }
 impl<T: Clone + PartialEq + 'static> EventEmitter<SelectEvent<T>> for SelectState<T> {}
 impl<T: Clone + PartialEq + 'static> SelectState<T> {
@@ -212,6 +224,21 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             .map(SelectPart::Option)
             .collect::<Vec<_>>();
         Self::check_ids(&parts);
+        let owner = cx.entity().downgrade();
+        let contains_owner = owner.clone();
+        let overlay = Rc::new(crate::popover::ChildOverlay {
+            contains: Box::new(move |point, cx| {
+                contains_owner.upgrade().is_some_and(|owner| {
+                    let state: &Self = owner.read(cx);
+                    state.open
+                        && state.mount.upgrade().is_some()
+                        && state.popup_bounds.get().contains(point)
+                })
+            }),
+            dismiss: Box::new(move |window, cx| {
+                let _ = owner.update(cx, |state: &mut Self, cx| state.set_open(false, window, cx));
+            }),
+        });
         Self {
             name,
             parts,
@@ -243,6 +270,11 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             hovered: false,
             _theme: cx.observe_global::<Theme>(|_, cx| cx.notify()),
             focus_out: None,
+            overlay,
+            parent: None,
+            parent_release: None,
+            mount: std::rc::Weak::new(),
+            mounted_once: false,
         }
     }
     fn check_ids(parts: &[SelectPart<T>]) {
@@ -356,7 +388,16 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         cx.notify();
     }
     pub fn set_open(&mut self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
-        if self.open == open || (open && self.unavailable()) {
+        if self.open == open || (open && (self.unavailable() || self.is_unmounted())) {
+            return;
+        }
+        if open
+            && self.parent.as_ref().is_some_and(|parent| {
+                parent
+                    .entity()
+                    .is_none_or(|parent| !parent.read(cx).is_open())
+            })
+        {
             return;
         }
         self.open = open;
@@ -380,8 +421,29 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         }
         cx.notify();
     }
+    // Detachment preserves value but excludes stale popup state without restoring an unmounted trigger.
+    fn discard_popup(&mut self, cx: &mut Context<Self>) {
+        self.open = false;
+        self.deferred = None;
+        self.prefix.clear();
+        self.typed_at = None;
+        self.hovered = false;
+        cx.notify();
+    }
+    fn blur_removed_focus(&self, handle: gpui_kit::AnyWindowHandle, cx: &mut App) {
+        let content = self.content.clone();
+        let trigger = self.trigger.clone();
+        let _ = handle.update(cx, |_, window, cx| {
+            if content.contains_focused(window, cx) || trigger.is_focused(window) {
+                window.blur(cx);
+            }
+        });
+    }
     fn unavailable(&self) -> bool {
         self.disabled || self.loading
+    }
+    fn is_unmounted(&self) -> bool {
+        self.mounted_once && self.mount.upgrade().is_none()
     }
     fn selected(&self, value: &T) -> bool {
         match &self.value {
@@ -419,7 +481,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         self.propose(id, window, cx);
     }
     fn propose(&mut self, id: &ElementId, window: &mut Window, cx: &mut Context<Self>) {
-        if self.unavailable() || self.read_only {
+        if self.unavailable() || self.read_only || self.is_unmounted() {
             return;
         }
         let Some(option) = self.options().find(|o| &o.id == id && !o.disabled) else {
@@ -593,6 +655,7 @@ pub struct Select<T: Clone + PartialEq + 'static> {
     required: bool,
     description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
+    parent: Option<crate::popover::PopoverClose>,
 }
 impl<T: Clone + PartialEq + 'static> Select<T> {
     pub fn new(id: impl Into<ElementId>, state: &Entity<SelectState<T>>) -> Self {
@@ -610,10 +673,17 @@ impl<T: Clone + PartialEq + 'static> Select<T> {
             required: true,
             description: None,
             error: None,
+            parent: None,
         }
     }
     pub fn placement(mut self, placement: Placement) -> Self {
         self.placement = placement;
+        self
+    }
+    /// Include this child surface in the parent Popover's dismissal boundary.
+    /// Parent closure dismisses this Select; reassigning or omitting detaches it.
+    pub fn parent(mut self, parent: &crate::popover::PopoverClose) -> Self {
+        self.parent = Some(parent.clone());
         self
     }
     pub fn align(mut self, align: Align) -> Self {
@@ -664,6 +734,45 @@ impl<T: Clone + PartialEq + 'static> Select<T> {
 }
 impl<T: Clone + PartialEq + 'static> RenderOnce for Select<T> {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let previous = self.state.read(cx).parent.clone();
+        let same_parent = match (&previous, &self.parent) {
+            (Some(previous), Some(parent)) => previous.same_parent(parent),
+            (None, None) => true,
+            _ => false,
+        };
+        if !same_parent {
+            let overlay = self.state.read(cx).overlay.clone();
+            if let Some(previous) = &previous {
+                previous.detach_overlay(&overlay, cx);
+            }
+            if let Some(parent) = &self.parent {
+                parent.attach_overlay(&overlay, cx);
+            }
+            self.state.update(cx, |state, cx| {
+                state.parent_release =
+                    self.parent
+                        .as_ref()
+                        .and_then(|parent| parent.entity())
+                        .map(|parent| {
+                            let window_handle = window.window_handle();
+                            cx.observe_release(&parent, move |state, _, cx| {
+                                // Release state even if its original window is already gone.
+                                state.discard_popup(cx);
+                                state.blur_removed_focus(window_handle, cx);
+                            })
+                        });
+                state.parent = self.parent;
+                if state.open
+                    && state.parent.as_ref().is_some_and(|parent| {
+                        parent
+                            .entity()
+                            .is_none_or(|parent| !parent.read(cx).is_open())
+                    })
+                {
+                    state.set_open(false, window, cx);
+                }
+            });
+        }
         self.state.update(cx, |v, cx| {
             v.size = self.size;
             v.placement = self.placement;
@@ -729,6 +838,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         let bounds = self.bounds.clone();
         let owner = cx.entity().downgrade();
         let open_owner = cx.entity().downgrade();
+        let mount_owner = open_owner.clone();
         let confirm_owner = open_owner.clone();
         let ring_focus = self.trigger.clone();
         let invalid = self.invalid;
@@ -738,7 +848,11 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             .disabled(disabled)
             .focus_handle(&self.trigger)
             .content_focus_handle(&self.content)
-            .key_context("KumoSelect")
+            .key_context(if open {
+                "KumoSelect select_open"
+            } else {
+                "KumoSelect"
+            })
             .accessibility_label(self.name.clone())
             .accessibility_value(readable)
             .on_open_change(move |open, window, cx| {
@@ -877,6 +991,45 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             read_only: self.read_only,
             invalid: self.invalid,
             description: self.description.clone(),
+            mount: Box::new({
+                let owner = mount_owner;
+                move |window, cx| {
+                    let executor = cx.foreground_executor().clone();
+                    let app = cx.to_async();
+                    let handle = window.window_handle();
+                    let cleanup_owner = owner.clone();
+                    let mount = Rc::new(semantics::Mount::new(move || {
+                        // Element-state GC occurs during a frame; defer entity updates
+                        // until the app/window borrow has ended.
+                        executor
+                            .spawn(async move {
+                                if cleanup_owner.upgrade().is_none() {
+                                    return;
+                                }
+                                app.update(|cx| {
+                                    let _ = cleanup_owner.update(cx, |state: &mut Self, cx| {
+                                        // A new identity may already have remounted this state.
+                                        if state.mount.upgrade().is_some() {
+                                            return;
+                                        }
+                                        if let Some(parent) = state.parent.take() {
+                                            parent.detach_overlay(&state.overlay, cx);
+                                        }
+                                        state.parent_release = None;
+                                        state.discard_popup(cx);
+                                        state.blur_removed_focus(handle, cx);
+                                    });
+                                });
+                            })
+                            .detach();
+                    }));
+                    let _ = owner.update(cx, |state: &mut Self, _| {
+                        state.mount = Rc::downgrade(&mount);
+                        state.mounted_once = true;
+                    });
+                    mount
+                }
+            }),
         }
     }
 }
@@ -902,7 +1055,11 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
             .relative()
             .w_full()
             .min_w_0()
-            .key_context("KumoSelect")
+            .key_context(if open {
+                "KumoSelect select_open"
+            } else {
+                "KumoSelect"
+            })
             .capture_any_mouse_down(cx.listener(|v, _, window, cx| {
                 if v.unavailable() {
                     window.prevent_default();

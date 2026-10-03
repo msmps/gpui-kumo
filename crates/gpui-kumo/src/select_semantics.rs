@@ -3,6 +3,27 @@ use gpui_kit::{
     A11ySubtreeBuilder, App, Bounds, Element, ElementId, GlobalElementId, InspectorElementId,
     IntoElement, LayoutId, Pixels, Role, SharedString, Window, accesskit,
 };
+use std::rc::Rc;
+
+/// Retained only by GPUI's mounted element state, never by SelectState.
+pub(super) struct Mount {
+    cleanup: Option<Box<dyn FnOnce()>>,
+}
+impl Mount {
+    pub fn new(cleanup: impl FnOnce() + 'static) -> Self {
+        Self {
+            cleanup: Some(Box::new(cleanup)),
+        }
+    }
+}
+impl Drop for Mount {
+    fn drop(&mut self) {
+        if let Some(cleanup) = self.cleanup.take() {
+            cleanup();
+        }
+    }
+}
+type MountFactory = dyn Fn(&mut Window, &mut App) -> Rc<Mount>;
 
 pub(super) struct Control<E: Element> {
     pub inner: E,
@@ -10,6 +31,7 @@ pub(super) struct Control<E: Element> {
     pub read_only: bool,
     pub invalid: bool,
     pub description: Option<SharedString>,
+    pub mount: Box<MountFactory>,
 }
 impl<E: Element> IntoElement for Control<E> {
     type Element = Self;
@@ -44,6 +66,14 @@ impl<E: Element> Element for Control<E> {
         window: &mut Window,
         cx: &mut App,
     ) -> Self::PrepaintState {
+        if let Some(id) = id {
+            // GPUI keys persistent state by (element ID, state TypeId), so this
+            // does not replace Base's own state. Unseen elements release it.
+            window.with_element_state(id, |mount: Option<Rc<Mount>>, window| {
+                let mount = mount.unwrap_or_else(|| (self.mount)(window, cx));
+                ((), mount)
+            });
+        }
         self.inner
             .prepaint(id, inspector, bounds, layout, window, cx)
     }
