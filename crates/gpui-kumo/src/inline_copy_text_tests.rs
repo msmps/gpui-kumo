@@ -235,3 +235,69 @@ fn intrinsic_width_keeps_taller_row_sibling_centred(cx: &mut TestAppContext) {
         });
     }
 }
+
+#[gpui_kit::test]
+fn localized_announcement_tracks_copy_reset_and_payload_replacement(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx);
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert_eq!(
+            window.within("first").find("copied-announcement").value(),
+            Some("")
+        );
+        window.click("first", cx);
+        window.render_frame(cx);
+        assert_eq!(
+            window.within("first").find("copied-announcement").value(),
+            Some("Identifier copied")
+        );
+        assert_eq!(
+            window.within("second").find("copied-announcement").value(),
+            Some("")
+        );
+    });
+    cx.background_executor
+        .advance_clock(Duration::from_millis(1500));
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert_eq!(
+            window.within("first").find("copied-announcement").value(),
+            Some("")
+        );
+        window.click("first", cx);
+        window.render_frame(cx);
+        view.update(cx, |v, _| v.value = "replacement".into());
+        window.render_frame(cx);
+        assert_eq!(
+            window.within("first").find("copied-announcement").value(),
+            Some("")
+        );
+    });
+}
+
+#[gpui_kit::test]
+fn group_reveal_motion_interrupts_and_reduced_motion_stops_frames(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx);
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        view.update(cx, |v, _| v.group = true);
+        window.render_frame(cx);
+        assert!(window.simulate_next_frame(cx) > 0);
+    });
+    cx.background_executor
+        .advance_clock(Duration::from_millis(75));
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        view.update(cx, |v, _| v.group = false);
+        window.render_frame(cx);
+        assert!(window.simulate_next_frame(cx) > 0);
+        cx.set_reduce_motion(true);
+        window.render_frame(cx);
+        window.simulate_next_frame(cx);
+        window.render_frame(cx);
+        assert_eq!(window.simulate_next_frame(cx), 0);
+        window.click("first", cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("first").label(), Some("Identifier copied"));
+    });
+}

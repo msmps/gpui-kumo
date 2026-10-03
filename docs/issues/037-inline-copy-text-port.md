@@ -1,30 +1,17 @@
-# KUMO-037: InlineCopyText: finish feedback motion and announcements
+# KUMO-037: InlineCopyText: copy fade and localized announcements
 
-Status: In progress
+Status: Resolved
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/22
 
-Local tracker: KUMO-037
+## Resolution — 2026-10-03
 
-## Current scope — 2026-10-03
+CopySimple now fades using the pinned 100ms opacity curve, with rapid reversal and immediate reduced-motion rendering. Check mounts immediately, as in the pinned source; the discarded Copy transition cannot leak into reset. A stable zero-size Label carries the localized copied message and polite live metadata, clears at reset/payload replacement and stays isolated across controls. Pointer/Space/Enter, cancellation, focus and clipboard regressions remain passing.
 
-**Working native implementation; remaining API/fidelity work.** String/rich decorative content, explicit copy payload, localized names, cancellation, action guards and retained feedback are implemented.
+Native macOS Metal rendering was inspected in Light/Dark at1040/520 logical widths, including text/control centres, baselines, sibling gaps, edge padding, rounded corners, fill/border/ring/shadow agreement and narrow layouts. [Capture fixture and measured evidence](https://github.com/msmps/gpui-kumo/blob/work/docs/evidence/quick-wins/README.md).
 
-Audited at `c1026fe042c133929eea2ef15da6e6a05b57c617`: 32/43 working families, 11 unported. This issue no longer tracks an unstarted port.
+Full `scripts/check-rust.sh` gate:232 library tests,1gallery,9doctests; workspace and adapter formatting; warnings-denied Clippy; locked all-target/all-feature/default-gallery builds; adapter12default/14all-feature tests. Dependency warnings remain visible; no pins or vendor patches changed.
 
-## Remaining acceptance
+Browser/catalog comparison and OS reduced-motion preference delivery remain under #10; actual spoken accessibility remains under #2–#4. These separate gates are not claimed complete. GPUI's clipboard API cannot report delivery failure and arbitrary descendant rounded clipping remains under #5.
 
-- [ ] Port source opacity/check transitions and reduced-motion interruption.
-- [ ] Complete supported copied live-region metadata and validate speech through #2–#4.
-
-Browser comparison belongs to #10; OS IME to #1 where applicable; spoken Linux/VoiceOver/Windows acceptance to #2–#4. Native tests and metadata do not establish spoken or full platform fidelity. Existing native adaptations and dependency limitations remain in the linked contract.
-
-## Evidence
-
-- [Component contract and measured evidence](https://github.com/msmps/gpui-kumo/blob/work/docs/inline-copy-text-validation.md)
-- [Current progress](https://github.com/msmps/gpui-kumo/blob/work/docs/port-progress.md)
-- [Coverage](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md)
-
-Latest shared locked gate passes226 library/1gallery/9doctests and adapter12/14, fmt/warnings-denied lint/builds. [Announcement checkpoint macOS CI37139317488](https://github.com/msmps/gpui-kumo/actions/runs/37139317488) passes. That gate establishes build/regression health, not this issue's remaining visual/platform acceptance.
-
-Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, Kit/Base0.7.0, GPUI0.3.7 and Rust1.99.0 remain pinned; existing vendor provenance stays authoritative. Historical implementation checkpoints remain in the contract and Git history.
+Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`; Kit/Base0.7.0; patched GPUI0.3.7. Component coverage remains32/43 working,11unported.

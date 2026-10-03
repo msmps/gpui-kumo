@@ -183,6 +183,32 @@ impl RenderOnce for InlineCopyText {
         let focus = state.focus.clone();
         let active = state.hovered || focus.is_focused(window) && window.last_input_was_keyboard();
         let show_icon = copied || active || self.group_active;
+        let icon_opacity = if copied {
+            1.
+        } else {
+            window.with_id(self.id.clone(), |window| {
+                // The source mounts Check immediately; only CopySimple transitions.
+                base::transition(
+                    "copy-opacity",
+                    if show_icon { 1.0_f32 } else { 0. },
+                    base::Transition::new(Duration::from_millis(100)).easing(
+                        base::Easing::CubicBezier {
+                            x1: 0.4,
+                            y1: 0.,
+                            x2: 0.2,
+                            y2: 1.,
+                        },
+                    ),
+                    window,
+                    cx,
+                )
+            })
+        };
+        let announcement = if copied {
+            self.copied_label.clone()
+        } else {
+            SharedString::default()
+        };
         let mut style = self.style;
         if active
             && let Style::Mono {
@@ -285,7 +311,7 @@ impl RenderOnce for InlineCopyText {
                     .test_support()
                     .size(px(14.))
                     .flex_shrink_0()
-                    .opacity(if show_icon { 1. } else { 0. })
+                    .opacity(icon_opacity)
                     .child(
                         svg()
                             .data(if copied {
@@ -296,6 +322,20 @@ impl RenderOnce for InlineCopyText {
                             .size(px(14.))
                             .text_color(foreground),
                     ),
+            )
+            .child(
+                div()
+                    .id("copied-announcement")
+                    .test_support()
+                    .role(gpui_kit::Role::Label)
+                    .aria_value(announcement)
+                    .a11y_synthetic_children(|builder| {
+                        builder
+                            .parent_node()
+                            .set_live(gpui_kit::accesskit::Live::Polite);
+                    })
+                    .absolute()
+                    .size(px(0.)),
             )
             .child(
                 canvas(
