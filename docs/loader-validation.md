@@ -15,7 +15,7 @@ Selected after Text checkpoint `e617c31`. Source: [pinned Loader](https://github
 
 Review finding: existing Button's private spinner is a fixed 270-degree, 1-second, 1.5px polyline with no faint track. Reuse its composition boundary, replace its presentation with the source recipe. GPUI AnimationExt respects reduce_motion, but its repeating start state would leave Kumo's active dash empty; select a visible static arc for reduced motion and schedule no repeating animation.
 
-## Implementation checkpoint
+## Implementation notes
 
 Standalone Loader and Button now share one GPUI canvas renderer. Radius/stroke scale with the source's 24-unit coordinate system; two SVG arcs form each path and endpoint discs supply round caps. A 6-second animation combines three rotation cycles and four dash cycles. Reduced motion selects a visible static phase and schedules no animation; zero-size indicators also schedule none. Nonpositive/nonfinite custom values normalize to zero rather than sending invalid geometry to the renderer. Standalone Status names default to Loading and support localization; Button's internal graphic is decorative under its existing busy/unavailable node.
 
@@ -29,6 +29,6 @@ Status: implemented with automated coverage and native light/dark presentation e
 
 Checkpoint gate: 43 workspace tests and one doctest pass; formatting, workspace/all-target/all-feature locked Clippy with warnings denied and gallery/example builds pass. The inherited-color assertions exercise actual painted caps in both themes. The upstream block 0.1.6 future-compatibility notice remains separate from successful current checks.
 
-The [deterministic SVG fixture](fixtures/loader-reference.html) reproduces the pinned circle/animation markup and samples chosen times in light/dark contexts. It isolates the recipe rather than mounting the React package. Computer-use attempts reported both Chrome and the in-app browser unavailable, so the fixture has not been executed here. Do not treat its authored markup as comparison evidence.
+The [deterministic SVG fixture](../tools/validation/loader/loader-reference.html) reproduces the pinned circle/animation markup and samples chosen times in light/dark contexts. It isolates the recipe rather than mounting the React package. Computer-use attempts reported both Chrome and the in-app browser unavailable, so the fixture has not been executed here. Do not treat its authored markup as comparison evidence.
 
 Timing-test repair during the LayerCard gate: the installed unsynced AnimationElement uses Instant::now/start.elapsed, while repeat_synced uses the executor clock. The test previously advanced only the executor and could compare unchanged paint. It now waits two actual 250ms intervals before checking endpoint movement, preserving the production animation policy. Workspace and isolated regression checks pass.

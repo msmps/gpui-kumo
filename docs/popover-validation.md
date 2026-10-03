@@ -47,7 +47,7 @@ The runnable native example places the trigger at the selected window edge. Thes
 | Left | Right | 8px | Left → right (capture removed) |
 | Right | Left | 8px | Right → left (capture removed) |
 
-[Raw measurements](evidence/popover-flips.json) include trigger/popup bounds and capture environment. For example, the bottom-requested trigger spans y=428–464 while its popup spans y=316–420: the popup is entirely above the trigger with an 8px gap. The right-requested trigger starts at x=490 while its popup ends at x=482, proving a left-side placement with the same gap.
+[Raw measurements](https://github.com/msmps/gpui-kumo/blob/97281d4/docs/evidence/popover-flips.json) include trigger/popup bounds and capture environment. For example, the bottom-requested trigger spans y=428–464 while its popup spans y=316–420: the popup is entirely above the trigger with an 8px gap. The right-requested trigger starts at x=490 while its popup ends at x=482, proving a left-side placement with the same gap.
 
 Reproduce using [the edge example](../apps/gallery/examples/popover_edges.rs):
 
@@ -61,7 +61,7 @@ Click the edge trigger. Replace `bottom` with `top`, `left` or `right` to inspec
 
 The selected `accesskit_atspi_common` 0.19.1 `NodeWrapper::state` omits expanded/collapsed state mapping. GPUI exposes `aria_expanded`, and tests verify that metadata, but the Linux bus does not receive the corresponding state flag. The trigger's updated “Expanded nonmodal dialog” / “Collapsed nonmodal dialog” description provides a verified descriptive fallback. Fixing the actual flag requires an upstream adapter change or a maintained dependency patch.
 
-At this validation baseline, the Input entry exposed its role, name and focus through AT-SPI, while Base supplied no accessible text-run subtree and the adapter did not expose Text. The 2026-10-02 [KUMO-006 continuation](issues/006-input-accessible-text.md) adds the missing integration and validates live Text reads, bounds, caret and selection. Linux EditableText and target-platform runtime validation remain blocked as recorded there; this earlier Popover validation does not establish those capabilities.
+At this validation baseline, the Input entry exposed its role, name and focus through AT-SPI, while Base supplied no accessible text-run subtree and the adapter did not expose Text. The 2026-10-02 [GitHub #49 continuation](https://github.com/msmps/gpui-kumo/issues/49) adds the missing integration and validates live Text reads, bounds, caret and selection. Linux EditableText and target-platform runtime validation remain blocked as recorded there; this earlier Popover validation does not establish those capabilities.
 
 GPUI 0.3.7 exposes transformations for SVG sprites, not a general affine transform for a complete interactive subtree. The native motion contract uses a fade and removes controls immediately on dismissal, avoiding retained invisible focus targets. It does not reproduce the browser's scale animation or exit fade.
 

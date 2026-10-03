@@ -1,9 +1,0 @@
-# Managed Linux continuation — 2026-10-03
-
-Clean stale checkout31d2c54 was fast-forwarded from actual fetched `work` to `3eee1325af367f03f9481fdd04fce284ebbf9027`; no reset or reconstructed-source baseline used. HTTPS through inherited proxy and ordinary Git/Cargo downloads now work. Runtime status reports connected/running with current observations, but HTTP enforcement state is unknown; readiness is not inferred from that status.
-
-Pinned setup activation and `bash scripts/check-rust.sh` executed on x86_64-unknown-linux-gnu with Rust1.99.0, unchanged lockfiles/vendor patches. [Raw gate](linux-rust-gate.log), exit0:175library,1gallery,9doctests; formatting, warning-denied lint, locked all-target/all-feature/default-gallery builds; exact standalone adapter12default/14all-feature tests and lint. The old missing hdrhistogram/endi cache blocker is resolved. Existing dependency profiler deprecation warnings remain visible.
-
-Latest inspected remote CI37118126735 succeeds at3eee132; previous033ccfde run37117805585 also succeeds. Paginated all-state issue inventory page1 contains45issues,37open/8closed (below100page limit). #43/#45 remain closed; #26/#38/#42 remain open at inspection. [Foundations native acceptance](../foundation-layout/linux/README.md) completes its local bounded gate. GitHub API through `gh api` returns Forbidden, so issue writes remain unavailable through that path; read-only connector inspection works.
-
-Connector issue-write tools are now available: #42 checklist reconciled and closed with publishedf03da05 evidence and successful CI37119510684. The blocked CLI endpoint is not required for supported connector maintenance.

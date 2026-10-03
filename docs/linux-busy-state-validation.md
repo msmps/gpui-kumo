@@ -1,6 +1,6 @@
 # Authored Linux busy-state export
 
-Tracker [#39/KUMO-054](issues/054-linux-busy-state.md), selected after #36 published4144c60. Exact adapter source/archive/checksum/license/root consumer/removal policy remains [the pinned patch](linux-disabled-state-patch.md). No dependency version, Kumo presentation, role, Base activation, event or focus ownership change.
+Tracker [#39](https://github.com/msmps/gpui-kumo/issues/39), selected after #36 published4144c60. Exact adapter source/archive/checksum/license/root consumer/removal policy remains [the pinned patch](linux-disabled-state-patch.md). No dependency version, Kumo presentation, role, Base activation, event or focus ownership change.
 
 Installed AccessKit0.24.1 has is_busy/set_busy/clear_busy; consumer0.38.0 forwards node flags. Pinned atspi_common0.19.1 had no Busy mapping. Native #36 evidence measured seven Loading-description Buttons with Busy false; their disabled availability and Click guards were independently correct. A new actual Adapter regression fails before the mapping on enabled Button Busy.
 
@@ -19,7 +19,7 @@ Implementation: three production lines map is_busy to State::Busy separately fro
 
 Next planned #26 Pagination dropdown/PageSize, with #38 rich highlight font resolution still in the backlog. Existing working coverage remains27/43,16 unported, with Pagination partial.
 
-Native review found an existing narrow gallery defect, tracked jointly as #40/KUMO-055: activation counter, fixed variant columns and the long-label size row overflowed right. Inspected pinned Button source `w-max shrink-0`; preserve source intrinsic width. Gallery now wraps activation and size rows; below the derived920px wide-table threshold it stacks explicitly labelled state rows with the same control IDs and160px caption width. Counter uses existing Kumo Text Secondary/Base so its complete native feedback can verify actual activation once. No design-system styling/API/state-owner change. Before narrow captures are preserved alongside final results.
+Native review found an existing narrow gallery defect, tracked jointly as #40: activation counter, fixed variant columns and the long-label size row overflowed right. Inspected pinned Button source `w-max shrink-0`; preserve source intrinsic width. Gallery now wraps activation and size rows; below the derived920px wide-table threshold it stacks explicitly labelled state rows with the same control IDs and160px caption width. Counter uses existing Kumo Text Secondary/Base so its complete native feedback can verify actual activation once. No design-system styling/API/state-owner change. Before narrow captures are preserved alongside final results.
 
 The committed owner probe scopes AT-SPI and X11 lookup to its launched PID (installed get_process_id and pinned _NET_WM_PID verified), checks complete counter feedback for pointer/Space/Enter and disabled-pointer rejection, and measures all three long variant controls and the long-label size example against actual panel bounds. Captures include loading/restored, long variants and sizes in all four combinations. This is observable native output, not an assertion of the responsive branch condition.
 

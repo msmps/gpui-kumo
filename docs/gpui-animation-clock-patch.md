@@ -1,6 +1,6 @@
 # GPUI 0.3.7 duration-animation clock correction
 
-Tracker: [#45/KUMO-060](https://github.com/msmps/gpui-kumo/issues/45), blocking repeatable [#43](https://github.com/msmps/gpui-kumo/issues/43). Exact gpui-pre0.3.7 vendor provenance/checksum/license and existing Tab correction remain as documented in [the Tab patch](gpui-tab-registration-patch.md). No version or dependency resolution changes.
+Tracker: [#45](https://github.com/msmps/gpui-kumo/issues/45), blocking repeatable [#43](https://github.com/msmps/gpui-kumo/issues/43). Exact gpui-pre0.3.7 vendor provenance/checksum/license and existing Tab correction remain as documented in [the Tab patch](gpui-tab-registration-patch.md). No version or dependency resolution changes.
 
 ## Reproduced problem and boundary
 
@@ -16,7 +16,7 @@ Switch keeps all intermediate track-color/thumb-position, reversal continuity, e
 
 The chained consumer regression renders actual identified Div bounds at both segment midpoints and endpoints, verifying initialization, elapsed sampling and the second segment restart on the same clock, then reduced-motion settling/no continuing frame requests. These consumer tests use the actual patched AnimationElement; no upstream suite success is implied.
 
-Separate skeptical source review checked all three clock sites, native clock provenance, unchanged segment/easing/repeat/reduced-motion branches, actual painted Switch/Loader assertions, and chained rendered geometry. No assertion was removed or tolerance relaxed. Local workspace/exact adapter formatting passes. Linux tests cannot resolve/download missing cached dependencies through the unreachable managed proxy. Remote compilation/tests/lint/build pass at85871b7 in run37115645935:170 library tests, one gallery test, nine doctests and adapter12default/14all-feature tests, formatting, warnings-denied Clippy and locked builds. The first candidate compile failed due to a missing test trait import, repaired in85871b7; no assertion changed. Repeated full run37116002411 at documentation-only5ea81bb also passes unchanged source with the same counts. [Raw evidence and repeated acceptance](evidence/animation-clock/README.md). Native runtime pixels/input/speech acceptance remains separate.
+Separate skeptical source review checked all three clock sites, native clock provenance, unchanged segment/easing/repeat/reduced-motion branches, actual painted Switch/Loader assertions, and chained rendered geometry. No assertion was removed or tolerance relaxed. Local workspace/exact adapter formatting passes. Linux tests cannot resolve/download missing cached dependencies through the unreachable managed proxy. Remote compilation/tests/lint/build pass at85871b7 in run37115645935:170 library tests, one gallery test, nine doctests and adapter12default/14all-feature tests, formatting, warnings-denied Clippy and locked builds. The first candidate compile failed due to a missing test trait import, repaired in85871b7; no assertion changed. Repeated full run37116002411 at documentation-only5ea81bb also passes unchanged source with the same counts. [Raw evidence and repeated acceptance](validation-fixtures.md). Native runtime pixels/input/speech acceptance remains separate.
 
 ## Maintenance and downstream setup
 

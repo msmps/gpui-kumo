@@ -36,6 +36,4 @@ Three rendered tests pass: all 16 filled variants’ dimensions/typography/ident
 
 Native macOS light/dark screenshots on 2026-10-02 show the filled palette, dashed Beta, outlined badges, transparent dot interiors and correctly bounded pill outlines. Pointer input on the hover example visibly added the current-color ring in dark. The native tree exposed every Badge label as text and did not expose separate decorative dots/icons. Appearance input updated on a later observation, preserving the existing native input/frame consistency caveat. Native-menu Quit completed and pgrep confirmed no gallery process remained.
 
-Gate: 52 workspace tests and four doctests (including compile-fail) pass; formatting, all-target/all-feature locked Clippy with warnings denied and gallery/example builds pass. The upstream block 0.1.6 future-compatibility notice remains separate.
-
 Status: implemented with automated and native light/dark evidence; pinned browser pixel comparison, exact mixed-height baseline alignment and effective TealSubtle background utility remain pending. Link navigation/keyboard integration belongs to the subsequent Link contract; this milestone verifies the explicit ancestor-hover mechanism, not a native navigation component.

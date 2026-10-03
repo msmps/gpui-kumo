@@ -1,6 +1,6 @@
 # InputArea acceptance
 
-Tracker [#23](https://github.com/msmps/gpui-kumo/issues/23), KUMO-038. Kumo3fd5b648df578cb1ba214dedd30f475009f6a668; Kit/Base0.7.0, GPUI0.3.7 with existing Tab registration patch. Complete source, matching Input test subsection, docs and all twelve demos inspected before implementation. Starting baseline109 tests/nine doctests; checkpoint113 tests/nine doctests.
+Tracker [#23](https://github.com/msmps/gpui-kumo/issues/23). Kumo3fd5b648df578cb1ba214dedd30f475009f6a668; Kit/Base0.7.0, GPUI0.3.7 with existing Tab registration patch. Complete source, matching Input test subsection, docs and all twelve demos inspected before implementation. Starting baseline109 tests/nine doctests; checkpoint113 tests/nine doctests.
 
 ## Selected milestone and ownership
 
@@ -28,7 +28,7 @@ Implementation checkpoint verified below. Run formatting, workspace tests/doctes
 
 Review findings so far: Medium Base policy/rewrap intrinsic rows stale; repaired narrowly without text resets (see patch boundary). Medium disabled pointer stole outside focus despite bubble prevent_default; disabled capture now prevents default and propagation before child focus paths. Four regressions exercise multiline/clipboard/undo/Tab, availability, row sizing, and selection/history preservation.
 
-## Checkpoint evidence — 2026-10-03
+## Implementation notes
 
 Passed:113 workspace tests/nine doctests, formatting, all-target/all-feature build and workspace Clippy with -D warnings. Four added observable InputArea regressions pass. Existing GPUI profiler deprecation remains visible, unchanged. No CI workflows configured. Attempted `cargo test -p gpui-base --lib test_auto_grow --locked --offline` did not run: Cargo rejects testing a non-workspace package requiring dev-dependencies. Consumer integration regressions validate the patched dependency; no upstream suite pass claimed.
 

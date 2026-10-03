@@ -1,6 +1,6 @@
 # Collapsible acceptance
 
-Tracker [#15](https://github.com/msmps/gpui-kumo/issues/15), KUMO-030. Pinned Kumo3fd5b648df578cb1ba214dedd30f475009f6a668, Kit/Base0.7.0 and GPUI0.3.7 with documented foundation patches. Full source/docs/seven demos inspected; no matching component tests found. Baseline117 tests/nine doctests.
+Tracker [#15](https://github.com/msmps/gpui-kumo/issues/15). Pinned Kumo3fd5b648df578cb1ba214dedd30f475009f6a668, Kit/Base0.7.0 and GPUI0.3.7 with documented foundation patches. Full source/docs/seven demos inspected; no matching component tests found.
 
 Selected because disclosure unlocks form/settings compositions using existing Button/Text/Input. Base Collapsible supplies conditional content; Base Button supplies activation/focus. Stable-ID keyed state owns only uncontrolled open and native focus lifecycle. Explicit open prop is authoritative in controlled mode; callbacks propose changes without updating uncontrolled state. Owner changes do not fire callbacks. Consumer prevent_default cancels trigger activation.
 
@@ -16,7 +16,7 @@ Selected because disclosure unlocks form/settings compositions using existing Bu
 | Motion | Source100ms height/opacity/caret motion requires safe lifecycle; static core initially has immediate transitions, including reduced motion; do not claim animated parity |
 | N/A | Sizes/variants, loading/invalid/selection independent of composed children; outside dismissal/trapping |
 
-## Validated working checkpoint — 2026-10-03
+## Implementation notes
 
 Three observable rendered-input regressions pass: uncontrolled pointer/Space/Enter once, root unavailable gating and independent state; ignored controlled proposals, custom consumer cancellation and caller-owned trigger focus/restoration; keep-mounted hidden descendant snapshots/Tab/action exclusion and retained Unicode editor/keyed copy feedback. Stale retained child-button focus cannot dispatch its former Space/Enter actions after closure. Tests cover both themes. Full gate:120 workspace tests/nine doctests, formatting, locked all-target/all-feature Clippy with warnings denied and builds (gallery included). Existing dependency profiler deprecation remains visible, no warnings suppressed. No Actions configuration/runs exist.
 

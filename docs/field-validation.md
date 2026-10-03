@@ -19,7 +19,7 @@ Rendered-input regression verifies pointer label focus, optional readable name, 
 Validation gate: 68 all-feature workspace tests and six doctests, formatting, warning-denied all-target/all-feature Clippy and workspace builds pass. Linux/Xvfb captures: light layout (capture removed), dark layout with retained input (capture removed). Clicking the label then typing `phone draft` reached the retained input, visible after theme change. The immediate light capture did not show the typed value; it is layout evidence only, not proof of timely presentation. Browser comparison and platform spoken semantics remain pending. The testing application was terminated; only zombie process entries remained.
 
 
-## Contextual help checkpoint
+## Implementation notes
 
 Complete pinned Label/Field source, Label documentation/demos and matching `@phosphor-icons/react`2.1.10 Info definition/license inspected. `Label::tooltip(&retained_state, text)` and `Field::label_tooltip` compose Kumo's source ghost/Xs square info trigger:14px button,16px regular Info SVG,4px sibling gap, centered with label/optional content. Embedded SVG uses explicit semantic default foreground: installed Svg does not paint without its own text-color refinement. Native review caught the missing icon before accepting this checkpoint; wide/narrow light/dark captures were refreshed after correction.
 

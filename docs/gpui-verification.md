@@ -1,6 +1,6 @@
 # Verifying a GPUI component
 
-Read when completing a component or investigating a rendering/input discrepancy. This is **Design-system guidance**. The workspace has a native gallery and headless Button, Input and Popover tests; see the [implementation plan](implementation-plan.md) for current validation scope.
+Read when completing a component or investigating a rendering/input discrepancy. This is **Design-system guidance**. The workspace has a native gallery and headless Button, Input and Popover tests; see the [implementation plan](README.md) for current validation scope.
 
 ## Compile and exercise
 
@@ -10,7 +10,7 @@ GPUI provides `#[gpui::test]`, `TestAppContext`, and `VisualTestContext` for con
 
 ## Select checks from the contract
 
-For native screenshot checks, verify platform presentation visibility as well as accessible state. On the selected macOS dependency, `Window::visibility()` / `Window::is_visible()` describe whether frames will be shown. A fully occluded background window can process input and expose updated accessibility while its frame source is suspended. Raising it through accessibility alone did not restore visibility in our probe. Establish a visible window before interpreting stale pixels as a component defect; see [KUMO-020](issues/020-native-frame-consistency.md). Keep testing-app cleanup and process-absence verification in the native loop.
+For native screenshot checks, verify platform presentation visibility as well as accessible state. On the selected macOS dependency, `Window::visibility()` / `Window::is_visible()` describe whether frames will be shown. A fully occluded background window can process input and expose updated accessibility while its frame source is suspended. Raising it through accessibility alone did not restore visibility in our probe. Establish a visible window before interpreting stale pixels as a component defect; see [GitHub #51](https://github.com/msmps/gpui-kumo/issues/51). Keep testing-app cleanup and process-absence verification in the native loop.
 
 | Branch | Evidence to collect |
 | --- | --- |

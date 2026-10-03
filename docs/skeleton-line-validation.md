@@ -1,6 +1,6 @@
 # SkeletonLine acceptance
 
-Tracker [#29](https://github.com/msmps/gpui-kumo/issues/29), KUMO-044. Pinned Kumo3fd5b648df578cb1ba214dedd30f475009f6a668, Kit/Base0.7.0, GPUI0.3.7. Full source/CSS/keyframes/docs/five demos inspected; no matching source tests found. Baseline120 tests/nine doctests.
+Tracker [#29](https://github.com/msmps/gpui-kumo/issues/29). Pinned Kumo3fd5b648df578cb1ba214dedd30f475009f6a668, Kit/Base0.7.0, GPUI0.3.7. Full source/CSS/keyframes/docs/five demos inspected; no matching source tests found.
 
 Completes the existing Loader catalog with a small dependency-free loading composition. Base Timing/Easing supplies source CSS easing/delay/repeat behavior and Base initializes native reduced-motion policy. Presentation is native canvas paint, including rounded shimmer rather than arbitrary descendant clipping.
 
@@ -14,7 +14,7 @@ Completes the existing Loader catalog with a small dependency-free loading compo
 | Semantics/input | Decorative placeholder, no interactive role/name/focus/activation; owning content provides loading status. Pointer/keyboard/disabled/focus/invalid/selected N/A |
 | Verification | Observable geometry/paint/frame regressions, both-theme wide/narrow/animated/reduced native evidence, skeptical independent review, required Rust gate |
 
-## Validated working checkpoint — 2026-10-03
+## Implementation notes
 
 Five regressions cover actual geometry/paint and lifecycle: retained sampled percentage across rerenders/themes/dimension changes and range updates; delayed eased gradient translation, rounded masks, reduced motion and unmount; invalid ranges/dimensions; wholly clipped no-paint/no-frame; fractional paint geometry with adjacent masks at three phases and scale1/1.25/1.5/2. Full gate passes125 workspace tests/nine doctests, formatting, warning-denied all-target/all-feature Clippy and locked builds (gallery included). Existing upstream profiler deprecation remains visible; no CI configuration/runs exist.
 
@@ -26,6 +26,6 @@ Evidence: light (capture removed), later animated light (capture removed), dark 
 
 Native adaptations: typed inclusive integer percentage ranges and logical-pixel dimensions replace CSS values/classes; reversed/nonfinite/negative inputs rejected. Time samples round to hundredths then clamp to the supplied typed range, avoiding invalid tiny/huge Duration conversion. Zero duration paints statically. Standard-library randomized hashing supplies presentation samples without a dependency or application-state random generator. Source has no reduced-motion CSS for SkeletonLine itself; native preference intentionally freezes centered shimmer with zero frame requests. The owner provides loading semantics, as the source placeholder is decorative. OS preference-change delivery and browser comparison remain separate acceptance gates (#10); #29 is resolved as implementation-complete; #10 owns that remaining comparison and preference delivery. Shared layer review now checks device-pixel boundary overlap, not just nominal gradient endpoints.
 
-## Tracker consolidation — 2026-10-03
+## Tracker consolidation
 
 Implementation #29 closed after browser comparison and OS preference-delivery acceptance were transferred to #10. Current shared gate and macOS37139317488 pass; earlier no-CI statements describe the historical implementation checkpoint. No new visual/platform measurements are claimed by this consolidation.

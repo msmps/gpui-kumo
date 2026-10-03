@@ -1,6 +1,6 @@
 # InlineCopyText acceptance
 
-Tracker [#22](https://github.com/msmps/gpui-kumo/issues/22), KUMO-037. Pinned Kumo3fd5b648df578cb1ba214dedd30f475009f6a668; Kit/Base0.7.0, GPUI0.3.7 with documented local foundation repairs. Complete source, tests, docs and all three demos inspected before coding. Baseline113 tests/nine doctests.
+Tracker [#22](https://github.com/msmps/gpui-kumo/issues/22). Pinned Kumo3fd5b648df578cb1ba214dedd30f475009f6a668; Kit/Base0.7.0, GPUI0.3.7 with documented local foundation repairs. Complete source, tests, docs and all three demos inspected before coding.
 
 ## Selected milestone / native ownership
 
@@ -21,7 +21,7 @@ Source has no variants of its own: expose valid copy and mono Text styles, exclu
 | N/A | Loading/invalid/open/trapping/selected persistent state, heading and web as-element mechanisms |
 | Remaining validation | Rust gate, meaningful regression tests, gallery both themes/wide/narrow, actual native clipboard, independent diff/render review |
 
-## Validated checkpoint — 2026-10-03
+## Implementation notes
 
 Four observable regressions cover both themes: pointer/Space/Enter, cancellation and current disabled state; latest-copy timer replacement, payload replacement and repeated-instance isolation; supported Text recipes and14px glyph geometry; centering beside a40px Button. Full workspace gate passes117 tests/nine doctests, formatting, all-target/all-feature warning-denied Clippy and locked builds (including gallery). Existing upstream profiler deprecation remains visible; no CI configuration/runs exist.
 
@@ -33,8 +33,8 @@ Evidence: light (capture removed), hover (capture removed), copied (capture remo
 
 Remaining: source opacity/check transition motion, copied live-region speech and OS clipboard failure reporting are not implemented/verified; GPUI's write API has no success result. Browser pixel comparison and supported-platform screen-reader acceptance remain separate gates. #22 stays open. Process improvement: shared alignment checklist now includes intrinsic geometry in a column and centering beside a taller row sibling; verify concrete font fallback through actual paint, not family-name assertions.
 
-## Quick-win completion — 2026-10-03
+## Quick-win completion
 
 CopySimple now fades using the pinned 100ms opacity curve, with rapid reversal and immediate reduced-motion rendering. Check mounts immediately, as in the pinned source; the discarded Copy transition cannot leak into reset. A stable zero-size Label carries the localized copied message and polite live metadata, clears at reset/payload replacement and stays isolated across controls. Pointer/Space/Enter, cancellation, focus and clipboard regressions remain passing.
 
-This supersedes the historical implementation gaps above. Issue #22 is resolved for its bounded implementation scope. Catalog/browser and OS reduced-motion delivery remain #10; speech remains #2–#4. [New native matrix, source fixture and review](evidence/quick-wins/README.md). Full locked workspace/adapter gate passes232library/1gallery/9doctests and adapter12/14, formatting, warnings-denied Clippy and builds.
+This supersedes the historical implementation gaps above. Issue #22 is resolved for its bounded implementation scope. Catalog/browser and OS reduced-motion delivery remain #10; speech remains #2–#4. [New native matrix, source fixture and review](validation-fixtures.md). Full locked workspace/adapter gate passes232library/1gallery/9doctests and adapter12/14, formatting, warnings-denied Clippy and builds.

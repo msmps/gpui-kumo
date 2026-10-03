@@ -38,7 +38,7 @@ Actual pinned source and native Linux Light/Dark ×1040/520 matrices pass. Both 
 
 Inspected both-theme wide/narrow edit and alert surfaces: horizontal centering, wrapped supporting text, input/title edges, action baselines and gaps agree;12px panel corners, outline and source literal shadows remain coherent. Simple caller content stays inside the surface. Arbitrary-descendant rounded clipping remains subject to LayerCard's existing contract. Native AlertDialog maps to AT-SPI Alert, while standard Dialog maps to Dialog; both export Modal. No spoken screen-reader acceptance follows from those observations.
 
-[Reproduction scripts, raw results and screenshots](evidence/dialog/README.md). Rendered regressions cover initial focus, Tab/reverse Tab, editor Enter, disabled skip, rejection/draft retention, Escape/pointer policies, surviving/removed opener, authoritative close, unmount/remount, all four source widths, long scrolling, empty content and two-Dialog ordering. Full pinned Rust gate results and remote CI are recorded at the published checkpoint.
+[Reproduction scripts, raw results and screenshots](validation-fixtures.md). Rendered regressions cover initial focus, Tab/reverse Tab, editor Enter, disabled skip, rejection/draft retention, Escape/pointer policies, surviving/removed opener, authoritative close, unmount/remount, all four source widths, long scrolling, empty content and two-Dialog ordering. Full pinned Rust gate results and remote CI are recorded at the published checkpoint.
 
 ## Remaining full-family work
 
@@ -47,4 +47,4 @@ Inspected both-theme wide/narrow edit and alert surfaces: horizontal centering, 
 - Long content scrolling is rendered-test acceptance; native/browser long-content and arbitrary-descendant clipping matrices remain open. The native viewport cap and scroll region are an explicit adaptation to the source's overflow-hidden panel.
 - RTL, other-platform font/native-input validation, OS IME and spoken screen-reader checks remain open. Native description is authored; speech and announcement ordering are not claimed.
 
-Track full acceptance in [KUMO-034/#19](issues/034-dialog-port.md). This core checkpoint does not close the issue.
+Track full acceptance in [GitHub #19/#19](https://github.com/msmps/gpui-kumo/issues/19). This core checkpoint does not close the issue.

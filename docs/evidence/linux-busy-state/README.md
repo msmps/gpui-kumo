@@ -1,9 +1,0 @@
-# Linux busy state and narrow Button gallery evidence
-
-Pinned source/version and acceptance: [validation](../../linux-busy-state-validation.md). Actual X11/AT-SPI, software Vulkan, DejaVu Sans,1040/520px, Light/Dark. No browser-pixel, speech, Wayland, macOS/Windows or IME claim.
-
-`before-narrow-*` preserves the discovered counter/variant overflow. Sixteen final `button-*` captures show loading/restored owner controls, long variants and size examples in all four combinations. Actual native counter changes once each for pointer, Space and Enter; unavailable pointer leaves it unchanged. Busy set/clear is measured independently of Enabled/Sensitive/Click. Owner probe is scoped to its launched process and window; it makes theme buttons visible before activation and moves the window to0,0 for pointer coordinates.
-
-[Owner state/bounds results](button-busy-results.json): at520px long variant controls are x233 with widths182/182/202 (right435, inside panel right463); long-label example is x57,width359 (right416). At1040px the original three-column geometry remains. Kumo source intrinsic `w-max shrink-0` Button sizing is unchanged; caller wraps size/activation rows and stacks labelled variant states below derived920px threshold. Separate strict [Pagination/loading probe results](pagination-busy-results.json) verify seven loading Buttons Busy with no Enabled/Sensitive/Click, existing disabled boundaries and native edit/clipboard/rejection behavior.
-
-Review checks icon/control centres, text baselines, caption/control offsets, spacing/padding, corners, fills, borders, focus rings and layers in both themes and widths. Button samples have no observed new clipping/seam regression. Pre-existing foundation swatch columns below the Button panel still overflow at520px; this separate gallery composition gap remains in the backlog, rather than claiming the entire gallery is narrow-safe.

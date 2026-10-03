@@ -1,8 +1,10 @@
 # Native runtime performance
 
-Measured 2026-10-02 on MacBookPro18,1, macOS 26.6.2, 10 CPUs, 16 GiB RAM. Pinned dependencies and gallery component coverage are in [port progress](port-progress.md). This answers the user's report of lag when scrolling a `cargo run` dev build.
+Measured 2026-10-02 on MacBookPro18,1, macOS 26.6.2, 10 CPUs, 16 GiB RAM. Pinned dependencies and gallery component coverage are in [port progress](component-coverage.md). This answers the user's report of lag when scrolling a `cargo run` dev build.
 
-## Findings
+## Development profile and findings
+
+`Cargo.toml` sets `[profile.dev.package.gpui-pre] opt-level = 3` so ordinary `cargo run` optimizes GPUI rendering while retaining workspace debug checks. Keep that setting unless representative measurements justify changing it.
 
 The unoptimized build has substantially higher full-gallery redraw cost. Release scrolling produced healthy frame intervals in the measured run. Animated gallery content also produces continuous work while idle; reduced motion stopped those draws. These are whole-gallery measurements, including Base, GPUI and platform integration. Incremental overhead of Kumo over an equivalent Base-only screen has not been isolated.
 
@@ -21,7 +23,7 @@ The matching normal-motion theme redraw sample is about 4.6 times faster in rele
 
 The idle sample represents approximately 6.7 seconds spent inside draw across 13.4 seconds elapsed. That is about half the elapsed interval in draw work, not a measured process CPU percentage. It is a concrete efficiency concern for the demo and warrants isolated animation/culling profiling.
 
-[Raw selected histogram results](fixtures/performance-samples.csv) include the remaining percentiles and metric sample counts. Zero samples mean no evidence for that metric, not zero latency.
+[Raw selected histogram results](https://github.com/msmps/gpui-kumo/blob/97281d4/docs/fixtures/performance-samples.csv) include the remaining percentiles and metric sample counts. Zero samples mean no evidence for that metric, not zero latency.
 
 ## Implementation costs and attribution
 
@@ -47,7 +49,7 @@ Native protocol: 1040×800 logical window, 2× captures, one registered applicat
 
 ## Limits and next measurement
 
-[KUMO-020](issues/020-native-frame-consistency.md) remains open. Debug native actions/accessibility draws can advance state while captured pixels and presentation timings do not advance. Release produced a valid presentation stream during the scroll/idle samples, but some other intervals also lacked presentation samples. This prevents claiming a debug scrolling FPS or attributing the native discrepancy solely to optimization.
+[Foreground presentation validation](https://github.com/msmps/gpui-kumo/issues/51) remains open. Debug native actions/accessibility draws can advance state while captured pixels and presentation timings do not advance. Release produced a valid presentation stream during the scroll/idle samples, but some other intervals also lacked presentation samples. This prevents claiming a debug scrolling FPS or attributing the native discrepancy solely to optimization.
 
 Follow-up: pure GPUI and Banner-only probes reproduced stale pixels while `Window::visibility()` reported Hidden. Enlarging those windows made them Visible and restored matching pixels. macOS suspends the selected dependency's frame source for occluded windows. The measurements above did not record visibility, so their zero-presentation intervals cannot establish foreground scrolling performance. The successful presentation streams remain measured evidence for their intervals.
 

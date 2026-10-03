@@ -42,7 +42,7 @@ Actual Button hover/measurement hooks avoid a stretched column wrapper opening o
 Final native review:1040×800 Top disclosure has a clean outline/arrow join in light/dark;520×800 long Unicode content wraps inside the4px viewport margin without corner clipping. `tooltip-activation-dark.png` shows counter3 after one pointer, Space and Enter activation and no popup. `tooltip-keyboard-dark.png` shows Tab moving focus to Bottom and disclosure; `tooltip-escape-dark.png` records dismissal with the keyboard focus outline retained. Initial1s capture ran before a presented popup; repeated3s settled capture confirmed disclosure, without changing600ms tested timing. Screenshots establish appearance only; event/timer/focus assertions are separate tests. Apps were terminated after review.
 
 
-## Pointer persistence checkpoint
+## Implementation notes
 
 Kumo's lockfile selects `@base-ui/react`1.8.0. Matching upstream TooltipRoot/TooltipTrigger inspected at Git tag `v1.8.0`: `disableHoverablePopup=false` and `safePolygon()` are the default. Public npm access was unavailable; the same-tag GitHub source was readable. The native implementation uses a bounded trapezoid connecting the facing trigger/popup edges, based on Base's actual resolved/flipped geometry. It is direction-independent and does not reproduce browser velocity/pointer-intent heuristics. No additional delay is imposed outside that region.
 

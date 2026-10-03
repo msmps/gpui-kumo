@@ -21,7 +21,7 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, Base0.7.0, GPUI0.3.7 and
 
 ## Results and limits
 
-[Source/native evidence](evidence/dropdown/README.md) exercises the actual pinned imports and native gallery in Light/Dark1040/520. Six rendered regressions cover keyboard entry/focus/availability, once-only activation, typeahead words/timeout, Tab dismissal, owner reorder/removal, mount cleanup/remount and long-list row height/focused reveal. Full-family acceptance remains open.
+[Source/native evidence](validation-fixtures.md) exercises the actual pinned imports and native gallery in Light/Dark1040/520. Six rendered regressions cover keyboard entry/focus/availability, once-only activation, typeahead words/timeout, Tab dismissal, owner reorder/removal, mount cleanup/remount and long-list row height/focused reveal. Full-family acceptance remains open.
 
 Native adaptations: the Base host keeps an8px window margin versus source5px collision padding, giving a3px horizontal offset in this near-left-edge fixture. Native width is explicit; source has intrinsic sizing with144px minimum. The Linux host currently paints the600-weight group label with a visibly different face from browser DejaVu Sans; requesting700 did not resolve the discrepancy. The source600 recipe is retained. This measured font-resolution discrepancy remains open for the target-platform polish pass; header typography parity is not claimed. Pointer-versus-keyboard focus-visible modality remains a known difference; source can retain a focus ring after keyboard use and pointer hover where native last-input modality hides it. Rounded clipping is bounded to supported flat rows; arbitrary descendant surfaces are not claimed.
 

@@ -1,0 +1,13 @@
+**/node_modules/
+**/app.js
+**/app.css
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.webp
+**/*.log
+**/*results.json
+**/captures.json
+**/probe-environment.json
+**/source-measurements.json
+**/source-states.json
