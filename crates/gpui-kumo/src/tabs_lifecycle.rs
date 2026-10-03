@@ -9,10 +9,12 @@ struct Mount {
     scroll: Rc<RefCell<Option<overflow::ScrollMotion>>>,
     indicator: Rc<RefCell<motion::IndicatorMotion>>,
     valid: Rc<Cell<bool>>,
+    edges: Rc<RefCell<[motion::EdgeMotion; 2]>>,
 }
 impl Drop for Mount {
     fn drop(&mut self) {
         self.valid.set(false);
+        *self.edges.borrow_mut() = Default::default();
         self.drag.borrow_mut().take();
         self.scroll.borrow_mut().take();
         *self.indicator.borrow_mut() = motion::IndicatorMotion::default();
@@ -24,6 +26,7 @@ pub(super) struct Mounted {
     pub scroll: Rc<RefCell<Option<overflow::ScrollMotion>>>,
     pub indicator: Rc<RefCell<motion::IndicatorMotion>>,
     pub valid: Rc<Cell<bool>>,
+    pub edges: Rc<RefCell<[motion::EdgeMotion; 2]>>,
 }
 impl IntoElement for Mounted {
     type Element = Self;
@@ -68,6 +71,7 @@ impl Element for Mounted {
                             scroll: self.scroll.clone(),
                             indicator: self.indicator.clone(),
                             valid: self.valid.clone(),
+                            edges: self.edges.clone(),
                         })
                     }),
                 )

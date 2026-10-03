@@ -343,12 +343,14 @@ impl<T: Clone + Eq + 'static> Render for TabsState<T> {
         );
         if segmented {
             for (side, shown) in visible.into_iter().enumerate() {
-                if !shown {
-                    continue;
-                }
                 root = root.child(control(
-                    side,
-                    sm,
+                    ControlPresentation {
+                        side,
+                        sm,
+                        shown,
+                        motion: self.edge_motion.clone(),
+                        reduced: cx.reduce_motion(),
+                    },
                     &theme,
                     &self.controls[side],
                     if side == 0 {
@@ -396,17 +398,46 @@ impl<T: Clone + Eq + 'static> Render for TabsState<T> {
             scroll: self.scroll_motion.clone(),
             indicator: self.indicator.clone(),
             valid: self.layout_valid.clone(),
+            edges: self.edge_motion.clone(),
         }
     }
 }
-fn control<T: Clone + Eq + 'static>(
+struct ControlPresentation {
     side: usize,
     sm: bool,
+    shown: bool,
+    motion: Rc<RefCell<[motion::EdgeMotion; 2]>>,
+    reduced: bool,
+}
+fn control<T: Clone + Eq + 'static>(
+    presentation: ControlPresentation,
     theme: &crate::Theme,
     focus: &FocusHandle,
     label: SharedString,
     owner: gpui_kit::WeakEntity<TabsState<T>>,
 ) -> AnyElement {
+    let ControlPresentation {
+        side,
+        sm,
+        shown,
+        motion,
+        reduced,
+    } = presentation;
+    let (from, generation) = {
+        let mut states = motion.borrow_mut();
+        let state = &mut states[side];
+        if state.visible != shown {
+            state.from = state.current;
+            state.visible = shown;
+            state.generation += 1;
+        }
+        if reduced {
+            state.current = if shown { 1. } else { 0. };
+            state.from = state.current;
+        }
+        (state.from, state.generation)
+    };
+    let target = if shown { 1. } else { 0. };
     let background = theme.colors.recessed;
     let gradient = canvas(
         |_, _, _| (),
@@ -517,6 +548,43 @@ fn control<T: Clone + Eq + 'static>(
             .inset_0()
             .size_full(),
         );
+    let graphic = div()
+        .relative()
+        .size_full()
+        .flex()
+        .items_center()
+        .when(side == 0, |v| v.justify_start())
+        .when(side == 1, |v| v.justify_end())
+        .child(gradient)
+        .child(inner);
+    let graphic = if !reduced && from != target {
+        graphic
+            .with_animation(
+                ("edge-opacity", generation),
+                Animation::new(Duration::from_millis(150)).with_easing(motion::easing),
+                move |graphic, progress| {
+                    let opacity = from + (target - from) * progress;
+                    motion.borrow_mut()[side].current = opacity;
+                    graphic.opacity(opacity)
+                },
+            )
+            .into_any_element()
+    } else {
+        graphic.opacity(target).into_any_element()
+    };
+    if !shown {
+        // Visual fade-out only: no hidden action node, focus target or occlusion.
+        return div()
+            .absolute()
+            .top_0()
+            .h_full()
+            .w(px(if sm { 32. } else { 40. }))
+            .when(side == 0, |v| v.left_0())
+            .when(side == 1, |v| v.right_0())
+            .text_color(theme.text.subtle)
+            .child(graphic)
+            .into_any_element();
+    }
     base::Button::new(if side == 0 {
         "scroll-start"
     } else {
@@ -531,12 +599,11 @@ fn control<T: Clone + Eq + 'static>(
     .w(px(if sm { 32. } else { 40. }))
     .text_color(theme.text.subtle)
     .hover(|v| v.text_color(theme.text.default))
-    .when(side == 0, |v| v.left_0().justify_start())
-    .when(side == 1, |v| v.right_0().justify_end())
+    .when(side == 0, |v| v.left_0())
+    .when(side == 1, |v| v.right_0())
     .on_click(move |_, window, cx| {
         let _ = owner.update(cx, |state, cx| state.scroll_page(side, window, cx));
     })
-    .child(gradient)
-    .child(inner)
+    .child(graphic)
     .into_any_element()
 }

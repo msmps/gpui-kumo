@@ -12,6 +12,9 @@ pub(super) struct IndicatorMotion {
 /// Tailwind's default transition timing: cubic-bezier(.4,0,.2,1).
 pub(super) fn easing(progress: f32) -> f32 {
     let t = progress.clamp(0., 1.);
+    if t == 0. || t == 1. {
+        return t;
+    }
     let mut low: f32 = 0.;
     let mut high = 1.;
     for _ in 0..16 {
@@ -137,4 +140,13 @@ impl RenderOnce for Indicator {
         .w(px(0.))
         .h(px(0.))
     }
+}
+
+/// Painted opacity is retained so a reversal begins at the visible intermediate value.
+#[derive(Default)]
+pub(super) struct EdgeMotion {
+    pub visible: bool,
+    pub from: f32,
+    pub current: f32,
+    pub generation: usize,
 }

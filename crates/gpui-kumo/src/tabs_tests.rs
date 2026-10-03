@@ -526,3 +526,72 @@ fn selected_indicator_moves_resizes_reverses_and_reduced_motion_settles(cx: &mut
         );
     });
 }
+
+#[gpui_kit::test]
+fn edge_opacity_transitions_keep_action_identity_and_hidden_edges_inert(cx: &mut TestAppContext) {
+    let (view, cx) = overflow_harness(cx, 220., Variant::Segmented);
+    cx.update(|window, cx| window.render_frame(cx));
+    cx.update(|window, cx| {
+        let tabs = view.read(cx).tabs.clone();
+        window.render_frame(cx);
+        let focus = tabs.read(cx).controls[1].clone();
+        assert_eq!(tabs.read(cx).edge_motion.borrow()[1].current, 0.);
+        cx.background_executor()
+            .advance_clock(std::time::Duration::from_millis(75));
+        window.render_frame(cx);
+        let middle = tabs.read(cx).edge_motion.borrow()[1].current;
+        assert!(middle > 0. && middle < 1.);
+        let surface = crate::theme(cx).colors.recessed;
+        let painted = gpui_kit::linear_gradient(
+            270.,
+            gpui_kit::linear_color_stop(surface, 0.),
+            gpui_kit::linear_color_stop(surface.alpha(0.95), 1.),
+        )
+        .color_space(gpui_kit::ColorSpace::Oklab)
+        .opacity(middle);
+        assert!(
+            window.painted_quads().iter().any(|q| q.bounds.size.width
+                == px(20.).scale(window.scale_factor())
+                && q.bounds.size.height == px(36.).scale(window.scale_factor())
+                && q.background == painted),
+            "the control gradient is painted with intermediate opacity"
+        );
+
+        window.within("overflow").click("scroll-end", cx);
+        assert!(focus.is_focused(window));
+        cx.background_executor()
+            .advance_clock(std::time::Duration::from_millis(240));
+        window.render_frame(cx);
+        assert!(focus.is_focused(window));
+    });
+    cx.update(|window, cx| {
+        let tabs = view.read(cx).tabs.clone();
+        window.render_frame(cx);
+        cx.background_executor()
+            .advance_clock(std::time::Duration::from_millis(160));
+        window.render_frame(cx);
+        assert_eq!(tabs.read(cx).edge_motion.borrow()[1].current, 1.);
+        tabs.update(cx, |s, cx| {
+            s.set_items(vec![TabItem::new("tab-0", 0, "One")], window, cx)
+        });
+        window.render_frame(cx);
+    });
+    cx.update(|window, cx| {
+        let tabs = view.read(cx).tabs.clone();
+        window.render_frame(cx);
+        assert!(window.within("overflow").try_find("scroll-end").is_none());
+        assert!(tabs.read(cx).items[0].focus.is_focused(window));
+        cx.background_executor()
+            .advance_clock(std::time::Duration::from_millis(75));
+        window.render_frame(cx);
+        let middle = tabs.read(cx).edge_motion.borrow()[1].current;
+        assert!(middle > 0. && middle < 1.);
+        cx.set_reduce_motion(true);
+        window.render_frame(cx);
+        assert_eq!(tabs.read(cx).edge_motion.borrow()[1].current, 0.);
+        window.simulate_next_frame(cx);
+        window.render_frame(cx);
+        assert_eq!(window.simulate_next_frame(cx), 0);
+        assert!(view.read(cx).events.is_empty());
+    });
+}

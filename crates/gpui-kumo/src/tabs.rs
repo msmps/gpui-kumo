@@ -112,6 +112,7 @@ pub struct TabsState<T: Clone + Eq + 'static> {
     scroll_motion: Rc<RefCell<Option<overflow::ScrollMotion>>>,
     scroll_generation: usize,
     indicator: Rc<RefCell<motion::IndicatorMotion>>,
+    edge_motion: Rc<RefCell<[motion::EdgeMotion; 2]>>,
 }
 impl<T: Clone + Eq + 'static> EventEmitter<TabsEvent<T>> for TabsState<T> {}
 impl<T: Clone + Eq + 'static> TabsState<T> {
@@ -143,6 +144,7 @@ impl<T: Clone + Eq + 'static> TabsState<T> {
             scroll_motion: Rc::new(RefCell::new(None)),
             scroll_generation: 0,
             indicator: Rc::new(RefCell::new(motion::IndicatorMotion::default())),
+            edge_motion: Rc::new(RefCell::new(Default::default())),
         }
     }
     fn validate(items: &[TabItem<T>]) {

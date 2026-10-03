@@ -1,5 +1,10 @@
 # Continue the GPUI Kumo migration from the pushed handoff checkpoint
 
+## Tabs edge-opacity continuation — 2026-10-03
+
+Following pushed93ca24c (remote CI37125609235 succeeds), source150ms edge-control fades are implemented with stable action identity, immediately inert hidden graphics, focus recovery and reduced-motion settling. [Follow-up evidence](evidence/tabs/edge-opacity/README.md). Remaining #32 work: indicator enter/exit scale/opacity, native replacement/link composition, full-gallery/platform/speech and arbitrary parent masking/clipping. Coverage stays28/43 working,15 unported. Continue supported Tabs gaps, then Toolbar #35; the entries below preserve prior checkpoints.
+
+
 ## Tabs overflow/motion checkpoint — 2026-10-03
 
 Tabs now implements source overflow edge controls/fades, thresholded drag with release suppression, whole-tab scrolling, moving/resizing200ms indicator and reduced-motion settling. Browser measurements repair underline tab heights, small radii and selected shadow/ring. Input regressions repair overlapping action activation; a separate animation clock retains accessible node identity. Collection/resize/unmount and disappearing-action focus recovery are covered. [Contract and exact remaining gaps](tabs-validation.md), [evidence](evidence/tabs/overflow-motion/README.md). #32 remains open for replacement/link composition, edge control fade/indicator enter-exit, full-gallery/platform acceptance and arbitrary parent masking. Coverage remains28/43 working,15 unported. Finish those source-specific gaps, then implement dependency-ready Toolbar; prior status below is historical.
