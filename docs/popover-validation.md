@@ -42,10 +42,10 @@ The runnable native example places the trigger at the selected window edge. Thes
 
 | Requested side | Observed side | Measured gap | Native capture |
 | --- | --- | --- | --- |
-| Bottom | Top | 8px | [Bottom → top](evidence/popover-flip-bottom-to-top.png) |
-| Top | Bottom | 8px | [Top → bottom](evidence/popover-flip-top-to-bottom.png) |
-| Left | Right | 8px | [Left → right](evidence/popover-flip-left-to-right.png) |
-| Right | Left | 8px | [Right → left](evidence/popover-flip-right-to-left.png) |
+| Bottom | Top | 8px | Bottom → top (capture removed) |
+| Top | Bottom | 8px | Top → bottom (capture removed) |
+| Left | Right | 8px | Left → right (capture removed) |
+| Right | Left | 8px | Right → left (capture removed) |
 
 [Raw measurements](evidence/popover-flips.json) include trigger/popup bounds and capture environment. For example, the bottom-requested trigger spans y=428–464 while its popup spans y=316–420: the popup is entirely above the trigger with an 8px gap. The right-requested trigger starts at x=490 while its popup ends at x=482, proving a left-side placement with the same gap.
 

@@ -13,7 +13,7 @@ Own border-only quads now use the border colour with zero alpha for their transp
 | Dark corner channel range | 13–38 | 15–38 |
 | Dark pixel (58,288) | (26,26,26) | (35,35,35) |
 
-Measurements use the same 1040×800 gallery placement: four 5px corner regions around the base neutral-off track. [Before light](evidence/switch-light.png), [repaired light](evidence/switch-edge-light.png), [before dark](evidence/switch-dark.png), [repaired dark](evidence/switch-edge-dark.png). Thumb shadows are preserved; palette values were not changed to conceal the defect.
+Measurements use the same 1040×800 gallery placement: four 5px corner regions around the base neutral-off track. Before light (capture removed), repaired light (capture removed), before dark (capture removed), repaired dark (capture removed). Thumb shadows are preserved; palette values were not changed to conceal the defect.
 
 The native pixel regression [check-switch-edge-capture.py](../scripts/check-switch-edge-capture.py) passes on the corrected capture (minimum231) and fails on the original capture (minimum175). Its220 floor is a conservative sentinel for this fixed light neutral recipe and softened thumb shadow, not a universal contrast rule. Requires Pillow in the capture environment. It accepts explicit origin coordinates when gallery order changes; do not run it on dark/theme-scaled captures or silently assume its default coordinates still identify the control.
 
@@ -23,7 +23,7 @@ python3 scripts/check-switch-edge-capture.py docs/evidence/switch-edge-light.png
 python3 scripts/check-switch-edge-capture.py docs/evidence/switch-light.png
 ```
 
-Badge normal filled borders avoid this exact transparent-background mechanism. Its optional link-hover ring did share it and is repaired. [Light hover](evidence/badge-edge-hover-light.png) and [dark hover](evidence/badge-edge-hover-dark.png) were inspected enlarged: continuous pill edge, correct fill/transparent interior, no dark notches. [Other controls light](evidence/control-edges-light.png), [dark](evidence/control-edges-dark.png) and [Button dark](evidence/button-edges-dark.png) were inspected. This does not resolve KUMO-019 arbitrary-descendant clipping.
+Badge normal filled borders avoid this exact transparent-background mechanism. Its optional link-hover ring did share it and is repaired. Light hover (capture removed) and dark hover (capture removed) were inspected enlarged: continuous pill edge, correct fill/transparent interior, no dark notches. Other controls light (capture removed), dark (capture removed) and Button dark (capture removed) were inspected. This does not resolve KUMO-019 arbitrary-descendant clipping.
 
 Independent review confirmed the shader diagnosis and matching-RGB zero-alpha repair, including translucent rings, and identified the additional Input/Popover/Link/Empty/Badge sites. LayerCard's zero-width transparent border was excluded after checking actual paint arguments.
 
