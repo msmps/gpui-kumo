@@ -1,0 +1,174 @@
+[
+  {
+    "theme": "light",
+    "width": 1040,
+    "result": "PASS",
+    "geometry": [
+      {
+        "id": "segmented-base",
+        "listHeight": 36,
+        "tabHeight": 32,
+        "radius": "6px",
+        "fontSize": "14px"
+      },
+      {
+        "id": "segmented-sm",
+        "listHeight": 26,
+        "tabHeight": 22,
+        "radius": "4px",
+        "fontSize": "12px"
+      },
+      {
+        "id": "underline-base",
+        "listHeight": 30,
+        "tabHeight": 24,
+        "radius": "4px",
+        "fontSize": "14px"
+      },
+      {
+        "id": "underline-sm",
+        "listHeight": 26,
+        "tabHeight": 20,
+        "radius": "4px",
+        "fontSize": "12px"
+      }
+    ],
+    "scrollOffset": 314,
+    "actions": [
+      "pointer edge scroll",
+      "Space edge scroll",
+      "no selection proposal",
+      "drag release suppresses activation",
+      "owner shrink removes overflow"
+    ]
+  },
+  {
+    "theme": "light",
+    "width": 520,
+    "result": "PASS",
+    "geometry": [
+      {
+        "id": "segmented-base",
+        "listHeight": 36,
+        "tabHeight": 32,
+        "radius": "6px",
+        "fontSize": "14px"
+      },
+      {
+        "id": "segmented-sm",
+        "listHeight": 26,
+        "tabHeight": 22,
+        "radius": "4px",
+        "fontSize": "12px"
+      },
+      {
+        "id": "underline-base",
+        "listHeight": 30,
+        "tabHeight": 24,
+        "radius": "4px",
+        "fontSize": "14px"
+      },
+      {
+        "id": "underline-sm",
+        "listHeight": 26,
+        "tabHeight": 20,
+        "radius": "4px",
+        "fontSize": "12px"
+      }
+    ],
+    "scrollOffset": 314,
+    "actions": [
+      "pointer edge scroll",
+      "Space edge scroll",
+      "no selection proposal",
+      "drag release suppresses activation",
+      "owner shrink removes overflow"
+    ]
+  },
+  {
+    "theme": "dark",
+    "width": 1040,
+    "result": "PASS",
+    "geometry": [
+      {
+        "id": "segmented-base",
+        "listHeight": 36,
+        "tabHeight": 32,
+        "radius": "6px",
+        "fontSize": "14px"
+      },
+      {
+        "id": "segmented-sm",
+        "listHeight": 26,
+        "tabHeight": 22,
+        "radius": "4px",
+        "fontSize": "12px"
+      },
+      {
+        "id": "underline-base",
+        "listHeight": 30,
+        "tabHeight": 24,
+        "radius": "4px",
+        "fontSize": "14px"
+      },
+      {
+        "id": "underline-sm",
+        "listHeight": 26,
+        "tabHeight": 20,
+        "radius": "4px",
+        "fontSize": "12px"
+      }
+    ],
+    "scrollOffset": 314,
+    "actions": [
+      "pointer edge scroll",
+      "Space edge scroll",
+      "no selection proposal",
+      "drag release suppresses activation",
+      "owner shrink removes overflow"
+    ]
+  },
+  {
+    "theme": "dark",
+    "width": 520,
+    "result": "PASS",
+    "geometry": [
+      {
+        "id": "segmented-base",
+        "listHeight": 36,
+        "tabHeight": 32,
+        "radius": "6px",
+        "fontSize": "14px"
+      },
+      {
+        "id": "segmented-sm",
+        "listHeight": 26,
+        "tabHeight": 22,
+        "radius": "4px",
+        "fontSize": "12px"
+      },
+      {
+        "id": "underline-base",
+        "listHeight": 30,
+        "tabHeight": 24,
+        "radius": "4px",
+        "fontSize": "14px"
+      },
+      {
+        "id": "underline-sm",
+        "listHeight": 26,
+        "tabHeight": 20,
+        "radius": "4px",
+        "fontSize": "12px"
+      }
+    ],
+    "scrollOffset": 314,
+    "actions": [
+      "pointer edge scroll",
+      "Space edge scroll",
+      "no selection proposal",
+      "drag release suppresses activation",
+      "owner shrink removes overflow"
+    ]
+  }
+]

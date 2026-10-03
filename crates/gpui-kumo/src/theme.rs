@@ -204,6 +204,8 @@ pub struct Effects {
     pub popover_outline_width: Pixels,
     pub popover_outline_offset: Pixels,
     pub shadow_xs: Vec<BoxShadow>,
+    /// Pinned Tailwind shadow-sm, used by the moving Tabs indicator.
+    pub shadow_sm: Vec<BoxShadow>,
     pub shadow_md: Vec<BoxShadow>,
     /// Pinned Tailwind shadow-lg used by Kumo selection popups.
     pub shadow_lg: Vec<BoxShadow>,
@@ -535,6 +537,12 @@ impl Theme {
                 popover_outline_offset: px(if dark { -1. } else { 0. }),
                 shadow_xs: vec![
                     BoxShadow::new(px(0.), px(1.), black.alpha(0.05)).blur_radius(px(2.)),
+                ],
+                shadow_sm: vec![
+                    BoxShadow::new(px(0.), px(1.), black.alpha(0.1)).blur_radius(px(3.)),
+                    BoxShadow::new(px(0.), px(1.), black.alpha(0.1))
+                        .blur_radius(px(2.))
+                        .spread_radius(px(-1.)),
                 ],
                 shadow_md: vec![
                     BoxShadow::new(px(0.), px(4.), black.alpha(0.1))

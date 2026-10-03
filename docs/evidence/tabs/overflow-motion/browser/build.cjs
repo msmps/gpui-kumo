@@ -1,0 +1,1 @@
+require('esbuild').buildSync({entryPoints:[__dirname+'/main.tsx'],outfile:__dirname+'/app.js',bundle:true,jsx:'automatic',nodePaths:[__dirname+'/node_modules']});

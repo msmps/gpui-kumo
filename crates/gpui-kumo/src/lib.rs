@@ -109,4 +109,4 @@ mod readable_label_tests;
 mod animation_clock_tests;
 
 pub mod tabs;
-pub use tabs::{TabItem, Tabs, TabsEvent, TabsState};
+pub use tabs::{TabItem, Tabs, TabsEvent, TabsLabels, TabsState};

@@ -1,5 +1,10 @@
 # Continue the GPUI Kumo migration from the pushed handoff checkpoint
 
+## Tabs overflow/motion checkpoint — 2026-10-03
+
+Tabs now implements source overflow edge controls/fades, thresholded drag with release suppression, whole-tab scrolling, moving/resizing200ms indicator and reduced-motion settling. Browser measurements repair underline tab heights, small radii and selected shadow/ring. Input regressions repair overlapping action activation; a separate animation clock retains accessible node identity. Collection/resize/unmount and disappearing-action focus recovery are covered. [Contract and exact remaining gaps](tabs-validation.md), [evidence](evidence/tabs/overflow-motion/README.md). #32 remains open for replacement/link composition, edge control fade/indicator enter-exit, full-gallery/platform acceptance and arbitrary parent masking. Coverage remains28/43 working,15 unported. Finish those source-specific gaps, then implement dependency-ready Toolbar; prior status below is historical.
+
+
 ## Tabs implementation checkpoint — 2026-10-03
 
 Tabs #32 now has a working retained native core: segmented/underline, base/sm, typed local/controlled selection, manual/automatic keyboard activation, disabled skipping, stable reordered focus and removal recovery, gallery and shared focused preview. Coverage advances to **28/43 working families,15 unported**. [Contract, native evidence and explicit remaining work](tabs-validation.md). #32 stays open for overflow edge controls/drag, sliding indicator/motion, replacement/link composition and full fidelity/platform acceptance; complete that source capability slice next. Select repairs are pushed as4c5fa69, with partial Pagination evidence and popup-width gap retained. Prior checkpoints below are historical.

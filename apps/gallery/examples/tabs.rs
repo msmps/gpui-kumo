@@ -9,7 +9,7 @@ use gpui_kit::{
     Styled, Window, WindowBounds, WindowOptions, div, px, size,
 };
 use gpui_kumo::{Appearance, set_appearance};
-gpui_kit::actions!(tabs_review, [Next, Previous]);
+gpui_kit::actions!(tabs_review, [Next, Previous, ToggleTabs]);
 struct Review {
     focus: gpui_kit::FocusHandle,
     tabs: gpui_kit::Entity<tabs::TabExamples>,
@@ -23,6 +23,10 @@ impl Render for Review {
             .tab_group()
             .on_action(|_: &Next, window, cx| window.focus_next(cx))
             .on_action(|_: &Previous, window, cx| window.focus_prev(cx))
+            .on_action(cx.listener(|this, _: &ToggleTabs, window, cx| {
+                this.tabs
+                    .update(cx, |tabs, cx| tabs.toggle_extra(window, cx));
+            }))
             .flex()
             .flex_col()
             .gap(px(12.))
@@ -53,6 +57,7 @@ fn main() {
         cx.bind_keys([
             gpui_kit::KeyBinding::new("tab", Next, None),
             gpui_kit::KeyBinding::new("shift-tab", Previous, None),
+            gpui_kit::KeyBinding::new("alt-t", ToggleTabs, None),
         ]);
         set_appearance(
             if dark {
@@ -66,7 +71,7 @@ fn main() {
             WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(Bounds::centered(
                     None,
-                    size(px(width), px(560.)),
+                    size(px(width), px(800.)),
                     cx,
                 ))),
                 ..Default::default()
