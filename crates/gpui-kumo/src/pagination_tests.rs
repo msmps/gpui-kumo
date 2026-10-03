@@ -10,6 +10,8 @@ struct Host {
     size_label: Option<&'static str>,
     accept: bool,
     simple: bool,
+    dropdown: bool,
+    mounted: bool,
     info_text: Option<&'static str>,
     _events: Subscription,
 }
@@ -21,38 +23,45 @@ impl Render for Host {
             .flex()
             .flex_col()
             .child(crate::Button::new("before", "Before"))
-            .child(
-                Pagination::new("pages", &self.state)
-                    .page_size(self.show_size)
-                    .controls(if self.simple {
-                        Controls::Simple
-                    } else {
-                        Controls::Full
-                    })
-                    .when_some(self.size_label, |this, label| {
-                        this.content(move |parts, _, _| {
-                            div()
-                                .flex()
-                                .flex_wrap()
-                                .items_center()
-                                .gap(px(8.))
-                                .child(parts.info)
-                                .child(parts.page_size.label(label))
-                                .child(parts.controls)
-                                .into_any_element()
+            .when(self.mounted, |this| {
+                this.child(
+                    Pagination::new("pages", &self.state)
+                        .page_size(self.show_size)
+                        .page_selector(if self.dropdown {
+                            PageSelector::Dropdown
+                        } else {
+                            PageSelector::Input
                         })
-                    })
-                    .when_some(self.info_text, |this, text| {
-                        this.content(move |parts, _, _| {
-                            div()
-                                .flex()
-                                .items_center()
-                                .child(parts.info.text(text))
-                                .child(parts.controls)
-                                .into_any_element()
+                        .controls(if self.simple {
+                            Controls::Simple
+                        } else {
+                            Controls::Full
                         })
-                    }),
-            )
+                        .when_some(self.size_label, |this, label| {
+                            this.content(move |parts, _, _| {
+                                div()
+                                    .flex()
+                                    .flex_wrap()
+                                    .items_center()
+                                    .gap(px(8.))
+                                    .child(parts.info)
+                                    .child(parts.page_size.label(label))
+                                    .child(parts.controls)
+                                    .into_any_element()
+                            })
+                        })
+                        .when_some(self.info_text, |this, text| {
+                            this.content(move |parts, _, _| {
+                                div()
+                                    .flex()
+                                    .items_center()
+                                    .child(parts.info.text(text))
+                                    .child(parts.controls)
+                                    .into_any_element()
+                            })
+                        }),
+                )
+            })
             .child(crate::Button::new("after", "After"))
     }
 }
@@ -90,6 +99,8 @@ fn host(
             size_label: None,
             accept,
             simple: false,
+            dropdown: false,
+            mounted: true,
             info_text: None,
             _events: events,
         }
@@ -356,9 +367,9 @@ fn pagination_geometry_theme_localization_large_counts_and_repeated_draft_render
             let input = window.find("surface").bounds();
             let next = window.find("pagination-next").bounds();
             let last = window.find("pagination-last").bounds();
-            assert_eq!(first.size, gpui_kit::size(px(36.), px(36.)));
+            assert_eq!(first.size, gpui_kit::size(px(42.), px(36.)));
             assert_eq!(input.size.width, px(50.));
-            assert_eq!(last.right() - first.left(), px(190.));
+            assert_eq!(last.right() - first.left(), px(214.));
             for (a, b) in [(first, prev), (prev, input), (input, next), (next, last)] {
                 assert_eq!(a.right() - b.left(), px(1.));
                 assert_eq!(a.center().y, b.center().y);
@@ -476,7 +487,7 @@ fn page_size_controlled_proposals_owner_sync_and_source_labels(cx: &mut TestAppC
         for value in [25usize, 50, 100, 250] {
             assert_eq!(
                 window.find(("pagination-size", value)).bounds().size.height,
-                px(32.),
+                px(33.),
                 "numeric option must stay on one source line"
             );
             assert_eq!(
@@ -687,5 +698,291 @@ fn page_size_unmount_remount_focus_and_theme_geometry(cx: &mut TestAppContext) {
         window.render_frame(cx);
         assert!(!select.read(cx).is_open());
         assert!(!select.read(cx).focus_handle().is_focused(window));
+    });
+}
+
+fn mount_dropdown(view: &Entity<Host>, window: &mut Window, cx: &mut App) {
+    view.update(cx, |v, cx| {
+        v.dropdown = true;
+        cx.notify();
+    });
+    for _ in 0..3 {
+        window.render_frame(cx);
+    }
+}
+fn open_page_select(window: &mut Window, cx: &mut App) {
+    window.click("hit", cx);
+    for _ in 0..3 {
+        window.render_frame(cx);
+    }
+}
+
+#[gpui_kit::test]
+fn dropdown_proposes_once_rejects_accepts_and_synchronizes_native_draft(cx: &mut TestAppContext) {
+    let (view, cx) = host(cx, 3, PaginationTotal::Known(95), false);
+    let state = cx.read(|cx| view.read(cx).state.clone());
+    let select = cx.read(|cx| state.read(cx).page_select.clone());
+    cx.update(|window, cx| {
+        mount_dropdown(&view, window, cx);
+        assert_eq!(window.find("trigger").value(), Some("3"));
+        open_page_select(window, cx);
+        assert!(select.read(cx).is_open());
+        window.click(("pagination-page", 7usize), cx);
+    });
+    cx.run_until_parked();
+    assert_eq!(view.read_with(cx, |v, _| v.events.clone()), vec![7]);
+    assert_eq!(state.read_with(cx, |s, _| s.page()), 3);
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert_eq!(window.find("trigger").value(), Some("3"));
+        assert!(select.read(cx).focus_handle().is_focused(window));
+        view.update(cx, |v, _| v.accept = true);
+        window.press("space", cx);
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        window.press("down", cx);
+        window.render_frame(cx);
+        window.press("enter", cx);
+    });
+    cx.run_until_parked();
+    assert_eq!(view.read_with(cx, |v, _| v.events.clone()), vec![7, 4]);
+    assert_eq!(state.read_with(cx, |s, _| s.page()), 4);
+    assert_eq!(
+        state
+            .read_with(cx, |s, cx| s.input.read(cx).value(cx))
+            .as_ref(),
+        "4"
+    );
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert_eq!(window.find("trigger").value(), Some("4"));
+        window.press("enter", cx);
+        window.render_frame(cx);
+        window.press("enter", cx); // Same selected page closes without a proposal.
+    });
+    cx.run_until_parked();
+    assert_eq!(view.read_with(cx, |v, _| v.events.len()), 2);
+}
+
+#[gpui_kit::test]
+fn dropdown_and_page_size_activation_cannot_override_a_newer_owner(cx: &mut TestAppContext) {
+    let (view, cx) = host(cx, 3, PaginationTotal::Known(95), true);
+    let state = cx.read(|cx| view.read(cx).state.clone());
+    cx.update(|window, cx| {
+        mount_dropdown(&view, window, cx);
+        open_page_select(window, cx);
+        window.click(("pagination-page", 7usize), cx);
+        state.update(cx, |s, cx| s.set_page(2, window, cx));
+    });
+    cx.run_until_parked();
+    assert_eq!(state.read_with(cx, |s, _| s.page()), 2);
+    assert!(view.read_with(cx, |v, _| v.events.is_empty()));
+    cx.update(|window, cx| {
+        view.update(cx, |v, cx| {
+            v.dropdown = false;
+            v.show_size = true;
+            cx.notify();
+        });
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        open_page_select(window, cx);
+        window.click(("pagination-size", 25usize), cx);
+        state.update(cx, |s, cx| s.set_per_page(50, window, cx));
+    });
+    cx.run_until_parked();
+    assert_eq!(state.read_with(cx, |s, _| s.per_page()), 50);
+    assert!(view.read_with(cx, |v, _| v.sizes.is_empty()));
+    // An option-list replacement also invalidates the pending old proposal.
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        open_page_select(window, cx);
+        window.click(("pagination-size", 25usize), cx);
+        state.update(cx, |s, cx| s.set_page_size_options(vec![50, 100], cx));
+    });
+    cx.run_until_parked();
+    assert!(view.read_with(cx, |v, _| v.sizes.is_empty()));
+}
+
+#[gpui_kit::test]
+fn dropdown_allocates_only_full_known_pages_and_reconciles_open_owner_changes(
+    cx: &mut TestAppContext,
+) {
+    let (view, cx) = host(cx, 1, PaginationTotal::Known(usize::MAX), true);
+    let state = cx.read(|cx| view.read(cx).state.clone());
+    cx.update(|window, cx| {
+        assert_eq!(state.read(cx).page_options, None);
+        // Dropdown requested on Simple must not enumerate usize::MAX pages.
+        view.update(cx, |v, cx| {
+            v.simple = true;
+            v.dropdown = true;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        assert_eq!(state.read(cx).page_options, None);
+        state.update(cx, |s, cx| {
+            s.set_total(
+                PaginationTotal::Unknown {
+                    has_next_page: true,
+                },
+                window,
+                cx,
+            )
+        });
+        view.update(cx, |v, cx| {
+            v.simple = false;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        assert_eq!(state.read(cx).page_options, None);
+        state.update(cx, |s, cx| {
+            s.set_total(PaginationTotal::Known(95), window, cx)
+        });
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        assert_eq!(state.read(cx).page_options, Some(10));
+        open_page_select(window, cx);
+        state.update(cx, |s, cx| {
+            s.set_per_page(25, window, cx);
+            s.set_page(4, window, cx);
+        });
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        assert_eq!(state.read(cx).page_options, Some(4));
+        let options: Vec<_> = base::test_support::snapshots(window)
+            .into_iter()
+            .filter(|n| n.role() == Some(Role::ListBoxOption))
+            .collect();
+        assert_eq!(options.len(), 4);
+        assert_eq!(window.find("trigger").value(), Some("4"));
+        window.press("escape", cx);
+        window.render_frame(cx);
+        view.update(cx, |v, cx| {
+            v.dropdown = false;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        assert_eq!(state.read(cx).page_options, None);
+        state.update(cx, |s, cx| {
+            s.set_total(PaginationTotal::Known(usize::MAX), window, cx)
+        });
+        window.render_frame(cx);
+        assert_eq!(state.read(cx).page_options, None);
+    });
+    cx.run_until_parked();
+    assert!(view.read_with(cx, |v, _| v.events.is_empty()));
+}
+
+#[gpui_kit::test]
+fn dropdown_focus_mode_removal_availability_and_unmount_cleanup(cx: &mut TestAppContext) {
+    let (view, cx) = host(cx, 3, PaginationTotal::Known(95), true);
+    let state = cx.read(|cx| view.read(cx).state.clone());
+    let select = cx.read(|cx| state.read(cx).page_select.clone());
+    cx.update(|window, cx| {
+        mount_dropdown(&view, window, cx);
+        open_page_select(window, cx);
+        state.update(cx, |s, cx| s.set_disabled(true, window, cx));
+        window.render_frame(cx);
+        assert!(!select.read(cx).is_open());
+        window.click("hit", cx);
+        window.press("space", cx);
+        window.press("enter", cx);
+        assert!(!select.read(cx).is_open());
+        state.update(cx, |s, cx| s.set_disabled(false, window, cx));
+        window.render_frame(cx);
+        open_page_select(window, cx);
+        view.update(cx, |v, cx| {
+            v.simple = true;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        assert!(!select.read(cx).is_open());
+        assert!(state.read(cx).focuses[1].is_focused(window));
+        window.press("tab", cx);
+        window.render_frame(cx);
+        assert!(state.read(cx).focuses[2].is_focused(window));
+        window.press("tab", cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("after").focused(), Some(true));
+        view.update(cx, |v, cx| {
+            v.simple = false;
+            cx.notify();
+        });
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        open_page_select(window, cx);
+        view.update(cx, |v, cx| {
+            v.mounted = false;
+            cx.notify();
+        });
+        window.render_frame(cx);
+    });
+    cx.run_until_parked();
+    assert!(!select.read_with(cx, |s, _| s.is_open()));
+    cx.update(|window, cx| {
+        assert!(!select.read(cx).focus_handle().is_focused(window));
+        select.update(cx, |s, cx| s.set_open(true, window, cx));
+        assert!(!select.read(cx).is_open());
+        view.update(cx, |v, cx| {
+            v.mounted = true;
+            cx.notify();
+        });
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        open_page_select(window, cx);
+        assert!(select.read(cx).is_open());
+        window.press("escape", cx);
+        window.render_frame(cx);
+        assert!(select.read(cx).focus_handle().is_focused(window));
+    });
+    cx.run_until_parked();
+    assert!(view.read_with(cx, |v, _| v.events.is_empty()));
+}
+
+#[gpui_kit::test]
+fn dropdown_source_joins_and_disabled_border_paint_in_both_themes(cx: &mut TestAppContext) {
+    let (view, cx) = host(cx, 1, PaginationTotal::Known(95), true);
+    cx.update(|window, cx| {
+        mount_dropdown(&view, window, cx);
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            for _ in 0..3 {
+                window.render_frame(cx);
+            }
+            let first = window.find("pagination-first").bounds();
+            let prev = window.find("pagination-previous").bounds();
+            let trigger = window.find("trigger").bounds();
+            let next = window.find("pagination-next").bounds();
+            let last = window.find("pagination-last").bounds();
+            assert_eq!(first.size, gpui_kit::size(px(42.), px(36.)));
+            for (a, b, overlap) in [
+                (first, prev, 1.),
+                (prev, trigger, 0.),
+                (trigger, next, 1.),
+                (next, last, 1.),
+            ] {
+                assert_eq!(a.right() - b.left(), px(overlap));
+                assert_eq!(a.center().y, b.center().y);
+            }
+            assert!(last.right() <= px(360.));
+            let t = theme(cx);
+            assert!(
+                window.painted_quads().iter().any(|q| q.bounds
+                    == first.dilate(px(1.)).scale(window.scale_factor())
+                    && q.border_color == t.colors.line),
+                "disabled joined border must remain full-opacity source line"
+            );
+            assert!(
+                window.painted_quads().iter().any(|q| q.bounds
+                    == trigger.dilate(px(1.)).scale(window.scale_factor())
+                    && q.border_color == t.colors.hairline),
+                "flat middle Select ring must paint source hairline"
+            );
+        }
     });
 }

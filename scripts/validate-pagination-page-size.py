@@ -151,7 +151,7 @@ try:
         transitions.append(expansion(size(5), True))
         selected(25)
         for value in (25, 50, 100, 250):
-            assert bounds(find(str(value), 'list item'))[3] == 32, (value, bounds(find(str(value), 'list item')))
+            assert bounds(find(str(value), 'list item'))[3] == 33, (value, bounds(find(str(value), 'list item')))
         capture(theme, width, 'open')
         pointer(find('50', 'list item'))
         assert counter() == original + 1

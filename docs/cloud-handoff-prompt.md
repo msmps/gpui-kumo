@@ -1,5 +1,10 @@
 # Continue the GPUI Kumo migration from the pushed handoff checkpoint
 
+## Active dropdown recreation — 2026-10-03
+
+#26's missing candidate is recreated over verified6c316ab. Typed page selector, retained controlled page Select, allocation/mode/owner/lifecycle guards and five rendered regressions are implemented; source-derived42×36/214/83 geometry, Select gap6/33px rows and disabled joined borders are reconciled. Local formatting/probe syntax pass; remote CI is pending. Linux/native/browser remain blocked by unreachable proxy and missing dependency cache. #26/#42/#38 stay open. [Exact contract/checkpoint](pagination-dropdown-checkpoint.md). Finish remote CI and repair measured failures; then restore connectivity and complete native#42/#26, followed by#38. Coverage remains27/43 working,16 unported.
+
+
 Continue `msmps/gpui-kumo` on branch `work`. Goal: migrate the supported, recommended Kumo design system to native Rust/GPUI, using GPUI Kit's `gpui-base` as the behaviour foundation and preserving Kumo appearance, capabilities and composability.
 
 Read the actual latest `origin/work` before acting. This handoff is a partial, reviewable checkpoint, not a completed milestone or permission to reset to an older tree. Read applicable `AGENTS.md`, `docs/README.md`, `CONTEXT.md`, `docs/port-progress.md`, `docs/issue-audit-2026-10-03.md`, component acceptance documents and relevant GitHub issues.

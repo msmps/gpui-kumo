@@ -1,5 +1,10 @@
 # Kumo native port progress
 
+## Active dropdown recreation — 2026-10-03
+
+#26's missing candidate is recreated over verified6c316ab. Typed page selector, retained controlled page Select, allocation/mode/owner/lifecycle guards and five rendered regressions are implemented; source-derived42×36/214/83 geometry, Select gap6/33px rows and disabled joined borders are reconciled. Local formatting/probe syntax pass; remote CI is pending. Linux/native/browser remain blocked by unreachable proxy and missing dependency cache. #26/#42/#38 stay open. [Exact contract/checkpoint](pagination-dropdown-checkpoint.md). Finish remote CI and repair measured failures; then restore connectivity and complete native#42/#26, followed by#38. Coverage remains27/43 working,16 unported.
+
+
 ## Current checkpoint — 2026-10-03
 
 Branch `work`; implementation85871b7689f987d3cdb035572e9f4b17687523f9 over clock correction9ef600b. Documentation/evidence checkpoint5ea81bb7f8ff6a26adb1e02b0228d3fdac2865a8; this final status update follows it. **#43/#45 resolved:** complete remote runs37115645935 and37116002411 both pass170 library tests,1gallery,9doctests, workspace/exact adapter formatting, warnings-denied Clippy/locked all-target/all-feature/default-gallery builds, adapter12default/14all-feature tests. [Raw outcomes, initial failure and repair](evidence/animation-clock/README.md). Preserve the new narrow GPUI executor-clock patch and its downstream/removal obligations alongside existing patches and exact pins. No assertions weakened. Coverage remains27/43 working families with fidelity gaps;16 unported.

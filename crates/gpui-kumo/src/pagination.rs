@@ -1,7 +1,7 @@
 //! Kumo compound pagination with a retained native draft and Base controlled bounds.
 use crate::{
-    Button, InputEvent, InputGroup, InputState, Select, SelectEvent, SelectOption, SelectState,
-    SelectValue, SelectValueContent, Theme, theme,
+    Button, InputEvent, InputGroup, InputState, Select, SelectOption, SelectState, SelectValue,
+    SelectValueContent, Theme, theme,
 };
 use gpui_kit::base::TestSupportExt;
 use gpui_kit::{
@@ -10,7 +10,7 @@ use gpui_kit::{
     StatefulInteractiveElement, Styled, Subscription, Window, base, div, prelude::FluentBuilder,
     px, svg,
 };
-use std::rc::Rc;
+use std::{cell::Cell, rc::Rc};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PaginationTotal {
@@ -25,6 +25,13 @@ pub enum Controls {
     #[default]
     Full,
     Simple,
+}
+/// The source dropdown enumerates every page; use Input for large datasets.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum PageSelector {
+    #[default]
+    Input,
+    Dropdown,
 }
 #[derive(Clone, Debug)]
 pub struct PaginationLabels {
@@ -191,7 +198,7 @@ impl RenderOnce for PaginationPageSize {
             .shape_line(text, style.size, &[run], None)
             .width
             + padding * 2.
-            + t.spacing.eight
+            + t.spacing.six
             + px(16.);
         div()
             .id("pagination-page-size")
@@ -229,6 +236,7 @@ type Content = Rc<dyn Fn(PaginationParts, &mut Window, &mut App) -> AnyElement>;
 #[derive(Default)]
 struct Presentation {
     controls: Controls,
+    page_selector: PageSelector,
     page_size: bool,
     content: Option<Content>,
 }
@@ -240,6 +248,9 @@ pub struct PaginationState {
     total: PaginationTotal,
     input: Entity<InputState>,
     page_size: Entity<SelectState<usize>>,
+    page_select: Entity<SelectState<usize>>,
+    page_options: Option<usize>,
+    proposal_revision: Rc<Cell<u64>>,
     draft_dirty: bool,
     draft_revision: u64,
     labels: PaginationLabels,
@@ -264,6 +275,67 @@ impl PaginationState {
             s.set_value(model.current_page().to_string(), window, cx);
             s
         });
+        let proposal_revision = Rc::new(Cell::new(0));
+        let owner = cx.entity().downgrade();
+        let configure_proposals = |select: &mut SelectState<usize>, page: bool| {
+            let owner = owner.clone();
+            let revision = proposal_revision.clone();
+            select.set_proposal_handler(move |value, window, cx| {
+                let SelectValue::Single(Some(value)) = value else {
+                    return;
+                };
+                let value = *value;
+                let expected = revision.get();
+                let revision = revision.clone();
+                let owner = owner.clone();
+                let handle = window.window_handle();
+                // Select is still borrowed here. Stamp now, deliver after that
+                // borrow ends, and discard if the owner changed in between.
+                cx.defer(move |cx| {
+                    let _ = handle.update(cx, |_, window, cx| {
+                        if revision.get() != expected {
+                            return;
+                        }
+                        let Some(owner) = owner.upgrade() else { return };
+                        let mounted = {
+                            let state = owner.read(cx);
+                            let select = if page {
+                                &state.page_select
+                            } else {
+                                &state.page_size
+                            };
+                            select.read(cx).is_mounted()
+                        };
+                        if !mounted {
+                            return;
+                        }
+                        if page {
+                            if owner.read(cx).page_options.is_some() {
+                                Self::request(&owner, Direction::Page(value), window, cx);
+                            }
+                        } else {
+                            owner.update(cx, |state, cx| {
+                                if !state.is_disabled() && value != state.per_page {
+                                    cx.emit(PaginationEvent::PageSize(value));
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+        };
+        let page_select = cx.new(|cx| {
+            let mut state = SelectState::new(
+                labels.page_number.clone(),
+                SelectValue::Single(Some(model.current_page())),
+                vec![],
+                cx,
+            );
+            state.set_controlled(true, cx);
+            state.set_joined_middle();
+            configure_proposals(&mut state, true);
+            state
+        });
         let page_size = cx.new(|cx| {
             let mut state = SelectState::new(
                 labels.page_size.clone(),
@@ -272,6 +344,7 @@ impl PaginationState {
                 cx,
             );
             state.set_controlled(true, cx);
+            configure_proposals(&mut state, false);
             // External owner values need not occur in the current option list.
             // Keep the actual size readable without adding an invented option.
             state.set_value_content(
@@ -286,18 +359,6 @@ impl PaginationState {
             );
             state
         });
-        let size_events = cx.subscribe_in(
-            &page_size,
-            window,
-            |state: &mut Self, _, event: &SelectEvent<usize>, _, cx| {
-                if let SelectValue::Single(Some(size)) = event.value
-                    && !state.is_disabled()
-                    && size != state.per_page
-                {
-                    cx.emit(PaginationEvent::PageSize(size));
-                }
-            },
-        );
         let events =
             cx.subscribe_in(
                 &input,
@@ -323,16 +384,15 @@ impl PaginationState {
             total,
             input,
             page_size,
+            page_select,
+            page_options: None,
+            proposal_revision,
             draft_dirty: false,
             draft_revision: 0,
             labels,
             focuses: std::array::from_fn(|_| cx.focus_handle()),
             presentation: Presentation::default(),
-            _subscriptions: vec![
-                events,
-                size_events,
-                cx.observe_global::<Theme>(|_, cx| cx.notify()),
-            ],
+            _subscriptions: vec![events, cx.observe_global::<Theme>(|_, cx| cx.notify())],
         }
     }
     fn model(
@@ -404,6 +464,8 @@ impl PaginationState {
         &self.input
     }
     fn reset_draft(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.proposal_revision
+            .set(self.proposal_revision.get().wrapping_add(1));
         self.draft_dirty = false;
         self.draft_revision = self.draft_revision.wrapping_add(1);
         let text = self.page().to_string();
@@ -414,6 +476,7 @@ impl PaginationState {
     pub fn set_page(&mut self, page: usize, window: &mut Window, cx: &mut Context<Self>) {
         self.model = Self::model(page, self.per_page, self.total, self.is_disabled(), cx);
         self.reset_draft(window, cx);
+        self.reconcile_page_options(cx);
         cx.notify();
     }
     /// Normalize to the new valid range without a proposal; does not automatically reset to1.
@@ -441,6 +504,8 @@ impl PaginationState {
         self.input.update(cx, |s, cx| s.set_disabled(disabled, cx));
         self.page_size
             .update(cx, |s, cx| s.set_disabled(disabled, window, cx));
+        self.page_select
+            .update(cx, |s, cx| s.set_disabled(disabled, window, cx));
         self.reset_draft(window, cx);
         cx.notify();
     }
@@ -463,22 +528,65 @@ impl PaginationState {
             .update(cx, |s, cx| s.set_name(labels.page_number.clone(), cx));
         self.page_size
             .update(cx, |s, cx| s.set_name(labels.page_size.clone(), cx));
+        self.page_select
+            .update(cx, |s, cx| s.set_name(labels.page_number.clone(), cx));
         self.labels = labels;
         cx.notify();
     }
     /// Replace source options without changing the owner's size or emitting a proposal.
     /// Empty lists are allowed. Positive, unique whole sizes have stable numeric IDs.
     pub fn set_page_size_options(&mut self, options: Vec<usize>, cx: &mut Context<Self>) {
+        self.proposal_revision
+            .set(self.proposal_revision.get().wrapping_add(1));
         self.page_size
             .update(cx, |s, cx| s.set_options(size_options(options), cx));
     }
+    fn full_controls(&self) -> bool {
+        self.presentation.controls == Controls::Full
+            && matches!(self.total, PaginationTotal::Known(_))
+    }
+    fn dropdown(&self) -> bool {
+        self.full_controls() && self.presentation.page_selector == PageSelector::Dropdown
+    }
+    fn reconcile_page_options(&mut self, cx: &mut Context<Self>) {
+        let pages = self.dropdown().then(|| self.model.total_pages());
+        if self.page_options != pages {
+            self.page_options = pages;
+            self.page_select.update(cx, |state, cx| {
+                state.set_options(
+                    pages.map_or_else(Vec::new, |pages| {
+                        (1..=pages)
+                            .map(|page| {
+                                SelectOption::new(("pagination-page", page), page, page.to_string())
+                            })
+                            .collect()
+                    }),
+                    cx,
+                );
+            });
+        }
+        let page = self.page();
+        if self.page_select.read(cx).value() != &SelectValue::Single(Some(page)) {
+            self.page_select.update(cx, |state, cx| {
+                state.set_value(SelectValue::Single(Some(page)), cx);
+            });
+        }
+    }
     fn reconcile_hidden_focus(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let full = self.presentation.controls == Controls::Full
-            && matches!(self.total, PaginationTotal::Known(_));
-        if !full
-            && (self.input.read(cx).focus_handle(cx).is_focused(window)
-                || self.focuses[0].is_focused(window)
-                || self.focuses[3].is_focused(window))
+        let full = self.full_controls();
+        let dropdown = self.dropdown();
+        let select_focus = self.page_select.read(cx).focus_handle();
+        let removed_select =
+            !dropdown && (select_focus.is_focused(window) || self.page_select.read(cx).is_open());
+        // Close while still mounted so content focus can return to its trigger
+        // before the removed-control fallback chooses a surviving action.
+        if !dropdown {
+            self.page_select
+                .update(cx, |state, cx| state.set_open(false, window, cx));
+        }
+        if ((!full || dropdown) && self.input.read(cx).focus_handle(cx).is_focused(window))
+            || (removed_select && select_focus.is_focused(window))
+            || (!full && (self.focuses[0].is_focused(window) || self.focuses[3].is_focused(window)))
         {
             self.reset_draft(window, cx);
             if self.model.previous_page().is_some() {
@@ -542,6 +650,7 @@ impl PaginationState {
             };
         Button::icon(id, name, NavigationGlyph(bytes))
             .variant(crate::button::Variant::Secondary)
+            .shape(crate::button::Shape::Standard)
             .track_focus(&self.focuses[index])
             .disabled(disabled)
             .on_click(move |_, window, cx| {
@@ -576,6 +685,7 @@ impl PaginationState {
             let target = target.clone();
             Button::icon(id, name.clone(), NavigationGlyph(bytes))
                 .variant(crate::button::Variant::Secondary)
+                .shape(crate::button::Shape::Standard)
                 .track_focus(&focus)
                 .disabled(disabled)
                 .on_click(move |_, window, cx| {
@@ -585,12 +695,99 @@ impl PaginationState {
                 })
         }
     }
-    fn controls(&self, _: &mut Window, cx: &mut Context<Self>) -> AnyElement {
-        let full = self.presentation.controls == Controls::Full
-            && matches!(self.total, PaginationTotal::Known(_));
-        let body = if full {
+    fn controls(&self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
+        let full = self.full_controls();
+        let dropdown = self.dropdown();
+        let mut minimum = if full { px(214.) } else { px(83.) };
+        let body = if dropdown {
+            let t = theme(cx);
+            let text: SharedString = self.page().to_string().into();
+            let run = gpui_kit::TextRun {
+                len: text.len(),
+                font: gpui_kit::font(t.typography.font_family.clone()),
+                color: t.text.default,
+                background_color: None,
+                underline: None,
+                strikethrough: None,
+            };
+            let (_, padding, _, _) = crate::input::metrics(crate::input::Size::Base, t);
+            let width = window
+                .text_system()
+                .shape_line(text, t.typography.base.size, &[run], None)
+                .width
+                + padding * 2.
+                + t.spacing.six
+                + px(16.);
+            // Select is not an InputGroup child in pinned Kumo: it has no
+            // leading -1px overlap; the other three button seams do.
+            minimum = px(4. * 42. - 3.) + width;
+            let borders = crate::button::JoinedRingQueue::default();
+            let navigation = |id, direction, name, index, bytes, first, last| {
+                self.button(id, direction, name, index, bytes, cx)
+                    .input_group_zone(
+                        false,
+                        crate::input_group::Zone {
+                            height: px(36.),
+                            radius: t.radii.lg,
+                            first,
+                            last,
+                            borders: borders.clone(),
+                        },
+                    )
+            };
+            crate::input_group::Zoned {
+                body: div()
+                    .flex()
+                    .items_center()
+                    .child(navigation(
+                        "pagination-first",
+                        Direction::First,
+                        self.labels.first_page.clone(),
+                        0,
+                        include_bytes!("../assets/pagination-first.svg"),
+                        true,
+                        false,
+                    ))
+                    .child(div().flex().ml(px(-1.)).child(navigation(
+                        "pagination-previous",
+                        Direction::Previous,
+                        self.labels.previous_page.clone(),
+                        1,
+                        include_bytes!("../assets/pagination-previous.svg"),
+                        false,
+                        false,
+                    )))
+                    .child(
+                        div().w(width).flex_shrink_0().child(
+                            Select::new("pagination-page-select", &self.page_select)
+                                .joined_middle(borders.clone()),
+                        ),
+                    )
+                    .child(div().flex().ml(px(-1.)).child(navigation(
+                        "pagination-next",
+                        Direction::Next,
+                        self.labels.next_page.clone(),
+                        2,
+                        include_bytes!("../assets/pagination-next.svg"),
+                        false,
+                        false,
+                    )))
+                    .child(div().flex().ml(px(-1.)).child(navigation(
+                        "pagination-last",
+                        Direction::Last,
+                        self.labels.last_page.clone(),
+                        3,
+                        include_bytes!("../assets/pagination-last.svg"),
+                        false,
+                        true,
+                    )))
+                    .into_any_element(),
+                borders,
+            }
+            .into_any_element()
+        } else if full {
             div()
-                .w(px(190.))
+                .w(px(214.))
                 .child(
                     InputGroup::new("pagination-input-group", &self.input)
                         .editor_width(px(50.))
@@ -703,7 +900,7 @@ impl PaginationState {
             .flex_1()
             // Preserve the intrinsic joined control width when the source parts
             // are composed in a wrapping native row; never paint over siblings.
-            .min_w(px(if full { 190. } else { 71. }))
+            .min_w(minimum)
             .flex()
             .flex_col()
             .items_end()
@@ -789,6 +986,12 @@ impl Pagination {
         self.presentation.controls = controls;
         self
     }
+    /// Source page control. Dropdown allocates all pages only in Full + Known
+    /// mode; Input is recommended for large counts.
+    pub fn page_selector(mut self, selector: PageSelector) -> Self {
+        self.presentation.page_selector = selector;
+        self
+    }
     /// Include the default PageSize part. Custom content chooses its own parts.
     pub fn page_size(mut self, show: bool) -> Self {
         self.presentation.page_size = show;
@@ -807,8 +1010,14 @@ impl Pagination {
 impl RenderOnce for Pagination {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         self.state.update(cx, |s, cx| {
+            if s.presentation.controls != self.presentation.controls
+                || s.presentation.page_selector != self.presentation.page_selector
+            {
+                s.reset_draft(window, cx);
+            }
             s.presentation = self.presentation;
             s.reconcile_hidden_focus(window, cx);
+            s.reconcile_page_options(cx);
         });
         div().id(self.id).w_full().min_w_0().child(self.state)
     }

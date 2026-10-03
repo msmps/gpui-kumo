@@ -57,3 +57,7 @@ Pinned source has no numbered-page/ellipsis strip. Compound API is recommended; 
 ## PageSize checkpoint
 
 Retained controlled Select, PageSize proposals, explicit owner acceptance/reset, default/custom/empty positive options, readable numeric owner projection, default/custom/rich/hidden labels and fresh composition. Required gate/native results and source/geometry fixes are recorded in [Pagination acceptance](../pagination-validation.md). #36/#37/#39 shared semantics repairs are published. Remaining #41 expansion export is selected next before dropdown Controls; never infer native Expanded or ComboBox string interfaces from authored metadata. Family remains open.
+
+## Recreated dropdown continuation
+
+Typed retained Dropdown controls and owner/mode/allocation/focus/paint regressions are recreated over6c316ab. [Current acceptance/checkpoint](../pagination-dropdown-checkpoint.md); formatting passes, remote CI pending, Linux/native/browser blocked by proxy/cache. Family stays open; no earlier missing-candidate evidence is reused as acceptance.

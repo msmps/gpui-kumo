@@ -685,7 +685,7 @@ impl RenderOnce for Button {
                         radii.to_pixels(window.rem_size()),
                         color.alpha(0.),
                         px(1.),
-                        color.opacity(ring_opacity),
+                        color,
                         Default::default(),
                     );
                     zone.borders

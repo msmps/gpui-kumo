@@ -47,6 +47,7 @@ pub enum SelectValue<T> {
 }
 type ContentFactory = Rc<dyn Fn(&mut Window, &mut App) -> AnyElement>;
 type Comparator<T> = Rc<dyn Fn(&T, &T) -> bool>;
+type ProposalHandler<T> = Rc<dyn Fn(&SelectValue<T>, &mut Window, &mut App)>;
 /// Decorative selected content with the complete readable value on Base's control.
 /// Keep interactive actions outside the trigger.
 pub struct SelectValueContent {
@@ -176,6 +177,9 @@ pub struct SelectState<T: Clone + PartialEq + 'static> {
     compare: Comparator<T>,
     value_content: Option<ValueFactory<T>>,
     controlled: bool,
+    proposal_handler: Option<ProposalHandler<T>>,
+    joined_middle: bool,
+    joined_borders: Option<crate::button::JoinedRingQueue>,
     disabled: bool,
     read_only: bool,
     open: bool,
@@ -246,6 +250,9 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             compare: Rc::new(|a, b| a == b),
             value_content: None,
             controlled: false,
+            proposal_handler: None,
+            joined_middle: false,
+            joined_borders: None,
             disabled: false,
             read_only: false,
             open: false,
@@ -352,6 +359,17 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         self.controlled = controlled;
         cx.notify();
     }
+    // Compound owners stamp proposals at activation, before deferred event
+    // delivery. The handler must not borrow this Select; capture owners weakly.
+    pub(crate) fn set_proposal_handler(
+        &mut self,
+        handler: impl Fn(&SelectValue<T>, &mut Window, &mut App) + 'static,
+    ) {
+        self.proposal_handler = Some(Rc::new(handler));
+    }
+    pub(crate) fn set_joined_middle(&mut self) {
+        self.joined_middle = true;
+    }
     pub fn set_value(&mut self, value: SelectValue<T>, cx: &mut Context<Self>) {
         assert!(
             matches!(
@@ -453,6 +471,9 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
     fn is_unmounted(&self) -> bool {
         self.mounted_once && self.mount.upgrade().is_none()
     }
+    pub(crate) fn is_mounted(&self) -> bool {
+        self.mount.upgrade().is_some()
+    }
     fn selected(&self, value: &T) -> bool {
         match &self.value {
             SelectValue::Single(v) => v.as_ref().is_some_and(|v| (self.compare)(v, value)),
@@ -523,6 +544,9 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             self.set_open(false, window, cx);
         }
         if changed {
+            if let Some(handler) = &self.proposal_handler {
+                handler(&next, window, cx);
+            }
             cx.emit(SelectEvent { value: next });
         }
         cx.notify();
@@ -664,6 +688,7 @@ pub struct Select<T: Clone + PartialEq + 'static> {
     description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
     parent: Option<crate::popover::PopoverClose>,
+    joined_borders: Option<crate::button::JoinedRingQueue>,
 }
 impl<T: Clone + PartialEq + 'static> Select<T> {
     pub fn new(id: impl Into<ElementId>, state: &Entity<SelectState<T>>) -> Self {
@@ -682,10 +707,15 @@ impl<T: Clone + PartialEq + 'static> Select<T> {
             description: None,
             error: None,
             parent: None,
+            joined_borders: None,
         }
     }
     pub fn placement(mut self, placement: Placement) -> Self {
         self.placement = placement;
+        self
+    }
+    pub(crate) fn joined_middle(mut self, borders: crate::button::JoinedRingQueue) -> Self {
+        self.joined_borders = Some(borders);
         self
     }
     /// Include this child surface in the parent Popover's dismissal boundary.
@@ -782,6 +812,7 @@ impl<T: Clone + PartialEq + 'static> RenderOnce for Select<T> {
             });
         }
         self.state.update(cx, |v, cx| {
+            v.joined_borders = self.joined_borders;
             v.size = self.size;
             v.placement = self.placement;
             v.align = self.align;
@@ -812,6 +843,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
     ) -> impl gpui_kit::Element {
         let t = theme(cx).clone();
         let (height, padding, radius, style) = crate::input::metrics(self.size, &t);
+        let radius = if self.joined_middle { px(0.) } else { radius };
         let display = self.display();
         let has_value = match &self.value {
             SelectValue::Single(value) => value.is_some(),
@@ -851,6 +883,8 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         let ring_focus = self.trigger.clone();
         let invalid = self.invalid;
         let colors = t.colors.clone();
+        let joined_middle = self.joined_middle;
+        let joined_borders = self.joined_borders.clone();
         let trigger = base::Select::new("trigger")
             .open(open)
             .disabled(disabled)
@@ -881,7 +915,9 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
                 t.colors.control
             })
             .opacity(if self.disabled { 0.5 } else { 1. })
-            .shadow(t.effects.shadow_xs.clone())
+            .when(!joined_middle, |this| {
+                this.shadow(t.effects.shadow_xs.clone())
+            })
             .text_color(if disabled {
                 t.text.default.opacity(0.7)
             } else if empty {
@@ -902,7 +938,11 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
                     .justify_between()
                     .size_full()
                     .px(padding)
-                    .gap(px(8.))
+                    .gap(px(match self.size {
+                        Size::Xs | Size::Sm => 4.,
+                        Size::Base => 6.,
+                        Size::Lg => 8.,
+                    }))
                     .when(!disabled, |v| v.cursor_pointer())
                     .on_hover(cx.listener(|v, hovered, _, cx| {
                         v.hovered = *hovered;
@@ -972,10 +1012,12 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
                             }
                         } else if focused {
                             colors.focus.opacity(0.5)
+                        } else if joined_middle {
+                            colors.hairline
                         } else {
                             colors.line
                         };
-                        window.paint_quad(gpui_kit::quad(
+                        let border = gpui_kit::quad(
                             if keyboard {
                                 bounds
                             } else {
@@ -986,7 +1028,14 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
                             width,
                             color,
                             Default::default(),
-                        ));
+                        );
+                        if let Some(borders) = &joined_borders {
+                            borders
+                                .borrow_mut()
+                                .push((focused, border, window.content_mask()));
+                        } else {
+                            window.paint_quad(border);
+                        }
                     },
                 )
                 .absolute()
@@ -1221,8 +1270,8 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
             .shadow(t.effects.shadow_lg.clone())
             .text_color(t.text.default)
             .font_family(t.typography.font_family.clone())
-            .text_size(px(14.))
-            .line_height(px(20.))
+            .text_size(t.typography.base.size)
+            .line_height(t.typography.base.line_height)
             .child(list)
             .on_mouse_down_out(
                 cx.listener(|v, event: &gpui_kit::MouseDownEvent, window, cx| {

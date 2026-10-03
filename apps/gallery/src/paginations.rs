@@ -4,12 +4,14 @@ use gpui_kit::{
 };
 use gpui_kumo::{
     Button, Pagination, PaginationEvent, PaginationLabels, PaginationState, PaginationTotal, Theme,
-    pagination::Controls, theme,
+    pagination::{Controls, PageSelector},
+    theme,
 };
 pub struct Paginations {
     states: Vec<Entity<PaginationState>>,
     proposals: usize,
     size_proposals: usize,
+    dropdown: bool,
     _subscriptions: Vec<Subscription>,
 }
 impl Paginations {
@@ -29,6 +31,8 @@ impl Paginations {
             (3, 25, PaginationTotal::Known(500)),
             (1, 10, PaginationTotal::Known(200)),
             (2, 10, PaginationTotal::Known(200)),
+            (3, 10, PaginationTotal::Known(95)),
+            (3, 10, PaginationTotal::Known(95)),
         ];
         let states: Vec<_> = configs
             .into_iter()
@@ -76,7 +80,7 @@ impl Paginations {
                             return;
                         };
                         v.proposals += 1;
-                        if index != 3 {
+                        if index != 3 && index != 9 {
                             state.update(cx, |s, cx| {
                                 s.set_page(page, window, cx);
                                 if index == 2 {
@@ -100,6 +104,7 @@ impl Paginations {
             states,
             proposals: 0,
             size_proposals: 0,
+            dropdown: false,
             _subscriptions: subscriptions,
         }
     }
@@ -110,8 +115,22 @@ impl Render for Paginations {
             theme(cx),
             "Pagination · controlled pages, retained native drafts and source joins",
         )
-        .child("Full controls · partial last page; type a page and press Enter or Tab")
-        .child(Pagination::new("pagination-full", &self.states[0]))
+        .child("Full controls · retained dropdown/input; partial last page; owner accepts")
+        .child(
+            Pagination::new("pagination-full", &self.states[0]).page_selector(if self.dropdown {
+                PageSelector::Dropdown
+            } else {
+                PageSelector::Input
+            }),
+        )
+        .child(
+            Button::new("pagination-selector-mode", "Toggle input/dropdown").on_click(cx.listener(
+                |v, _, _, cx| {
+                    v.dropdown = !v.dropdown;
+                    cx.notify();
+                },
+            )),
+        )
         .child("Simple controls · large dataset")
         .child(Pagination::new("pagination-simple", &self.states[1]).controls(Controls::Simple))
         .child("Unknown total · sequential pages until the server reports no next page")
@@ -160,6 +179,17 @@ impl Render for Paginations {
                     .child(parts.controls)
                     .into_any_element()
             }),
+        )
+        .child("Page dropdown · accepted page and PageSize proposals")
+        .child(
+            Pagination::new("pagination-dropdown", &self.states[8])
+                .page_selector(PageSelector::Dropdown)
+                .page_size(true),
+        )
+        .child("Page dropdown · owner rejects page proposals")
+        .child(
+            Pagination::new("pagination-dropdown-rejected", &self.states[9])
+                .page_selector(PageSelector::Dropdown),
         )
         .child(gpui_kumo::Text::new(
             "pagination-size-proposals",
