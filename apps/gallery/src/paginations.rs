@@ -224,7 +224,10 @@ impl Render for Paginations {
                         })),
                 ),
         )
-        .child(format!("Page proposals: {}", self.proposals))
+        .child(gpui_kumo::Text::new(
+            "pagination-page-proposals",
+            format!("Page proposals: {}", self.proposals),
+        ))
         .child(
             div()
                 .flex()

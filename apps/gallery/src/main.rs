@@ -252,6 +252,9 @@ fn main() {
         .with_assets(GalleryAssets)
         .run(|cx: &mut App| {
             gpui_kumo::init(cx);
+            if std::env::args().any(|arg| arg == "--reduce-motion") {
+                cx.set_reduce_motion(true);
+            }
             cx.bind_keys([
                 KeyBinding::new("tab", FocusNext, None),
                 KeyBinding::new("shift-tab", FocusPrevious, None),

@@ -1,5 +1,12 @@
 # Kumo native port progress
 
+## Current migration checkpoint — 2026-10-03
+
+Foundations #42 and the reported Text glyph discrepancy #38 are resolved and pushed (f03da05 / 9a2a402); both remote CI gates pass. [Text evidence](evidence/text-fonts/README.md). Two further Select repairs address open-menu Tab/ShiftTab dismissal with consuming host bindings and hovered/open trigger paint. The pinned Rust gate passes177library/1gallery/9doctests and adapter12/14. [Browser and partial native evidence](evidence/pagination/native-browser/README.md) records remaining Pagination matrix and numbered Select popup-width gaps explicitly; #26/#27 remain open.
+
+**Next implementation: Tabs #32.** Coverage remains27/43 working,16 unported until an implemented new family is validated. Preserve the preceding repairs as their own coherent checkpoint; commit and non-force push new implementation milestones regularly. Historical continuation entries below retain provenance and are superseded by this status.
+
+
 ## Managed native continuation — 2026-10-03
 
 Actual latest `work`3eee132 was fetched and the clean checkout fast-forwarded; managed Git/Cargo/HTTPS now work. Full pinned Linux gate passes175library/1gallery/9doctests, workspace/adapter fmt and warning-denied lint, locked all-target/all-feature/default gallery builds and adapter12default/14all-feature tests. Exact pins/patches unchanged. [Raw results](evidence/cloud-native-2026-10-03/README.md).

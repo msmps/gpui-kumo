@@ -203,6 +203,7 @@ pub struct SelectState<T: Clone + PartialEq + 'static> {
     loading: bool,
     hovered: bool,
     _theme: Subscription,
+    _tab_exit: Subscription,
     focus_out: Option<Subscription>,
     overlay: Rc<crate::popover::ChildOverlay>,
     parent: Option<crate::popover::PopoverClose>,
@@ -230,6 +231,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         Self::check_ids(&parts);
         let owner = cx.entity().downgrade();
         let contains_owner = owner.clone();
+        let tab_owner = owner.clone();
         let overlay = Rc::new(crate::popover::ChildOverlay {
             contains: Box::new(move |point, cx| {
                 contains_owner.upgrade().is_some_and(|owner| {
@@ -276,6 +278,34 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             loading: false,
             hovered: false,
             _theme: cx.observe_global::<Theme>(|_, cx| cx.notify()),
+            _tab_exit: cx.intercept_keystrokes({
+                let owner = tab_owner;
+                move |event, window, cx| {
+                    let key = &event.keystroke;
+                    let modifiers = key.modifiers;
+                    if key.key != "tab"
+                        || modifiers.control
+                        || modifiers.alt
+                        || modifiers.platform
+                        || modifiers.function
+                    {
+                        return;
+                    }
+                    let Some(owner) = owner.upgrade() else {
+                        return;
+                    };
+                    let state: &Self = owner.read(cx);
+                    if state.open
+                        && !state.unavailable()
+                        && !state.is_unmounted()
+                        && (state.trigger.is_focused(window) || state.content.is_focused(window))
+                    {
+                        owner.update(cx, |state, cx| {
+                            state.exit_on_tab(modifiers.shift, window, cx);
+                        });
+                    }
+                }
+            }),
             focus_out: None,
             overlay,
             parent: None,
@@ -557,22 +587,27 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         }
         cx.stop_propagation();
     }
+    fn exit_on_tab(&mut self, backwards: bool, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.open || self.unavailable() {
+            cx.propagate();
+            return;
+        }
+        // Intercept before a consumer's global Tab action. Raw key listeners run
+        // after action dispatch; later host bindings can override scoped bindings.
+        self.set_open(false, window, cx);
+        self.trigger.focus(window, cx);
+        if backwards {
+            window.focus_prev(cx);
+        } else {
+            window.focus_next(cx);
+        }
+        cx.stop_propagation();
+    }
     fn keys(&mut self, event: &KeyDownEvent, window: &mut Window, cx: &mut Context<Self>) {
         if self.unavailable() {
             return;
         }
         let key = event.keystroke.key.as_str();
-        if key == "tab" && self.open {
-            self.set_open(false, window, cx);
-            self.trigger.focus(window, cx);
-            if event.keystroke.modifiers.shift {
-                window.focus_prev(cx);
-            } else {
-                window.focus_next(cx);
-            }
-            cx.stop_propagation();
-            return;
-        }
         if key == "space" {
             if self.open
                 && self.typed_at.is_some_and(|t| {
@@ -909,7 +944,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             .rounded(radius)
             .bg(if disabled {
                 t.colors.control.opacity(0.5)
-            } else if self.hovered && !open {
+            } else if self.hovered {
                 t.colors.tint
             } else {
                 t.colors.control

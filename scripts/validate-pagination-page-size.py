@@ -8,6 +8,7 @@ Text/Value interfaces. These checks do not establish speech or OS IME behavior.
 """
 import argparse
 import json
+import hashlib
 from pathlib import Path
 import subprocess
 import time
@@ -15,22 +16,60 @@ import time
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--binary', type=Path, default=Path('target/debug/kumo-gallery'))
 parser.add_argument('--output', type=Path, default=Path('/tmp'))
+parser.add_argument('--reduce-motion', action='store_true', help='Request the gallery native reduced-motion preference')
+parser.add_argument('--case', choices=['light-1040', 'dark-1040', 'dark-520', 'light-520'])
 parser.add_argument('--require-expansion-state', action='store_true', help='Require authored Expandable/Expanded export and shared disclosure checks (#41)')
 args = parser.parse_args()
 from gi.repository import Gio, GLib
 import pyatspi
 args.output.mkdir(parents=True, exist_ok=True)
+(args.output / 'probe-environment.json').write_text(json.dumps({
+    'binary': str(args.binary.resolve()),
+    'sha256': hashlib.sha256(args.binary.read_bytes()).hexdigest(),
+    'reduce_motion': args.reduce_motion,
+    'head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+    'working_tree': subprocess.check_output(['git', 'status', '--short'], text=True),
+}, indent=2) + '\n')
 bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
 bus.call_sync('org.a11y.Bus', '/org/a11y/bus', 'org.freedesktop.DBus.Properties',
               'Set', GLib.Variant('(ssv)', ('org.a11y.Status', 'ScreenReaderEnabled',
                                           GLib.Variant('b', True))), None,
               Gio.DBusCallFlags.NONE, -1, None)
 desktop = pyatspi.Registry.getDesktop(0)
-app = subprocess.Popen([str(args.binary.resolve())],
+app = subprocess.Popen([str(args.binary.resolve())] + (['--reduce-motion'] if args.reduce_motion else []),
                        stdout=open(args.output / 'page-size-gallery.log', 'w'),
                        stderr=subprocess.STDOUT)
 gallery = None
 window = None
+
+
+def wait_for(read, message):
+    deadline = time.monotonic() + 5
+    while True:
+        if read():
+            return
+        if time.monotonic() >= deadline:
+            raise AssertionError(message)
+        time.sleep(.1)
+
+
+def stable_read(read):
+    # Owner/mode updates replace native accessible identities mid traversal.
+    # Retry transport/lookup races only; never retry a contract assertion.
+    def retry(*arguments):
+        for attempt in range(10):
+            try:
+                return read(*arguments)
+            except (GLib.GError, StopIteration):
+                if attempt == 9:
+                    raise
+                time.sleep(.1)
+        raise RuntimeError('unreachable')
+    return retry
+
+
+def expect_counter(expected):
+    wait_for(lambda: counter() == expected, ('proposal count', expected, counter()))
 
 
 def walk(node):
@@ -40,6 +79,7 @@ def walk(node):
         yield from walk(child)
 
 
+@stable_read
 def find(name, role=None):
     return next(n for n in walk(gallery) if n.name == name and
                 (role is None or n.getRoleName() == role))
@@ -75,13 +115,17 @@ def click(node):
     action = node.queryAction()
     i = next(i for i in range(action.nActions) if action.getName(i) == 'click')
     assert action.doAction(i)
-    time.sleep(.7)
+    time.sleep(1.2)
 
 
 def pointer(node):
     x, y, w, h = bounds(node)
-    subprocess.run(['xdotool', 'windowfocus', window, 'mousemove',
-                    str(x + w // 2), str(y + h // 2), 'click', '1'], check=True)
+    print('POINTER', node.name, [x, y, w, h], flush=True)
+    subprocess.run(['xdotool', 'windowfocus', '--sync', window, 'mousemove', '--sync',
+                    str(x + w // 2), str(y + h // 2)], check=True)
+    # Allow hover-driven rendering to install the current hitboxes before down.
+    time.sleep(.3)
+    subprocess.run(['xdotool', 'click', '1'], check=True)
     time.sleep(.7)
 
 
@@ -90,11 +134,13 @@ def key(name):
     time.sleep(.7)
 
 
+@stable_read
 def counter():
     return int(next(n.name.removeprefix('Page size proposals: ') for n in walk(gallery)
                     if n.getRoleName() == 'label' and n.name.startswith('Page size proposals: ')))
 
 
+@stable_read
 def is_open():
     return any(n.getRoleName() == 'list item' and n.name in ('10', '20', '25', '50', '100', '250') for n in walk(gallery))
 
@@ -106,10 +152,16 @@ def expansion(node, opened):
     actual = {'expandable': state.contains(pyatspi.STATE_EXPANDABLE),
               'expanded': state.contains(pyatspi.STATE_EXPANDED)}
     if args.require_expansion_state:
+        wait_for(lambda: find(node.name, node.getRoleName()).getState().contains(pyatspi.STATE_EXPANDED) == opened, ('expansion publication', node.name, opened))
+        node = find(node.name, node.getRoleName())
+        node.clearCache()
+        state = node.getState()
+        actual = {'expandable': state.contains(pyatspi.STATE_EXPANDABLE), 'expanded': state.contains(pyatspi.STATE_EXPANDED)}
         assert actual == {'expandable': True, 'expanded': opened}, (node.name, actual, opened)
     return actual
 
 
+@stable_read
 def selected(value):
     assert find(str(value), 'list item').getState().contains(pyatspi.STATE_SELECTED)
 
@@ -135,6 +187,8 @@ try:
     subprocess.run(['xdotool', 'windowmove', window, '0', '0', 'windowfocus', window], check=True)
     results = []
     for theme, width in [('Light', 1040), ('Dark', 1040), ('Dark', 520), ('Light', 520)]:
+        if args.case and args.case != f'{theme.lower()}-{width}':
+            continue
         subprocess.run(['xdotool', 'mousemove', '200', '700', 'click', '--repeat',
                         '420', '--delay', '4', '4'], check=True)
         time.sleep(.7)
@@ -154,6 +208,7 @@ try:
             assert bounds(find(str(value), 'list item'))[3] == 33, (value, bounds(find(str(value), 'list item')))
         capture(theme, width, 'open')
         pointer(find('50', 'list item'))
+        expect_counter(original + 1)
         assert counter() == original + 1
         assert size(5).getState().contains(pyatspi.STATE_FOCUSED)
         assert not is_open()
@@ -164,11 +219,13 @@ try:
         selected(50)
         key('Down')
         key('Return')
+        expect_counter(original + 2)
         assert counter() == original + 2
         find('Showing 1-100 of 500', 'label')
         key('Return')
         selected(100)
         key('Return')  # Confirming current owner size is a no-op.
+        expect_counter(original + 2)
         assert counter() == original + 2
         key('space')
         transitions.append(expansion(size(5), True))
@@ -185,18 +242,21 @@ try:
         pointer(size(6))
         selected(10)
         pointer(find('20', 'list item'))
+        expect_counter(original + 3)
         assert counter() == original + 3
         assert size(6).getState().contains(pyatspi.STATE_FOCUSED)
         key('Return')
         selected(10)  # Rejected value was never copied into durable selection.
         key('Escape')
+        assert not is_open(), ('rejected Escape', [(n.name, n.getRoleName()) for n in walk(gallery) if n.getState().contains(pyatspi.STATE_FOCUSED)])
         capture(theme, width, 'rejected')
         show(size(7))
         pointer(size(7))
         selected(10)
         key('Down')
         key('Return')
-        assert counter() == original + 4
+        expect_counter(original + 4)
+        assert counter() == original + 4, ('hidden label proposal', original, counter(), is_open(), [(n.name, n.getRoleName()) for n in walk(gallery) if n.getState().contains(pyatspi.STATE_FOCUSED)])
         assert find('Dataset 7 page number', 'entry').queryText().getText(0, -1) == '2'
         find('Showing 21-40 of 200', 'label')
         # Both controls must be painted: offscreen AT actions can be acknowledged
@@ -230,10 +290,12 @@ try:
         key('space')
         key('Return')
         assert not is_open()
+        expect_counter(original + 4)
         assert counter() == original + 4
         capture(theme, width, 'disabled')
         show(find('Toggle size availability', 'button'))
         click(find('Toggle size availability', 'button'))
+        wait_for(lambda: size(5).getState().contains(pyatspi.STATE_ENABLED), 'availability restoration')
         assert size(5).getState().contains(pyatspi.STATE_ENABLED)
         assert size(5).getState().contains(pyatspi.STATE_SENSITIVE)
         assert has_click(size(5))

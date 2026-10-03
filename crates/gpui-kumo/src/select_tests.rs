@@ -2,6 +2,69 @@ use super::*;
 use gpui_kit::{
     AppContext, Entity, Modifiers, TestAppContext, VisualTestContext, size, test::TestWindowExt,
 };
+gpui_kit::actions!(select_traversal_test, [FocusNext, FocusPrevious]);
+
+struct TraversalHost {
+    state: Entity<SelectState<u32>>,
+    before: FocusHandle,
+    after: FocusHandle,
+}
+impl Render for TraversalHost {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        // Match the gallery: global action bindings and no enclosing tab group.
+        div()
+            .on_action(|_: &FocusNext, window, cx| window.focus_next(cx))
+            .on_action(|_: &FocusPrevious, window, cx| window.focus_prev(cx))
+            .flex()
+            .flex_col()
+            .w(px(230.))
+            .child(crate::Button::new("before", "Before").track_focus(&self.before))
+            .child(Select::new("select", &self.state))
+            .child(crate::Button::new("after", "After").track_focus(&self.after))
+    }
+}
+
+#[gpui_kit::test]
+fn open_select_tab_exits_once_with_consuming_host_bindings(cx: &mut TestAppContext) {
+    cx.update(|cx| {
+        crate::init(cx);
+        cx.bind_keys([
+            KeyBinding::new("tab", FocusNext, None),
+            KeyBinding::new("shift-tab", FocusPrevious, None),
+        ]);
+    });
+    let (view, cx) = cx.add_window_view(|_, cx| TraversalHost {
+        state: cx.new(|cx| SelectState::new("Fruit", SelectValue::Single(Some(1)), options(), cx)),
+        before: cx.focus_handle(),
+        after: cx.focus_handle(),
+    });
+    let state = view.read_with(cx, |v, _| v.state.clone());
+    cx.update(|window, cx| {
+        for key in ["tab", "shift-tab"] {
+            window.render_frame(cx);
+            state.update(cx, |s, cx| s.set_open(true, window, cx));
+            window.render_frame(cx);
+            assert!(state.read(cx).content.is_focused(window));
+            window.press("down", cx);
+            assert_eq!(state.read(cx).highlighted, Some("three".into()));
+            window.press(key, cx);
+            window.render_frame(cx);
+            assert!(!state.read(cx).is_open(), "{key} must dismiss in one press");
+            let expected = view.read(cx);
+            assert!(if key == "tab" {
+                expected.after.is_focused(window)
+            } else {
+                expected.before.is_focused(window)
+            });
+            assert_eq!(state.read(cx).value(), &SelectValue::Single(Some(1)));
+        }
+        state.update(cx, |s, cx| s.set_open(true, window, cx));
+        window.press("ctrl-tab", cx);
+        assert!(state.read(cx).is_open(), "modified Tab belongs to the host");
+        window.press("escape", cx);
+    });
+}
+
 struct Harness {
     state: Entity<SelectState<u32>>,
     proposals: Vec<SelectValue<u32>>,
@@ -17,6 +80,46 @@ struct Harness {
     gap: Pixels,
     left: f32,
 }
+
+#[gpui_kit::test]
+fn open_hovered_trigger_paints_observed_source_tint(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx, false);
+    let state = view.read_with(cx, |v, _| v.state.clone());
+    cx.update(|window, cx| {
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            window.hover("after", cx);
+            window.render_frame(cx);
+            let control = theme(cx).colors.control;
+            let tint = theme(cx).colors.tint;
+            let paints = |window: &mut Window, color| {
+                let bounds = window.find("trigger").bounds().scale(window.scale_factor());
+                window
+                    .painted_quads()
+                    .iter()
+                    .any(|q| q.bounds == bounds && q.background.as_solid() == Some(color))
+            };
+            assert!(paints(window, control));
+            window.hover("hit", cx);
+            window.render_frame(cx);
+            assert!(paints(window, tint));
+            window.click("hit", cx);
+            window.render_frame(cx);
+            assert!(state.read(cx).is_open());
+            // Base UI authors data-popup-open, so Kumo's data-state=open CSS
+            // override does not replace the trigger's ordinary hover paint.
+            assert!(
+                paints(window, tint),
+                "open hovered trigger lost source tint"
+            );
+            window.hover("one", cx);
+            window.render_frame(cx);
+            assert!(paints(window, control));
+            window.press("escape", cx);
+        }
+    });
+}
+
 impl Render for Harness {
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
         div().child(
