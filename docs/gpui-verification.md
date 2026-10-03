@@ -52,3 +52,5 @@ A component is verified when all applicable contract branches have passing evide
 When reviewing composable controls, exercise Base's default keyed focus while inserting or reordering passive parts. Explicit `track_focus` handles can conceal unstable ancestor IDs; keep action identity independent of positional decoration wrappers.
 
 Collection controls: distinguish the action that opens from the action that confirms; propagated Base actions must not activate twice. Exercise closed multi-character/repeated typeahead and open word gaps, then Space after timeout. Activate test windows and settle focus listeners before asserting focus-out dismissal; choose outside targets beyond the popup hitbox. Retained factories/comparators must use weak captures of their owner; include open-overlay unmount release when adding retained rich slots.
+
+Factories invoked during an entity's Render must not read or update that same entity, even through a weak handle: it is already mutably borrowed. Pass needed values to the factory, retain child entities outside rendering, and use weak owner handles in later event callbacks.

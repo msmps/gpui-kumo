@@ -93,4 +93,5 @@ mod select_base_tests;
 pub mod select;
 pub use select::{
     Select, SelectEvent, SelectGroup, SelectOption, SelectPart, SelectState, SelectValue,
+    SelectValueContent,
 };

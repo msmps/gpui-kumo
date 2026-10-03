@@ -12,24 +12,34 @@ struct Harness {
     after: FocusHandle,
     description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
+    placement: Placement,
+    align: Align,
+    gap: Pixels,
+    left: f32,
 }
 impl Render for Harness {
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
-        div()
-            .w(px(230.))
-            .pl(px(16.))
-            .pt(px(self.offset))
-            .flex()
-            .flex_col()
-            .gap(px(8.))
-            .child(
-                Select::new("select", &self.state)
-                    .loading(self.loading)
-                    .size(self.size)
-                    .when_some(self.description.clone(), |v, d| v.description(d))
-                    .when_some(self.error.clone(), |v, (e, show)| v.error(e, show)),
-            )
-            .child(crate::Button::new("after", "After").track_focus(&self.after))
+        div().child(
+            div()
+                .w(px(230.))
+                .ml(px(self.left))
+                .pl(px(16.))
+                .pt(px(self.offset))
+                .flex()
+                .flex_col()
+                .gap(px(8.))
+                .child(
+                    Select::new("select", &self.state)
+                        .loading(self.loading)
+                        .size(self.size)
+                        .placement(self.placement)
+                        .align(self.align)
+                        .offset(self.gap)
+                        .when_some(self.description.clone(), |v, d| v.description(d))
+                        .when_some(self.error.clone(), |v, (e, show)| v.error(e, show)),
+                )
+                .child(crate::Button::new("after", "After").track_focus(&self.after)),
+        )
     }
 }
 fn options() -> Vec<SelectOption<u32>> {
@@ -198,6 +208,184 @@ fn select_deep_initial_selection_manual_scroll_and_oversized_group_row(cx: &mut 
         assert_eq!(state.read(cx).value(), &SelectValue::Single(Some(3)));
     });
 }
+#[gpui_kit::test]
+fn select_custom_value_readable_text_null_fallback_and_current_value(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx, false);
+    let state = view.read_with(cx, |v, _| v.state.clone());
+    let calls = Rc::new(Cell::new(0));
+    let observed = calls.clone();
+    state.update(cx, |s, cx| {
+        s.set_value_content(
+            move |value, _, _| {
+                observed.set(observed.get() + 1);
+                let SelectValue::Single(Some(value)) = value else {
+                    panic!("null must skip factory")
+                };
+                Some(SelectValueContent::new(
+                    format!("Complete formatted fruit {value}"),
+                    div()
+                        .id("formatted")
+                        .test_support()
+                        .child(format!("Fruit {value}")),
+                ))
+            },
+            cx,
+        )
+    });
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert_eq!(
+            window.find("trigger").value(),
+            Some("Complete formatted fruit 1")
+        );
+        assert!(window.find("formatted").bounds().size.width > px(0.));
+        state.update(cx, |s, cx| s.set_value(SelectValue::Single(Some(3)), cx));
+        window.render_frame(cx);
+        assert_eq!(
+            window.find("trigger").value(),
+            Some("Complete formatted fruit 3")
+        );
+        assert!(window.find("formatted").bounds().size.width > px(0.));
+        state.update(cx, |s, cx| s.set_value(SelectValue::Single(None), cx));
+        let before = calls.get();
+        for _ in 0..2 {
+            window.render_frame(cx);
+        }
+        assert_eq!(calls.get(), before);
+        assert_eq!(window.find("trigger").value(), Some(""));
+        state.update(cx, |s, cx| {
+            s.set_value(SelectValue::Single(Some(1)), cx);
+            s.set_value_content(|_, _, _| None, cx);
+        });
+        window.render_frame(cx);
+        // Returning no decoration does not erase the actual current selection metadata.
+        assert_eq!(window.find("trigger").value(), Some("Apple"));
+        state.update(cx, |s, cx| s.clear_value_content(cx));
+        window.render_frame(cx);
+        assert_eq!(window.find("trigger").value(), Some("Apple"));
+    });
+    cx.run_until_parked();
+    assert!(view.read_with(cx, |v, _| v.proposals.is_empty()));
+}
+#[gpui_kit::test]
+fn select_placement_alignment_gap_and_edge_flip(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx, false);
+    let state = view.read_with(cx, |v, _| v.state.clone());
+    cx.simulate_resize(size(px(1000.), px(800.)));
+    view.update(cx, |v, cx| {
+        v.offset = 300.;
+        v.left = 250.;
+        v.gap = px(12.);
+        cx.notify();
+    });
+    cx.update(|window, cx| {
+        for placement in [
+            Placement::Top,
+            Placement::Bottom,
+            Placement::Left,
+            Placement::Right,
+        ] {
+            for align in [Align::Start, Align::Center, Align::End] {
+                view.update(cx, |v, cx| {
+                    v.placement = placement;
+                    v.align = align;
+                    cx.notify();
+                });
+                window.render_frame(cx);
+                window.press("enter", cx);
+                for _ in 0..3 {
+                    window.render_frame(cx);
+                }
+                let trigger = window.find("trigger").bounds();
+                let popup = window.find("surface").bounds();
+                match placement {
+                    Placement::Top => assert_eq!(popup.bottom(), trigger.top() - px(12.)),
+                    Placement::Bottom => assert_eq!(popup.top(), trigger.bottom() + px(12.)),
+                    Placement::Left => assert_eq!(popup.right(), trigger.left() - px(12.)),
+                    Placement::Right => assert_eq!(popup.left(), trigger.right() + px(12.)),
+                }
+                if matches!(placement, Placement::Left | Placement::Right) {
+                    match align {
+                        Align::Start => assert_eq!(popup.top(), trigger.top()),
+                        Align::Center => assert_eq!(popup.center().y, trigger.center().y),
+                        Align::End => assert_eq!(popup.bottom(), trigger.bottom()),
+                    }
+                } else {
+                    assert_eq!(popup.left(), trigger.left());
+                }
+                window.press("escape", cx);
+                window.render_frame(cx);
+                assert!(state.read(cx).trigger.is_focused(window));
+            }
+        }
+        view.update(cx, |v, cx| {
+            v.left = 0.;
+            v.placement = Placement::Left;
+            v.align = Align::Start;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        window.press("enter", cx);
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        assert_eq!(
+            window.find("surface").bounds().left(),
+            window.find("trigger").bounds().right() + px(12.)
+        );
+    });
+}
+#[gpui_kit::test]
+fn select_multiple_factory_receives_empty_and_loading_skips_presentation(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx, true);
+    let state = view.read_with(cx, |v, _| v.state.clone());
+    let calls = Rc::new(Cell::new(0));
+    let observed = calls.clone();
+    state.update(cx, |s, cx| {
+        s.set_value_content(
+            move |value, _, _| {
+                let SelectValue::Multiple(values) = value else {
+                    panic!("immutable multiple mode")
+                };
+                observed.set(observed.get() + 1);
+                Some(SelectValueContent::new(
+                    format!("{} fruits selected", values.len()),
+                    div().child(format!("{} fruits", values.len())),
+                ))
+            },
+            cx,
+        )
+    });
+    cx.update(|window, cx| {
+        window.render_frame(cx);
+        assert_eq!(window.find("trigger").value(), Some("0 fruits selected"));
+        window.press("enter", cx);
+        window.render_frame(cx);
+        window.press("space", cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("trigger").value(), Some("1 fruits selected"));
+        assert_eq!(state.read(cx).value(), &SelectValue::Multiple(vec![1]));
+        view.update(cx, |v, cx| {
+            v.loading = true;
+            cx.notify();
+        });
+        let before = calls.get();
+        for _ in 0..2 {
+            window.render_frame(cx);
+        }
+        assert_eq!(calls.get(), before);
+        assert!(!state.read(cx).is_open());
+        assert_eq!(window.find("trigger").value(), Some("Apple"));
+        view.update(cx, |v, cx| {
+            v.loading = false;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        assert_eq!(window.find("trigger").value(), Some("1 fruits selected"));
+    });
+    cx.run_until_parked();
+    assert_eq!(view.read_with(cx, |v, _| v.proposals.len()), 1);
+}
 fn harness(cx: &mut TestAppContext, multiple: bool) -> (Entity<Harness>, &mut VisualTestContext) {
     cx.update(crate::init);
     let (view, cx) = cx.add_window_view(|_, cx| {
@@ -226,6 +414,10 @@ fn harness(cx: &mut TestAppContext, multiple: bool) -> (Entity<Harness>, &mut Vi
             after: cx.focus_handle(),
             description: None,
             error: None,
+            placement: Placement::Bottom,
+            align: Align::Start,
+            gap: px(4.),
+            left: 0.,
         }
     });
     cx.update(|window, _| window.activate_window());
@@ -697,6 +889,17 @@ fn select_rich_option_unmount_releases_open_entity(cx: &mut TestAppContext) {
         }
     });
     let weak = view.read_with(cx, |v, _| v.child.as_ref().unwrap().downgrade());
+    let value_owner = weak.clone();
+    weak.update(cx, |s, cx| {
+        s.set_value_content(
+            move |_, _, _| {
+                assert!(value_owner.upgrade().is_some());
+                Some(SelectValueContent::new("Primary", div().child("Primary")))
+            },
+            cx,
+        )
+    })
+    .unwrap();
     cx.update(|window, cx| {
         window.render_frame(cx);
         window.render_frame(cx);

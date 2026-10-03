@@ -4,7 +4,9 @@ use gpui_kit::{
 };
 use gpui_kumo::{
     Button, Select, SelectEvent, SelectGroup, SelectOption, SelectPart, SelectState, SelectValue,
-    select::Size, theme,
+    SelectValueContent,
+    select::{Align, Placement, Size},
+    theme,
 };
 pub struct Selects {
     single: Entity<SelectState<u32>>,
@@ -66,6 +68,26 @@ impl Selects {
                 cx,
             );
             state.set_parts(grouped_options(), cx);
+            state.set_value_content(
+                |value, _, _| {
+                    let SelectValue::Multiple(values) = value else {
+                        return None;
+                    };
+                    Some(SelectValueContent::new(
+                        format!("{} allowed regions selected", values.len()),
+                        div()
+                            .flex()
+                            .items_center()
+                            .gap(px(8.))
+                            .child(gpui_kumo::Badge::new(
+                                "selection-count",
+                                format!("{}", values.len()),
+                            ))
+                            .child("regions selected"),
+                    ))
+                },
+                cx,
+            );
             state
         });
         let controlled = cx.new(|cx| {
@@ -104,7 +126,7 @@ impl Selects {
                 let mut s = SelectState::new(
                     "Compact read-only region",
                     SelectValue::Single(Some(1)),
-                    options(),
+                    options().into_iter().take(4).collect(),
                     cx,
                 );
                 s.set_read_only(true, cx);
@@ -143,7 +165,15 @@ impl Render for Selects {
                     .update(cx, |s, cx| s.set_value(SelectValue::Single(None), cx));
             })),
         )
-        .child(Select::new("compact-region", &self.compact).size(Size::Xs))
+        .child(
+            div().w(px(200.)).max_w_full().child(
+                Select::new("compact-region", &self.compact)
+                    .size(Size::Xs)
+                    .placement(Placement::Right)
+                    .align(Align::End)
+                    .offset(px(8.)),
+            ),
+        )
         .child(
             Button::new("select-loading", "Toggle loading").on_click(cx.listener(|v, _, _, cx| {
                 v.loading = !v.loading;

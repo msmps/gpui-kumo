@@ -4,8 +4,8 @@ mod semantics;
 #[cfg(test)]
 #[path = "select_tests.rs"]
 mod tests;
-pub use crate::input::Size;
 use crate::{Theme, theme};
+pub use crate::{input::Size, popover::Placement, tooltip::Align};
 use gpui_kit::base::TestSupportExt;
 use gpui_kit::{
     AnyElement, App, Bounds, Context, ElementId, Entity, EventEmitter, FocusHandle, FontWeight,
@@ -40,6 +40,27 @@ pub enum SelectValue<T> {
 }
 type ContentFactory = Rc<dyn Fn(&mut Window, &mut App) -> AnyElement>;
 type Comparator<T> = Rc<dyn Fn(&T, &T) -> bool>;
+/// Decorative selected content with the complete readable value on Base's control.
+/// Keep interactive actions outside the trigger.
+pub struct SelectValueContent {
+    value_text: SharedString,
+    content: AnyElement,
+}
+impl SelectValueContent {
+    pub fn new(value_text: impl Into<SharedString>, content: impl IntoElement) -> Self {
+        let value_text = value_text.into();
+        assert!(
+            !value_text.trim().is_empty(),
+            "Select value content requires readable text"
+        );
+        Self {
+            value_text,
+            content: content.into_any_element(),
+        }
+    }
+}
+type ValueFactory<T> =
+    Rc<dyn Fn(&SelectValue<T>, &mut Window, &mut App) -> Option<SelectValueContent>>;
 /// A named option with identity independent of its value or current order.
 #[derive(Clone)]
 pub struct SelectOption<T> {
@@ -65,7 +86,9 @@ impl<T> SelectOption<T> {
     /// Capture Select/owner entities weakly: the state retains this closure, so
     /// capturing either strongly can form a reference cycle. For example,
     /// create `let owner = cx.entity().downgrade()` before the factory and
-    /// upgrade it only while building content. Keep interactive controls outside options.
+    /// use it for callbacks without retaining the owner. Do not read or update this
+    /// SelectState while building content: it is already rendering under a mutable borrow.
+    /// Keep interactive controls outside options.
     pub fn content(
         mut self,
         content: impl Fn(&mut Window, &mut App) -> AnyElement + 'static,
@@ -144,6 +167,7 @@ pub struct SelectState<T: Clone + PartialEq + 'static> {
     parts: Vec<SelectPart<T>>,
     value: SelectValue<T>,
     compare: Comparator<T>,
+    value_content: Option<ValueFactory<T>>,
     controlled: bool,
     disabled: bool,
     read_only: bool,
@@ -159,6 +183,9 @@ pub struct SelectState<T: Clone + PartialEq + 'static> {
     prefix: String,
     typed_at: Option<Instant>,
     size: Size,
+    placement: Placement,
+    align: Align,
+    offset: Pixels,
     placeholder: SharedString,
     invalid: bool,
     description: Option<SharedString>,
@@ -190,6 +217,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             parts,
             value,
             compare: Rc::new(|a, b| a == b),
+            value_content: None,
             controlled: false,
             disabled: false,
             read_only: false,
@@ -205,6 +233,9 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             prefix: String::new(),
             typed_at: None,
             size: Size::Base,
+            placement: Placement::Bottom,
+            align: Align::Start,
+            offset: px(4.),
             placeholder: "Select…".into(),
             invalid: false,
             description: None,
@@ -243,6 +274,23 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         cx: &mut Context<Self>,
     ) {
         self.compare = Rc::new(compare);
+        cx.notify();
+    }
+    /// Format a defined value; returning None presents the placeholder.
+    /// Single(None) skips the factory; Multiple passes its array, including when empty.
+    /// Retain child entities outside this factory and capture Select/owner entities
+    /// weakly for returned element callbacks. Do not read or update this SelectState
+    /// from the factory: it is already borrowed. Use the provided value.
+    pub fn set_value_content(
+        &mut self,
+        content: impl Fn(&SelectValue<T>, &mut Window, &mut App) -> Option<SelectValueContent> + 'static,
+        cx: &mut Context<Self>,
+    ) {
+        self.value_content = Some(Rc::new(content));
+        cx.notify();
+    }
+    pub fn clear_value_content(&mut self, cx: &mut Context<Self>) {
+        self.value_content = None;
         cx.notify();
     }
     pub fn value(&self) -> &SelectValue<T> {
@@ -535,6 +583,9 @@ pub struct Select<T: Clone + PartialEq + 'static> {
     id: ElementId,
     state: Entity<SelectState<T>>,
     size: Size,
+    placement: Placement,
+    align: Align,
+    offset: Pixels,
     placeholder: SharedString,
     invalid: bool,
     loading: bool,
@@ -549,6 +600,9 @@ impl<T: Clone + PartialEq + 'static> Select<T> {
             id: id.into(),
             state: state.clone(),
             size: Size::Base,
+            placement: Placement::Bottom,
+            align: Align::Start,
+            offset: px(4.),
             placeholder: "Select…".into(),
             invalid: false,
             loading: false,
@@ -557,6 +611,23 @@ impl<T: Clone + PartialEq + 'static> Select<T> {
             description: None,
             error: None,
         }
+    }
+    pub fn placement(mut self, placement: Placement) -> Self {
+        self.placement = placement;
+        self
+    }
+    pub fn align(mut self, align: Align) -> Self {
+        self.align = align;
+        self
+    }
+    /// Main-axis separation from the trigger, including collision fitting.
+    pub fn offset(mut self, offset: Pixels) -> Self {
+        assert!(
+            f32::from(offset).is_finite() && offset >= px(0.),
+            "Select offset must be finite and nonnegative"
+        );
+        self.offset = offset;
+        self
     }
     pub fn loading(mut self, loading: bool) -> Self {
         self.loading = loading;
@@ -595,6 +666,9 @@ impl<T: Clone + PartialEq + 'static> RenderOnce for Select<T> {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         self.state.update(cx, |v, cx| {
             v.size = self.size;
+            v.placement = self.placement;
+            v.align = self.align;
+            v.offset = self.offset;
             v.placeholder = self.placeholder;
             v.invalid = self.invalid || self.error.is_some();
             v.description =
@@ -622,7 +696,34 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         let t = theme(cx).clone();
         let (height, padding, radius, style) = crate::input::metrics(self.size, &t);
         let display = self.display();
-        let empty = display.is_empty();
+        let has_value = match &self.value {
+            SelectValue::Single(value) => value.is_some(),
+            SelectValue::Multiple(_) => true,
+        };
+        let custom = if has_value && !self.loading {
+            self.value_content
+                .as_ref()
+                .and_then(|factory| factory(&self.value, window, cx))
+        } else {
+            None
+        };
+        let empty = if has_value && self.value_content.is_some() && !self.loading {
+            custom.is_none()
+        } else {
+            display.is_empty()
+        };
+        let readable = custom
+            .as_ref()
+            .map_or_else(|| display.clone(), |value| value.value_text.clone());
+        let value_content = custom.map(|value| value.content).unwrap_or_else(|| {
+            div()
+                .child(if empty {
+                    self.placeholder.clone()
+                } else {
+                    display
+                })
+                .into_any_element()
+        });
         let open = self.open;
         let disabled = self.unavailable();
         let bounds = self.bounds.clone();
@@ -639,7 +740,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             .content_focus_handle(&self.content)
             .key_context("KumoSelect")
             .accessibility_label(self.name.clone())
-            .accessibility_value(display.clone())
+            .accessibility_value(readable)
             .on_open_change(move |open, window, cx| {
                 let _ = open_owner.update(cx, |v, cx| v.set_open(open, window, cx));
             })
@@ -703,13 +804,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
                             .min_w_0()
                             .flex_1()
                             .text_ellipsis()
-                            .when(!self.loading, |v| {
-                                v.child(if empty {
-                                    self.placeholder.clone()
-                                } else {
-                                    display
-                                })
-                            })
+                            .when(!self.loading, |v| v.child(value_content))
                             .when(self.loading, |v| {
                                 v.child(div().w(px(128.)).max_w_full().child(
                                     crate::SkeletonLine::new("loading").width_range(100..=100),
@@ -848,9 +943,14 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
         }
         let popup_bounds = self.popup_bounds.clone();
         let trigger_bounds = self.bounds.get();
-        let available = (window.viewport_size().height - trigger_bounds.bottom() - px(12.))
-            .max(trigger_bounds.top() - px(12.))
-            .max(px(1.));
+        let available = match self.placement {
+            Placement::Top | Placement::Bottom => {
+                (window.viewport_size().height - trigger_bounds.bottom() - self.offset - px(8.))
+                    .max(trigger_bounds.top() - self.offset - px(8.))
+            }
+            Placement::Left | Placement::Right => window.viewport_size().height - px(16.),
+        }
+        .max(px(1.));
         let mut list = div()
             .id("list")
             .test_support()
@@ -949,12 +1049,29 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
             deferred(
                 base::Positioner::side({
                     let mut b = self.bounds.get();
-                    b.origin.y -= px(4.);
-                    b.size.height += px(8.);
+                    match self.placement {
+                        Placement::Top | Placement::Bottom => {
+                            b.origin.y -= self.offset;
+                            b.size.height += self.offset * 2.;
+                        }
+                        Placement::Left | Placement::Right => {
+                            b.origin.x -= self.offset;
+                            b.size.width += self.offset * 2.;
+                        }
+                    }
                     b
                 })
-                .placement(base::Placement::Bottom)
-                .align(base::Align::Start)
+                .placement(match self.placement {
+                    Placement::Top => base::Placement::Top,
+                    Placement::Bottom => base::Placement::Bottom,
+                    Placement::Left => base::Placement::Left,
+                    Placement::Right => base::Placement::Right,
+                })
+                .align(match self.align {
+                    Align::Start => base::Align::Start,
+                    Align::Center => base::Align::Center,
+                    Align::End => base::Align::End,
+                })
                 .offset(px(0.))
                 .margin(px(8.))
                 .occlude()
