@@ -40,6 +40,164 @@ fn options() -> Vec<SelectOption<u32>> {
         SelectOption::new("four", 4, "Date"),
     ]
 }
+fn grouped_options() -> Vec<SelectPart<u32>> {
+    vec![
+        SelectGroup::new("early", options())
+            .label("Early fruit")
+            .into(),
+        SelectPart::separator("divider"),
+        SelectGroup::new(
+            "later",
+            (5..35)
+                .map(|i| SelectOption::new(format!("fruit-{i}"), i, format!("Fruit {i}")))
+                .collect(),
+        )
+        .label("Later fruit")
+        .into(),
+    ]
+}
+#[gpui_kit::test]
+fn select_grouped_keyboard_scroll_semantics_and_reorder(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx, false);
+    let state = view.read_with(cx, |v, _| v.state.clone());
+    state.update(cx, |s, cx| s.set_parts(grouped_options(), cx));
+    cx.simulate_resize(size(px(270.), px(260.)));
+    cx.update(|window, cx| {
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            window.press("enter", cx);
+            for _ in 0..3 {
+                window.render_frame(cx);
+            }
+            assert_eq!(window.find("early").role(), Some(Role::Group));
+            assert_eq!(window.find("early").label(), Some("Early fruit"));
+            assert_eq!(window.find("later").label(), Some("Later fruit"));
+            assert_eq!(window.find("divider").role(), Some(Role::Splitter));
+            assert_eq!(window.find("divider").bounds().size.height, px(1.));
+            window.press("down", cx);
+            window.render_frame(cx);
+            assert_eq!(state.read(cx).highlighted, Some("three".into()));
+            window.press("end", cx);
+            for _ in 0..3 {
+                window.render_frame(cx);
+            }
+            assert_eq!(state.read(cx).highlighted, Some("fruit-34".into()));
+            let list = window.find("list").bounds();
+            let last = window.find("fruit-34").bounds();
+            assert!(last.top() >= list.top());
+            assert!(last.bottom() <= list.bottom());
+            // Nearest reveal targets the nested row rather than aligning its whole group.
+            assert!(state.read(cx).scroll.offset().y < px(0.));
+            window.press("home", cx);
+            for _ in 0..3 {
+                window.render_frame(cx);
+            }
+            let first = window.find("one").bounds();
+            assert!(first.top() >= list.top());
+            assert!(first.bottom() <= list.bottom());
+            window.press("escape", cx);
+            window.render_frame(cx);
+        }
+        window.press("enter", cx);
+        window.render_frame(cx);
+        window.press("end", cx);
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        state.update(cx, |s, cx| {
+            let mut parts = grouped_options();
+            parts.reverse();
+            s.set_parts(parts, cx);
+        });
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        assert_eq!(state.read(cx).highlighted, Some("fruit-34".into()));
+        window.press("enter", cx);
+        window.render_frame(cx);
+        assert_eq!(state.read(cx).value(), &SelectValue::Single(Some(34)));
+        assert!(state.read(cx).trigger.is_focused(window));
+    });
+    cx.run_until_parked();
+    assert_eq!(
+        view.read_with(cx, |v, _| v.proposals.clone()),
+        vec![SelectValue::Single(Some(34))]
+    );
+}
+#[gpui_kit::test]
+fn select_deep_initial_selection_manual_scroll_and_oversized_group_row(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx, false);
+    let state = view.read_with(cx, |v, _| v.state.clone());
+    state.update(cx, |s, cx| {
+        s.set_parts(grouped_options(), cx);
+        s.set_value(SelectValue::Single(Some(34)), cx);
+    });
+    cx.simulate_resize(size(px(270.), px(260.)));
+    cx.update(|window, cx| {
+        window.press("enter", cx);
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        let viewport = window.find("list").bounds();
+        let last = window.within("later").find("fruit-34").bounds();
+        assert!(last.top() >= viewport.top() && last.bottom() <= viewport.bottom());
+        assert_eq!(window.find("fruit-34").selected(), Some(true));
+        let scroll = state.read(cx).scroll.clone();
+        scroll.set_offset(Default::default());
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        // A settled highlight must not force a manually scrolled viewport back to its row.
+        assert_eq!(scroll.offset().y, px(0.));
+        window.press("escape", cx);
+        state.update(cx, |s, cx| {
+            s.set_parts(
+                vec![
+                    SelectGroup::new(
+                        "tall-group",
+                        vec![
+                            SelectOption::new("tall", 1, "Tall decorative option").content(
+                                |_, _| {
+                                    div()
+                                        .h(px(400.))
+                                        .child("Tall decorative option")
+                                        .into_any_element()
+                                },
+                            ),
+                            SelectOption::new("short", 3, "Short option"),
+                        ],
+                    )
+                    .label("Tall options")
+                    .into(),
+                ],
+                cx,
+            );
+            s.set_value(SelectValue::Single(Some(1)), cx);
+        });
+        window.press("enter", cx);
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        let viewport = window.find("list").bounds();
+        let tall = window.find("tall").bounds();
+        assert!(tall.size.height > viewport.size.height);
+        assert_eq!(tall.top(), viewport.top() + px(8.));
+        let settled = scroll.offset();
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        assert_eq!(scroll.offset(), settled);
+        window.press("end", cx);
+        for _ in 0..3 {
+            window.render_frame(cx);
+        }
+        let short = window.find("short").bounds();
+        assert!(short.top() >= viewport.top() && short.bottom() <= viewport.bottom());
+        window.press("enter", cx);
+        window.render_frame(cx);
+        assert_eq!(state.read(cx).value(), &SelectValue::Single(Some(3)));
+    });
+}
 fn harness(cx: &mut TestAppContext, multiple: bool) -> (Entity<Harness>, &mut VisualTestContext) {
     cx.update(crate::init);
     let (view, cx) = cx.add_window_view(|_, cx| {

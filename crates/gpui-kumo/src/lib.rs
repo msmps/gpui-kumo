@@ -91,4 +91,6 @@ pub use breadcrumbs::{BreadcrumbClipboard, BreadcrumbCurrent, Breadcrumbs};
 mod select_base_tests;
 
 pub mod select;
-pub use select::{Select, SelectEvent, SelectOption, SelectState, SelectValue};
+pub use select::{
+    Select, SelectEvent, SelectGroup, SelectOption, SelectPart, SelectState, SelectValue,
+};

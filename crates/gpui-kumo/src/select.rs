@@ -78,6 +78,60 @@ impl<T> SelectOption<T> {
         self
     }
 }
+/// A contiguous option group. Its optional label is visible and names the native group.
+#[derive(Clone)]
+pub struct SelectGroup<T> {
+    id: ElementId,
+    label: Option<SharedString>,
+    options: Vec<SelectOption<T>>,
+}
+impl<T> SelectGroup<T> {
+    pub fn new(id: impl Into<ElementId>, options: Vec<SelectOption<T>>) -> Self {
+        Self {
+            id: id.into(),
+            label: None,
+            options,
+        }
+    }
+    pub fn label(mut self, label: impl Into<SharedString>) -> Self {
+        let label = label.into();
+        assert!(
+            !label.trim().is_empty(),
+            "Select group label requires a name"
+        );
+        self.label = Some(label);
+        self
+    }
+}
+/// Ordered list parts; groups own their options, so there is no second value collection.
+#[derive(Clone)]
+pub enum SelectPart<T> {
+    Option(SelectOption<T>),
+    Group(SelectGroup<T>),
+    Separator(ElementId),
+}
+impl<T> SelectPart<T> {
+    pub fn separator(id: impl Into<ElementId>) -> Self {
+        Self::Separator(id.into())
+    }
+    fn options(&self) -> &[SelectOption<T>] {
+        match self {
+            Self::Option(option) => std::slice::from_ref(option),
+            Self::Group(group) => &group.options,
+            Self::Separator(_) => &[],
+        }
+    }
+}
+impl<T> From<SelectOption<T>> for SelectPart<T> {
+    fn from(option: SelectOption<T>) -> Self {
+        Self::Option(option)
+    }
+}
+impl<T> From<SelectGroup<T>> for SelectPart<T> {
+    fn from(group: SelectGroup<T>) -> Self {
+        Self::Group(group)
+    }
+}
 /// Value proposals emitted after activation; programmatic setters emit nothing.
 #[derive(Clone, Debug)]
 pub struct SelectEvent<T> {
@@ -87,7 +141,7 @@ pub struct SelectEvent<T> {
 /// Subscribe to `SelectEvent` to accept controlled proposals with `set_value`.
 pub struct SelectState<T: Clone + PartialEq + 'static> {
     name: SharedString,
-    options: Vec<SelectOption<T>>,
+    parts: Vec<SelectPart<T>>,
     value: SelectValue<T>,
     compare: Comparator<T>,
     controlled: bool,
@@ -100,6 +154,7 @@ pub struct SelectState<T: Clone + PartialEq + 'static> {
     bounds: Rc<Cell<Bounds<Pixels>>>,
     popup_bounds: Rc<Cell<Bounds<Pixels>>>,
     scroll: ScrollHandle,
+    reveal_pending: Rc<Cell<bool>>,
     deferred: Option<base::DeferredPopover>,
     prefix: String,
     typed_at: Option<Instant>,
@@ -125,10 +180,14 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             !name.trim().is_empty(),
             "Select requires an accessible name"
         );
-        Self::check_ids(&options);
+        let parts = options
+            .into_iter()
+            .map(SelectPart::Option)
+            .collect::<Vec<_>>();
+        Self::check_ids(&parts);
         Self {
             name,
-            options,
+            parts,
             value,
             compare: Rc::new(|a, b| a == b),
             controlled: false,
@@ -141,6 +200,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             bounds: Rc::new(Cell::new(Bounds::default())),
             popup_bounds: Rc::new(Cell::new(Bounds::default())),
             scroll: ScrollHandle::new(),
+            reveal_pending: Rc::new(Cell::new(false)),
             deferred: None,
             prefix: String::new(),
             typed_at: None,
@@ -154,13 +214,25 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             focus_out: None,
         }
     }
-    fn check_ids(options: &[SelectOption<T>]) {
-        for (i, o) in options.iter().enumerate() {
-            assert!(
-                !options[..i].iter().any(|p| p.id == o.id),
-                "Select option IDs must be unique"
-            );
+    fn check_ids(parts: &[SelectPart<T>]) {
+        let mut ids = std::collections::HashSet::new();
+        for part in parts {
+            match part {
+                SelectPart::Group(group) => {
+                    assert!(ids.insert(&group.id), "Select part IDs must be unique")
+                }
+                SelectPart::Separator(id) => {
+                    assert!(ids.insert(id), "Select part IDs must be unique")
+                }
+                SelectPart::Option(_) => (),
+            }
+            for option in part.options() {
+                assert!(ids.insert(&option.id), "Select part IDs must be unique");
+            }
         }
+    }
+    fn options(&self) -> impl DoubleEndedIterator<Item = &SelectOption<T>> {
+        self.parts.iter().flat_map(|part| part.options().iter())
     }
     /// Override logical equality for object values without relying on allocation identity.
     /// Prefer a pure comparator. This retained closure must capture Select/owner
@@ -205,18 +277,19 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         cx.notify();
     }
     pub fn set_options(&mut self, options: Vec<SelectOption<T>>, cx: &mut Context<Self>) {
-        Self::check_ids(&options);
-        self.options = options;
+        self.set_parts(options.into_iter().map(SelectPart::Option).collect(), cx);
+    }
+    /// Replace the authoritative list while retaining valid highlighted option identity.
+    /// All option, group and separator IDs must be unique across the collection.
+    pub fn set_parts(&mut self, parts: Vec<SelectPart<T>>, cx: &mut Context<Self>) {
+        Self::check_ids(&parts);
+        self.parts = parts;
         if !self
-            .options
-            .iter()
+            .options()
             .any(|o| Some(&o.id) == self.highlighted.as_ref() && !o.disabled)
         {
-            self.highlighted = self
-                .options
-                .iter()
-                .find(|o| !o.disabled)
-                .map(|o| o.id.clone());
+            let highlighted = self.options().find(|o| !o.disabled).map(|o| o.id.clone());
+            self.highlighted = highlighted;
         }
         self.reveal();
         cx.notify();
@@ -242,12 +315,12 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         self.prefix.clear();
         self.typed_at = None;
         if open {
-            self.highlighted = self
-                .options
-                .iter()
+            let highlighted = self
+                .options()
                 .find(|o| !o.disabled && self.selected(&o.value))
-                .or_else(|| self.options.iter().find(|o| !o.disabled))
+                .or_else(|| self.options().find(|o| !o.disabled))
                 .map(|o| o.id.clone());
+            self.highlighted = highlighted;
             self.deferred = Some(base::GlobalState::register_deferred_popover(cx));
             self.content.focus(window, cx);
             self.reveal();
@@ -269,18 +342,13 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         }
     }
     fn reveal(&self) {
-        if let Some(i) = self
-            .options
-            .iter()
-            .position(|o| Some(&o.id) == self.highlighted.as_ref())
-        {
-            self.scroll.scroll_to_item(i);
-        }
+        // ScrollHandle::scroll_to_item only understands direct children, not grouped options.
+        // A highlighted row's actual prepaint bounds reconcile nearest reveal next frame.
+        self.reveal_pending.set(true);
     }
     fn move_highlight(&mut self, delta: isize, cx: &mut Context<Self>) {
         let enabled: Vec<_> = self
-            .options
-            .iter()
+            .options()
             .filter(|o| !o.disabled)
             .map(|o| o.id.clone())
             .collect();
@@ -306,7 +374,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         if self.unavailable() || self.read_only {
             return;
         }
-        let Some(option) = self.options.iter().find(|o| &o.id == id && !o.disabled) else {
+        let Some(option) = self.options().find(|o| &o.id == id && !o.disabled) else {
             return;
         };
         let next = match &self.value {
@@ -386,9 +454,9 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         }
         if self.open && (key == "home" || key == "end") {
             self.highlighted = if key == "home" {
-                self.options.iter().find(|o| !o.disabled)
+                self.options().find(|o| !o.disabled)
             } else {
-                self.options.iter().rev().find(|o| !o.disabled)
+                self.options().rev().find(|o| !o.disabled)
             }
             .map(|o| o.id.clone());
             self.reveal();
@@ -429,18 +497,17 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             self.prefix.clone()
         };
         let start = self
-            .options
-            .iter()
+            .options()
             .position(|o| Some(&o.id) == self.highlighted.as_ref())
             .map_or(0, |i| if repeated { i + 1 } else { i });
-        let found = (0..self.options.len())
-            .map(|n| (start + n) % self.options.len())
+        let options: Vec<_> = self.options().collect();
+        let found = (0..options.len())
+            .map(|n| (start + n) % options.len())
             .find(|i| {
-                !self.options[*i].disabled
-                    && self.options[*i].label.to_lowercase().starts_with(&query)
+                !options[*i].disabled && options[*i].label.to_lowercase().starts_with(&query)
             });
         if let Some(i) = found {
-            let id = self.options[i].id.clone();
+            let id = options[i].id.clone();
             if !self.open {
                 self.highlighted = Some(id.clone());
                 self.propose(&id, window, cx);
@@ -453,8 +520,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         cx.stop_propagation();
     }
     fn display(&self) -> SharedString {
-        self.options
-            .iter()
+        self.options()
             .filter(|o| self.selected(&o.value))
             .map(|o| o.label.as_ref())
             .collect::<Vec<_>>()
@@ -796,105 +862,53 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
             .track_focus(&self.content)
             .track_scroll(&self.scroll)
             .overflow_y_scroll()
+            // CSS overflow-y:auto also contains horizontal overflow. In GPUI
+            // the axes are independent; contain source negative-margin separators.
+            .overflow_x_hidden()
             .flex()
             .flex_col()
             .max_h((available - px(14.)).max(px(1.)));
-        for option in &self.options {
-            let id = option.id.clone();
-            let select_id = id.clone();
-            let hover_id = id.clone();
-            let accessible_id = id.clone();
-            let selected = self.selected(&option.value);
-            let unavailable = option.disabled;
-            let highlighted = self.highlighted.as_ref() == Some(&id);
-            list = list.child(
-                div()
-                    .id(id)
-                    .test_support()
-                    .role(Role::ListBoxOption)
-                    .aria_label(option.label.clone())
-                    .aria_selected(selected)
-                    .a11y_synthetic_children(move |builder| {
-                        if unavailable {
-                            builder.parent_node().set_disabled();
-                        }
-                    })
-                    .when(highlighted, |v| v.aria_active_descendant())
-                    .relative()
-                    .flex()
-                    .items_center()
-                    .gap(px(8.))
-                    .mx(px(6.))
-                    .px(px(8.))
-                    .py(px(6.))
-                    .rounded(px(4.))
-                    .bg(if highlighted {
-                        t.colors.tint
-                    } else {
-                        t.colors.base
-                    })
-                    .opacity(if unavailable { 0.5 } else { 1. })
-                    .on_hover(cx.listener(move |v, hovered, _, cx| {
-                        if *hovered && !unavailable {
-                            v.highlighted = Some(hover_id.clone());
-                            cx.notify();
-                        }
-                    }))
-                    .when(!unavailable, |v| {
-                        let owner = cx.entity().downgrade();
-                        v.on_a11y_action(gpui_kit::AccessibleAction::Click, move |_, window, cx| {
-                            let _ = owner.update(cx, |v, cx| v.commit(&accessible_id, window, cx));
-                        })
-                    })
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(move |v, _, window, cx| {
-                            v.commit(&select_id, window, cx);
-                            cx.stop_propagation();
-                        }),
-                    )
-                    .child(
-                        div()
-                            .min_w_0()
-                            .flex_1()
-                            .child(if let Some(factory) = &option.content {
-                                factory(window, cx)
-                            } else {
-                                div().child(option.label.clone()).into_any_element()
-                            }),
-                    )
-                    .child(div().size(px(14.)).flex_shrink_0().when(selected, |v| {
-                        v.child(
-                            svg()
-                                .data(include_bytes!("../assets/empty-check.svg").as_slice())
-                                .size_full()
-                                .text_color(t.text.default),
-                        )
-                    }))
-                    .when(highlighted, |v| {
-                        let brand = t.colors.brand;
-                        v.child(
-                            canvas(
-                                |_, _, _| (),
-                                move |bounds, _, window, _| {
-                                    if window.last_input_was_keyboard() {
-                                        window.paint_quad(gpui_kit::quad(
-                                            bounds,
-                                            px(4.),
-                                            brand.alpha(0.),
-                                            px(2.),
-                                            brand,
-                                            Default::default(),
-                                        ));
-                                    }
-                                },
+        for part in &self.parts {
+            list = list.child(match part {
+                SelectPart::Option(option) => self
+                    .option_element(option, &t, window, cx)
+                    .into_any_element(),
+                SelectPart::Group(group) => {
+                    let mut element = div()
+                        .id(group.id.clone())
+                        .test_support()
+                        .role(Role::Group)
+                        .flex()
+                        .flex_col()
+                        .flex_shrink_0()
+                        .when_some(group.label.clone(), |v, label| {
+                            v.aria_label(label.clone()).child(
+                                div()
+                                    .px(px(14.))
+                                    .py(px(6.))
+                                    .text_size(t.typography.sm.size)
+                                    .line_height(t.typography.sm.line_height)
+                                    .font_weight(FontWeight::SEMIBOLD)
+                                    .text_color(t.text.subtle)
+                                    .child(label),
                             )
-                            .absolute()
-                            .inset_0()
-                            .size_full(),
-                        )
-                    }),
-            );
+                        });
+                    for option in &group.options {
+                        element = element.child(self.option_element(option, &t, window, cx));
+                    }
+                    element.into_any_element()
+                }
+                SelectPart::Separator(id) => div()
+                    .id(id.clone())
+                    .test_support()
+                    .role(Role::Splitter)
+                    .flex_shrink_0()
+                    .mx(px(-4.))
+                    .my(px(4.))
+                    .h(px(1.))
+                    .bg(t.colors.hairline)
+                    .into_any_element(),
+            });
         }
         let surface = div()
             .id("surface")
@@ -949,5 +963,150 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
             .with_priority(base::POPUP_PRIORITY),
         )
         .into_any_element()
+    }
+}
+
+impl<T: Clone + PartialEq + 'static> SelectState<T> {
+    fn option_element(
+        &self,
+        option: &SelectOption<T>,
+        t: &Theme,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
+        let id = option.id.clone();
+        let select_id = id.clone();
+        let hover_id = id.clone();
+        let accessible_id = id.clone();
+        let selected = self.selected(&option.value);
+        let unavailable = option.disabled;
+        let highlighted = self.highlighted.as_ref() == Some(&id);
+        div()
+            .id(id)
+            .test_support()
+            .role(Role::ListBoxOption)
+            .aria_label(option.label.clone())
+            .aria_selected(selected)
+            .a11y_synthetic_children(move |builder| {
+                if unavailable {
+                    builder.parent_node().set_disabled();
+                }
+            })
+            .when(highlighted, |v| v.aria_active_descendant())
+            .relative()
+            .flex()
+            .items_center()
+            .gap(px(8.))
+            .mx(px(6.))
+            .px(px(8.))
+            .py(px(6.))
+            .rounded(px(4.))
+            .bg(if highlighted {
+                t.colors.tint
+            } else {
+                t.colors.base
+            })
+            .opacity(if unavailable { 0.5 } else { 1. })
+            .on_hover(cx.listener(move |v, hovered, _, cx| {
+                if *hovered && !unavailable {
+                    v.highlighted = Some(hover_id.clone());
+                    cx.notify();
+                }
+            }))
+            .when(!unavailable, |v| {
+                let owner = cx.entity().downgrade();
+                v.on_a11y_action(gpui_kit::AccessibleAction::Click, move |_, window, cx| {
+                    let _ = owner.update(cx, |v, cx| v.commit(&accessible_id, window, cx));
+                })
+            })
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(move |v, _, window, cx| {
+                    v.commit(&select_id, window, cx);
+                    cx.stop_propagation();
+                }),
+            )
+            .child(
+                div()
+                    .min_w_0()
+                    .flex_1()
+                    .child(if let Some(factory) = &option.content {
+                        factory(window, cx)
+                    } else {
+                        div().child(option.label.clone()).into_any_element()
+                    }),
+            )
+            .child(div().size(px(14.)).flex_shrink_0().when(selected, |v| {
+                v.child(
+                    svg()
+                        .data(include_bytes!("../assets/empty-check.svg").as_slice())
+                        .size_full()
+                        .text_color(t.text.default),
+                )
+            }))
+            .when(highlighted, |v| {
+                let brand = t.colors.brand;
+                v.child(
+                    canvas(
+                        |_, _, _| (),
+                        move |bounds, _, window, _| {
+                            if window.last_input_was_keyboard() {
+                                window.paint_quad(gpui_kit::quad(
+                                    bounds,
+                                    px(4.),
+                                    brand.alpha(0.),
+                                    px(2.),
+                                    brand,
+                                    Default::default(),
+                                ));
+                            }
+                        },
+                    )
+                    .absolute()
+                    .inset_0()
+                    .size_full(),
+                )
+            })
+            .when(highlighted, |v| {
+                let scroll = self.scroll.clone();
+                let pending = self.reveal_pending.clone();
+                let owner = cx.entity().downgrade();
+                v.child(
+                    canvas(
+                        move |bounds, window, cx| {
+                            if pending.replace(false) {
+                                let viewport = scroll.bounds();
+                                let padding = if viewport.size.height > px(16.) {
+                                    px(8.)
+                                } else {
+                                    px(0.)
+                                };
+                                let top = viewport.top() + padding;
+                                let bottom = viewport.bottom() - padding;
+                                let delta =
+                                    if bounds.size.height > bottom - top || bounds.top() < top {
+                                        top - bounds.top()
+                                    } else if bounds.bottom() > bottom {
+                                        bottom - bounds.bottom()
+                                    } else {
+                                        px(0.)
+                                    };
+                                let mut offset = scroll.offset();
+                                let next = (offset.y + delta).clamp(-scroll.max_offset().y, px(0.));
+                                if next != offset.y {
+                                    offset.y = next;
+                                    scroll.set_offset(offset);
+                                    let _ = owner.update(cx, |_, cx| cx.notify());
+                                    window.request_animation_frame();
+                                }
+                            }
+                        },
+                        |_, _, _, _| {},
+                    )
+                    .absolute()
+                    .inset_0()
+                    .size_full(),
+                )
+            })
     }
 }

@@ -3,7 +3,8 @@ use gpui_kit::{
     div, px,
 };
 use gpui_kumo::{
-    Button, Select, SelectEvent, SelectOption, SelectState, SelectValue, select::Size, theme,
+    Button, Select, SelectEvent, SelectGroup, SelectOption, SelectPart, SelectState, SelectValue,
+    select::Size, theme,
 };
 pub struct Selects {
     single: Entity<SelectState<u32>>,
@@ -32,23 +33,40 @@ fn options() -> Vec<SelectOption<u32>> {
         })
         .collect()
 }
+fn grouped_options() -> Vec<SelectPart<u32>> {
+    let mut first = options();
+    let rest = first.split_off(5);
+    vec![
+        SelectGroup::new("primary-regions", first)
+            .label("Available regions")
+            .into(),
+        SelectPart::separator("region-divider"),
+        SelectGroup::new("more-regions", rest)
+            .label("More regions")
+            .into(),
+    ]
+}
 impl Selects {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let single = cx.new(|cx| {
-            SelectState::new(
+            let mut state = SelectState::new(
                 "Deployment region",
                 SelectValue::Single(Some(0)),
-                options(),
+                vec![],
                 cx,
-            )
+            );
+            state.set_parts(grouped_options(), cx);
+            state
         });
         let multiple = cx.new(|cx| {
-            SelectState::new(
+            let mut state = SelectState::new(
                 "Allowed regions",
                 SelectValue::Multiple(vec![1, 3]),
-                options(),
+                vec![],
                 cx,
-            )
+            );
+            state.set_parts(grouped_options(), cx);
+            state
         });
         let controlled = cx.new(|cx| {
             let mut s = SelectState::new(
@@ -109,7 +127,7 @@ impl Render for Selects {
                 .required(false)
                 .description("Disabled options, long labels and scrolling"),
         )
-        .child("Allowed regions · multiple selection stays open")
+        .child("Allowed regions · grouped multiple selection stays open")
         .child(Select::new("multi-region", &self.multiple))
         .child("Controlled · owner rejects proposals")
         .child(
