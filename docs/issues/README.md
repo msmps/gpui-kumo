@@ -102,4 +102,4 @@ Necessary example repair: [KUMO-055 — Button gallery narrow composition](055-b
 
 [KUMO-058 — reproducible CI](058-reproducible-ci.md) ([#43](https://github.com/msmps/gpui-kumo/issues/43)), In progress.
 
-[KUMO-059 — native InputArea test shortcuts](059-input-area-platform-shortcuts.md) ([#44](https://github.com/msmps/gpui-kumo/issues/44)), In progress.
+[KUMO-059 — native InputArea test shortcuts](059-input-area-platform-shortcuts.md) ([#44](https://github.com/msmps/gpui-kumo/issues/44)), Resolved in744354a.

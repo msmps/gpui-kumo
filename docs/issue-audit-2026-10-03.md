@@ -1,6 +1,6 @@
 # Migration issue audit — 2026-10-03
 
-Audited `work` at33ab7668f71ec36359164dc34ceed0e6ce8233b2. GitHub REST inventory used `--paginate` with `state=all&per_page=100`:42 issues,36 open/six closed. Public exports, gallery modules, tests, acceptance documents/local-ID mapping, recorded native captures/results and ancestor commits were compared. Independent reviewer examined seven implemented families and five closed repairs. Recorded historical validation is distinguished from the macOS tests reproduced during this session.
+Audited `work` at33ab7668f71ec36359164dc34ceed0e6ce8233b2. GitHub REST inventory used `--paginate` with `state=all&per_page=100`:42 issues,37 open/five closed. Public exports, gallery modules, tests, acceptance documents/local-ID mapping, recorded native captures/results and ancestor commits were compared. Independent reviewer examined seven implemented families and five closed repairs. Recorded historical validation is distinguished from the macOS tests reproduced during this session.
 
 | GitHub | Local ID | Classification and remaining work |
 | --- | --- | --- |
@@ -35,6 +35,6 @@ Audited `work` at33ab7668f71ec36359164dc34ceed0e6ce8233b2. GitHub REST inventory
 | #43 | KUMO-058 | Newly created bounded CI issue/milestone; workflow and exact gates in progress |
 | #44 | KUMO-059 | Newly reproduced macOS InputArea test shortcut defect; test-only repair and review pass, push pending |
 
-No family closure justified from rendering/count alone. No audit-supported reopening or duplicate closure found. Existing six resolution checklists reconciled against their published evidence, without claiming new platform measurements. GitHub remains the queue; local acceptance documents retain detailed contracts.
+No family closure justified from rendering/count alone. No audit-supported reopening or duplicate closure found. Existing five resolution checklists reconciled against their published evidence, without claiming new platform measurements. GitHub remains the queue; local acceptance documents retain detailed contracts.
 
-Independently reproduced: baseline169 library tests with three failures; repaired native shortcuts pass169 plus foundation gallery regression and nine doctests. Workspace formatting/Clippy/build/default-gallery gate passed; exact adapter12default/14all-feature tests and warning-denied lint passed after approved locked dependency download. Native foundation captures and CI remote runs remain pending. No CI runs existed at audit baseline.
+Independently reproduced: baseline169 library tests with three failures; repaired native shortcuts pass169 plus foundation gallery regression and nine doctests. Workspace formatting/Clippy/build/default-gallery gate passed; exact adapter12default/14all-feature tests and warning-denied lint passed after approved locked dependency download. Native foundation final matrix remains incomplete; code checkpoint744354a is published, #44 closed, first remote CI run37114282490 is in progress. No CI runs existed at audit baseline.
