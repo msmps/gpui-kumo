@@ -1,6 +1,6 @@
 use gpui_kit::{
-    Animation, AnimationExt, Context, IntoElement, ParentElement, Render, Styled, TestAppContext,
-    TestSupportExt, Window, div, px, test::TestWindowExt,
+    Animation, AnimationExt, Context, InteractiveElement, IntoElement, ParentElement, Render,
+    Styled, TestAppContext, TestSupportExt, Window, div, px, test::TestWindowExt,
 };
 use std::time::Duration;
 
