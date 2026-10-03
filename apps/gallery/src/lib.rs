@@ -55,6 +55,8 @@ gpui_kit::actions!(gallery, [Quit, ToggleAppearance, FocusNext, FocusPrevious]);
 struct Gallery {
     focus_handle: FocusHandle,
     _theme_subscription: Subscription,
+    #[cfg(feature = "frame-profiler")]
+    _visibility_subscription: Subscription,
     inputs: gpui_kit::Entity<inputs::Inputs>,
     fields: gpui_kit::Entity<fields::Fields>,
     checkboxes: gpui_kit::Entity<checkboxes::Checkboxes>,
@@ -122,6 +124,11 @@ impl Render for Gallery {
             .on_action(|_: &performance::ToggleMotion, _, cx| {
                 cx.set_reduce_motion(!cx.reduce_motion());
             });
+        #[cfg(feature = "frame-profiler")]
+        let root = root.child(gpui_kumo::Text::new(
+            "presentation-visibility",
+            format!("Presentation: {:?}", window.visibility()),
+        ));
         root.child(
             div()
                 .flex()
@@ -282,9 +289,18 @@ pub fn run() {
                         let focus_handle = cx.focus_handle();
                         focus_handle.focus(window, cx);
                         let subscription = cx.observe_global::<Theme>(|_, cx| cx.notify());
+                        #[cfg(feature = "frame-profiler")]
+                        let visibility_subscription = {
+                            let owner = cx.entity().downgrade();
+                            window.observe_window_visibility(move |_, _, cx| {
+                                let _ = owner.update(cx, |_, cx| cx.notify());
+                            })
+                        };
                         Gallery {
                             focus_handle,
                             _theme_subscription: subscription,
+                            #[cfg(feature = "frame-profiler")]
+                            _visibility_subscription: visibility_subscription,
                             inputs: cx.new(|cx| inputs::Inputs::new(window, cx)),
                             fields: cx.new(|cx| fields::Fields::new(window, cx)),
                             checkboxes: cx.new(checkboxes::Checkboxes::new),

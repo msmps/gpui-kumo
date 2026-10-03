@@ -10,7 +10,7 @@ GPUI provides `#[gpui::test]`, `TestAppContext`, and `VisualTestContext` for con
 
 ## Select checks from the contract
 
-For native screenshot checks, verify platform presentation visibility as well as accessible state. On the selected macOS dependency, `Window::visibility()` / `Window::is_visible()` describe whether frames will be shown. A fully occluded background window can process input and expose updated accessibility while its frame source is suspended. Raising it through accessibility alone did not restore visibility in our probe. Establish a visible window before interpreting stale pixels as a component defect; see [GitHub #51](https://github.com/msmps/gpui-kumo/issues/51). Keep testing-app cleanup and process-absence verification in the native loop.
+For native screenshot checks, verify platform presentation visibility as well as accessible state. On the selected macOS dependency, `Window::visibility()` / `Window::is_visible()` describe whether frames will be shown. A fully occluded background window can process input and expose updated accessibility while its frame source is suspended. Raise the actual test window and verify visibility rather than assuming activation or a successful accessibility action makes it visible. The gallery’s opt-in `frame-profiler` feature exposes `Presentation: Visible/Hidden`; see the [native protocol](performance-validation.md#foreground-presentation-protocol) and [GitHub #51](https://github.com/msmps/gpui-kumo/issues/51). Keep testing-app cleanup and process-absence verification in the native loop.
 
 | Branch | Evidence to collect |
 | --- | --- |
