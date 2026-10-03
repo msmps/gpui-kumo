@@ -1,6 +1,6 @@
 # KUMO-057: Narrow foundation gallery composition
 
-Status: Native acceptance complete; publish evidence and reconcile GitHub closure
+Status: Complete; publishedf03da05 and GitHub#42 closed
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/42
 
@@ -14,4 +14,6 @@ Extracted shared foundation renderer; stack columns below738px, preserve wide la
 
 ## Native continuation — 2026-10-03
 
-Both-theme focused/full-gallery 1040/520 and real 737/738 resize transitions now pass painted text, shadow, alignment and corner review over3eee132. Full pinned Linux script passes175 library/1gallery/9doctests, fmt/lint/locked builds and standalone adapter12/14tests. No new recipe change needed. [Captures, exact scripts, review and limits](../evidence/foundation-layout/linux/README.md). GitHub API CLI currently returns Forbidden; closure/checklist reconciliation is pending publication and a supported write path.
+Both-theme focused/full-gallery 1040/520 and real 737/738 resize transitions now pass painted text, shadow, alignment and corner review over3eee132. Full pinned Linux script passes175 library/1gallery/9doctests, fmt/lint/locked builds and standalone adapter12/14tests. No new recipe change needed. [Captures, exact scripts, review and limits](../evidence/foundation-layout/linux/README.md). Publishedf03da05 succeeds in remote CI37119510684; GitHub#42 checklist is reconciled/closed through the connector. CLI API denial remains separate.
+
+GitHub#42 checklist reconciled and closed as completed on2026-10-03 after verifying publishedf03da05 and remote CI37119510684.

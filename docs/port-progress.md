@@ -4,7 +4,7 @@
 
 Actual latest `work`3eee132 was fetched and the clean checkout fast-forwarded; managed Git/Cargo/HTTPS now work. Full pinned Linux gate passes175library/1gallery/9doctests, workspace/adapter fmt and warning-denied lint, locked all-target/all-feature/default gallery builds and adapter12default/14all-feature tests. Exact pins/patches unchanged. [Raw results](evidence/cloud-native-2026-10-03/README.md).
 
-#42's bounded gallery repair now passes native focused/full-gallery Light/Dark1040/520, painted text/shadow/corner/alignment review and real737/738 resize transitions. [Evidence/scripts](evidence/foundation-layout/linux/README.md). No further recipe change required. GitHub checklist/closure awaits publication and a supported issue write path (`gh api` returns Forbidden). #26 native Dropdown/PageSize and pinned browser validation remain next, followed by#38 glyph reproduction. Coverage stays27/43 working,16unported; platform/browser/speech/IME acceptance remains separate.
+#42's bounded gallery repair now passes native focused/full-gallery Light/Dark1040/520, painted text/shadow/corner/alignment review and real737/738 resize transitions. [Evidence/scripts](evidence/foundation-layout/linux/README.md). No further recipe change required. Published evidence checkpointf03da05 passes remote CI37119510684; #42 checklist is reconciled and the issue is closed through the GitHub connector. CLI API remains blocked, but connector issue writes are available. #26 native Dropdown/PageSize and pinned browser validation remain next, followed by#38 glyph reproduction. Coverage stays27/43 working,16unported; platform/browser/speech/IME acceptance remains separate.
 
 ## Current dropdown checkpoint — 2026-10-03
 

@@ -2,7 +2,7 @@
 
 Native Linux acceptance completed on 2026-10-03 over `3eee1325af367f03f9481fdd04fce284ebbf9027`. No further gallery recipe change was needed. [Current captures, reproduction and review](linux/README.md). Focused and full-gallery Light/Dark at 1040/520, plus actual 737/738 resize transitions, preserve readable text, panel containment and complete shadow samples. The full pinned Linux Rust script passes: 175 library / 1 gallery / 9 doctests and 12 default / 14 all-feature standalone adapter tests, formatting, warning-denied lint and locked builds. [Raw gate](../cloud-native-2026-10-03/linux-rust-gate.log).
 
-The bounded gallery repair is accepted locally; GitHub #42 closure still requires publishing this evidence and reconciling its checklist. No browser parity, arbitrary-descendant clipping, speech, OS IME or other-platform acceptance is inferred.
+The bounded gallery repair is accepted and published inf03da05; successful remote CI37119510684 is verified and GitHub#42 checklist is reconciled/closed. No browser parity, arbitrary-descendant clipping, speech, OS IME or other-platform acceptance is inferred.
 
 ## Earlier handoff evidence (historical)
 
