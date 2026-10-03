@@ -1,6 +1,6 @@
 # KUMO-057: Narrow foundation gallery composition
 
-Status: Open
+Status: Native acceptance complete; publish evidence and reconcile GitHub closure
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/42
 
@@ -11,3 +11,7 @@ Backlog after active Pagination parts/shared expansion repair.
 ## Handoff candidate
 
 Extracted shared foundation renderer; stack columns below738px, preserve wide layout/token recipes, bound flex children. Both-theme1040/520/737/738 rendered containment/resize regression passes. Independent source review found no blocker; panel rectangles do not establish text or shadow paint containment. Focused native example provides width/theme startup flags. Only saved native final evidence is Light1040; Light520 inspected with an earlier too-short preview, complete narrow shadows and both Dark captures remain outstanding. [Evidence](../evidence/foundation-layout/README.md). Do not close#42 until final native gate is complete.
+
+## Native continuation — 2026-10-03
+
+Both-theme focused/full-gallery 1040/520 and real 737/738 resize transitions now pass painted text, shadow, alignment and corner review over3eee132. Full pinned Linux script passes175 library/1gallery/9doctests, fmt/lint/locked builds and standalone adapter12/14tests. No new recipe change needed. [Captures, exact scripts, review and limits](../evidence/foundation-layout/linux/README.md). GitHub API CLI currently returns Forbidden; closure/checklist reconciliation is pending publication and a supported write path.

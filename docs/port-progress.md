@@ -1,5 +1,11 @@
 # Kumo native port progress
 
+## Managed native continuation — 2026-10-03
+
+Actual latest `work`3eee132 was fetched and the clean checkout fast-forwarded; managed Git/Cargo/HTTPS now work. Full pinned Linux gate passes175library/1gallery/9doctests, workspace/adapter fmt and warning-denied lint, locked all-target/all-feature/default gallery builds and adapter12default/14all-feature tests. Exact pins/patches unchanged. [Raw results](evidence/cloud-native-2026-10-03/README.md).
+
+#42's bounded gallery repair now passes native focused/full-gallery Light/Dark1040/520, painted text/shadow/corner/alignment review and real737/738 resize transitions. [Evidence/scripts](evidence/foundation-layout/linux/README.md). No further recipe change required. GitHub checklist/closure awaits publication and a supported issue write path (`gh api` returns Forbidden). #26 native Dropdown/PageSize and pinned browser validation remain next, followed by#38 glyph reproduction. Coverage stays27/43 working,16unported; platform/browser/speech/IME acceptance remains separate.
+
 ## Current dropdown checkpoint — 2026-10-03
 
 #26's missing dropdown candidate is recreated and published: implementation 46f919e, test corrections dfbbdc06/d3bfbe96, final source shadow correction 033ccfde78c5fdf1f925fc3e03ba8a9671f45278. Full remote macOS gates [37117625758](https://github.com/msmps/gpui-kumo/actions/runs/37117625758) and [37117805585](https://github.com/msmps/gpui-kumo/actions/runs/37117805585) pass 175 library / 1 gallery / 9 doctests, workspace/adapter formatting and warning-denied lint, locked builds/default gallery, and 12 default / 14 all-feature adapter tests. [Contract and evidence](pagination-dropdown-checkpoint.md).

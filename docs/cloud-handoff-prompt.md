@@ -1,5 +1,11 @@
 # Continue the GPUI Kumo migration from the pushed handoff checkpoint
 
+## Managed native continuation — 2026-10-03
+
+Actual latest `work`3eee132 was fetched and the clean checkout fast-forwarded; managed Git/Cargo/HTTPS now work. Full pinned Linux gate passes175library/1gallery/9doctests, workspace/adapter fmt and warning-denied lint, locked all-target/all-feature/default gallery builds and adapter12default/14all-feature tests. Exact pins/patches unchanged. [Raw results](evidence/cloud-native-2026-10-03/README.md).
+
+#42's bounded gallery repair now passes native focused/full-gallery Light/Dark1040/520, painted text/shadow/corner/alignment review and real737/738 resize transitions. [Evidence/scripts](evidence/foundation-layout/linux/README.md). No further recipe change required. GitHub checklist/closure awaits publication and a supported issue write path (`gh api` returns Forbidden). #26 native Dropdown/PageSize and pinned browser validation remain next, followed by#38 glyph reproduction. Coverage stays27/43 working,16unported; platform/browser/speech/IME acceptance remains separate.
+
 Continue `msmps/gpui-kumo` on branch `work`. Goal: migrate the supported, recommended Kumo design system to native Rust/GPUI, using GPUI Kit's `gpui-base` as the behaviour foundation and preserving Kumo appearance, capabilities and composability.
 
 Read the actual latest `origin/work` before acting. This handoff is a partial, reviewable checkpoint, not a completed milestone or permission to reset to an older tree. Read applicable `AGENTS.md`, `docs/README.md`, `CONTEXT.md`, `docs/port-progress.md`, `docs/issue-audit-2026-10-03.md`, component acceptance documents and relevant GitHub issues.
