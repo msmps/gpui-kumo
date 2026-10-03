@@ -915,9 +915,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
                 t.colors.control
             })
             .opacity(if self.disabled { 0.5 } else { 1. })
-            .when(!joined_middle, |this| {
-                this.shadow(t.effects.shadow_xs.clone())
-            })
+            .shadow(t.effects.shadow_xs.clone())
             .text_color(if disabled {
                 t.text.default.opacity(0.7)
             } else if empty {
