@@ -80,7 +80,7 @@ All 25 unported families have one confirmed GitHub issue each (#11–#35), linke
 
 ## Maintaining the tracker
 
-Shared follow-up: [KUMO-051 — disabled Buttons export Enabled/Sensitive on Linux](051-linux-disabled-button-state.md) ([#36](https://github.com/msmps/gpui-kumo/issues/36)), In progress. Found through Pagination's actual AT-SPI gate; applies to all Buttons.
+Shared follow-up: [KUMO-051 — disabled Buttons export Enabled/Sensitive on Linux](051-linux-disabled-button-state.md) ([#36](https://github.com/msmps/gpui-kumo/issues/36)), Resolved. Found through Pagination's actual AT-SPI gate; applies to all Buttons.
 
 Completed foundation: [KUMO-052 — readable values on Label nodes](052-readable-label-values.md) ([#37](https://github.com/msmps/gpui-kumo/issues/37)), Resolved. Same native gate exposed the distinction between authored aria_label and platform names; affects Text/Label/Badge/Banner/BreadcrumbCurrent.
 
@@ -91,3 +91,5 @@ Completed foundation: [KUMO-052 — readable values on Label nodes](052-readable
 - Continue tracking work here until publication is confirmed. A prepared draft or failed API request does not mean an issue exists on GitHub.
 
 Visual follow-up: [KUMO-053 — rich Text highlight font fidelity](053-rich-text-highlight-font.md) ([#38](https://github.com/msmps/gpui-kumo/issues/38)), Open. Native review discovered an existing serif-looking highlight; inspect pinned shaping/font resolution before changing typography.
+
+Shared follow-up: [KUMO-054 — authored busy-state export on Linux](054-linux-busy-state.md) ([#39](https://github.com/msmps/gpui-kumo/issues/39)), Open. Discovered in #36 native fixture validation; selected after #36 before remaining Pagination parts.

@@ -1,6 +1,7 @@
 [workspace]
 members = ["crates/gpui-kumo", "apps/gallery"]
 default-members = ["apps/gallery"]
+exclude = ["vendor/accesskit_atspi_common-0.19.1"]
 resolver = "2"
 
 [workspace.package]
@@ -24,3 +25,7 @@ gpui-pre = { path = "vendor/gpui-pre-0.3.7" }
 # Preserve Textarea intrinsic growth when policy, width or font changes.
 # Exact0.7.0 source plus the documented display-map row reconciliation.
 gpui-base = { path = "vendor/gpui-base-0.7.0" }
+
+# Preserve disabled Enabled/Sensitive states on the pinned Linux adapter.
+# Exact0.19.1 source plus the documented disabled-state guard.
+accesskit_atspi_common = { path = "vendor/accesskit_atspi_common-0.19.1" }

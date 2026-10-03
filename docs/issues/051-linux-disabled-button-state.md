@@ -1,6 +1,6 @@
 # KUMO-051: Correct disabled Button state export on Linux
 
-Status: In progress
+Status: Resolved
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/36
 
@@ -14,9 +14,11 @@ Pinned GPUI 0.3.7 uses accesskit_atspi_common 0.19.1. Its src/node.rs state mapp
 
 ## Acceptance
 
-- [ ] Reproduce with native enabled/disabled Buttons, including Pagination boundary directions, busy Buttons and transitions, and record actual AccessKit versus AT-SPI state/actions.
-- [ ] Evaluate a narrowly scoped upstream correction or pinned patch; preserve existing Base behavior and Kumo styling, and do not alter a Button's role to conceal the export bug.
-- [ ] Verify Enabled/Sensitive are absent when disabled and restored when enabled; ReadOnly applies only to supported roles. Verify pointer/Space/Enter and accessible action remain guarded, focus/Tab policy unchanged.
-- [ ] Run required Rust checks and actual X11 AT-SPI regression; record Wayland/Orca/macOS/Windows scope independently.
+- [x] Reproduce with native enabled/disabled Buttons, including Pagination boundary directions, busy Buttons and transitions, and record actual AccessKit versus AT-SPI state/actions.
+- [x] Evaluate a narrowly scoped upstream correction or pinned patch; preserve existing Base behavior and Kumo styling, and do not alter a Button's role to conceal the export bug.
+- [x] Verify Enabled/Sensitive are absent when disabled and restored when enabled; ReadOnly applies only to supported roles. Verify pointer/Space/Enter and accessible action remain guarded, focus/Tab policy unchanged.
+- [x] Run required Rust checks and actual X11 AT-SPI regression; record Wayland/Orca/macOS/Windows scope independently.
 
 Related Linux workflow: #2. Component evidence will be recorded in docs/pagination-validation.md. Platform state export remains a fidelity gap; working implementation does not imply full platform parity.
+
+Resolved by the exact pinned mapping guard.166 workspace tests/nine doctests; upstream10/12 default/all-feature tests; required Rust/vendor checks and strict native four-combination availability/action/keyboard/clipboard gate pass. Independent review found no blocker. See [patch/evidence/consumer setup](../linux-disabled-state-patch.md). Busy export omission remains separate #39, selected next; spoken/other-platform validation remains separate.

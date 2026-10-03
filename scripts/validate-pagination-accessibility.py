@@ -13,7 +13,7 @@ import json
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--binary', type=Path, default=Path('target/debug/kumo-gallery'))
 parser.add_argument('--output', type=Path, default=Path('/tmp'))
-parser.add_argument('--require-disabled-state', action='store_true', help='Fail on the pinned disabled-Button export defect tracked in #36')
+parser.add_argument('--require-disabled-state', action='store_true', help='Require corrected disabled-state export from the pinned #36 patch')
 args = parser.parse_args()
 
 import tkinter
@@ -114,6 +114,15 @@ try:
         click(find('Reset full dataset', 'button'))
         assert text(input()) == '5'
         next_button = find('Next page', 'button', nav(0))
+        if args.require_disabled_state:
+            assert next_button.getState().contains(pyatspi.STATE_ENABLED)
+            assert next_button.getState().contains(pyatspi.STATE_SENSITIVE)
+            loading = [n for n in walk(desktop) if n.getRoleName() == 'button' and n.description == 'Loading']
+            assert {n.name for n in loading} >= {'Primary', 'Secondary', 'Ghost', 'Destructive', 'Secondary destructive', 'Outline'}
+            for node in loading:
+                assert not node.getState().contains(pyatspi.STATE_ENABLED), node.name
+                assert not node.getState().contains(pyatspi.STATE_SENSITIVE), node.name
+                assert not has_click(node), node.name
         r = next_button.queryComponent().getExtents(pyatspi.DESKTOP_COORDS)
         subprocess.run(['xdotool', 'mousemove', str(r.x + r.width // 2), str(r.y + r.height // 2)], check=True)
         time.sleep(0.4)
@@ -160,7 +169,7 @@ try:
         clip.destroy()
         assert payload == '3'
         print('COMBINATION PASS', theme, width, flush=True)
-        results.append({'theme': theme, 'width': width, 'pointer_space_enter_pages': [6, 7, 8], 'huge_draft_clamped': 10, 'malformed_restored': 10, 'blur_committed': 3, 'native_clipboard': payload, 'landmark': nav(0).name})
+        results.append({'theme': theme, 'width': width, 'pointer_space_enter_pages': [6, 7, 8], 'huge_draft_clamped': 10, 'malformed_restored': 10, 'blur_committed': 3, 'native_clipboard': payload, 'landmark': nav(0).name, 'disabled_states': [str(state) for state in states], 'enabled_restored': args.require_disabled_state, 'busy_variants_guarded': len(loading) if args.require_disabled_state else None, 'loading_busy_exported': all(n.getState().contains(pyatspi.STATE_BUSY) for n in loading) if args.require_disabled_state else None})
     click(find('Next page', 'button', nav(3)))
     assert text(input(3)) == '1'
     for page in (2, 3):
@@ -168,7 +177,9 @@ try:
     assert not has_click(find('Next page', 'button', nav(2)))
     assert any((n.name == 'Page 3 · café 🦀' for n in walk(desktop)))
     assert not any((n.name in ('First page', 'Last page') for n in walk(nav(2))))
-    print('PASS', json.dumps({'combinations': results, 'controlled_rejection': True, 'unknown_server_boundary': True, 'readable_info': True, 'disabled_button_state_export': 'passed' if args.require_disabled_state else 'awaiting #36'}, indent=2), flush=True)
+    result = {'combinations': results, 'controlled_rejection': True, 'unknown_server_boundary': True, 'readable_info': True, 'disabled_button_state_export': 'passed' if args.require_disabled_state else 'not checked (pass --require-disabled-state)'}
+    (args.output / 'pagination-native-results.json').write_text(json.dumps(result, indent=2) + '\n')
+    print('PASS', json.dumps(result, indent=2), flush=True)
 except Exception:
     capture('failure')
     raise

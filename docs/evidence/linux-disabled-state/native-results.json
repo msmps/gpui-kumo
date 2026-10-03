@@ -1,0 +1,92 @@
+{
+  "combinations": [
+    {
+      "theme": "Light",
+      "width": 1040,
+      "pointer_space_enter_pages": [
+        6,
+        7,
+        8
+      ],
+      "huge_draft_clamped": 10,
+      "malformed_restored": 10,
+      "blur_committed": 3,
+      "native_clipboard": "3",
+      "landmark": "Dataset 0 pages",
+      "disabled_states": [
+        "<enum ATSPI_STATE_SHOWING of type Atspi.StateType>",
+        "<enum ATSPI_STATE_VISIBLE of type Atspi.StateType>"
+      ],
+      "enabled_restored": true,
+      "busy_variants_guarded": 7,
+      "loading_busy_exported": false
+    },
+    {
+      "theme": "Dark",
+      "width": 1040,
+      "pointer_space_enter_pages": [
+        6,
+        7,
+        8
+      ],
+      "huge_draft_clamped": 10,
+      "malformed_restored": 10,
+      "blur_committed": 3,
+      "native_clipboard": "3",
+      "landmark": "Dataset 0 pages",
+      "disabled_states": [
+        "<enum ATSPI_STATE_SHOWING of type Atspi.StateType>",
+        "<enum ATSPI_STATE_VISIBLE of type Atspi.StateType>"
+      ],
+      "enabled_restored": true,
+      "busy_variants_guarded": 7,
+      "loading_busy_exported": false
+    },
+    {
+      "theme": "Dark",
+      "width": 520,
+      "pointer_space_enter_pages": [
+        6,
+        7,
+        8
+      ],
+      "huge_draft_clamped": 10,
+      "malformed_restored": 10,
+      "blur_committed": 3,
+      "native_clipboard": "3",
+      "landmark": "Dataset 0 pages",
+      "disabled_states": [
+        "<enum ATSPI_STATE_SHOWING of type Atspi.StateType>",
+        "<enum ATSPI_STATE_VISIBLE of type Atspi.StateType>"
+      ],
+      "enabled_restored": true,
+      "busy_variants_guarded": 7,
+      "loading_busy_exported": false
+    },
+    {
+      "theme": "Light",
+      "width": 520,
+      "pointer_space_enter_pages": [
+        6,
+        7,
+        8
+      ],
+      "huge_draft_clamped": 10,
+      "malformed_restored": 10,
+      "blur_committed": 3,
+      "native_clipboard": "3",
+      "landmark": "Dataset 0 pages",
+      "disabled_states": [
+        "<enum ATSPI_STATE_SHOWING of type Atspi.StateType>",
+        "<enum ATSPI_STATE_VISIBLE of type Atspi.StateType>"
+      ],
+      "enabled_restored": true,
+      "busy_variants_guarded": 7,
+      "loading_busy_exported": false
+    }
+  ],
+  "controlled_rejection": true,
+  "unknown_server_boundary": true,
+  "readable_info": true,
+  "disabled_button_state_export": "passed"
+}
