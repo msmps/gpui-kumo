@@ -2,6 +2,7 @@ use super::*;
 use gpui_kit::{
     Focusable, InteractiveElement, Role, TestAppContext, VisualTestContext, test::TestWindowExt,
 };
+gpui_kit::actions!(pagination_test, [FocusNext, FocusPrevious]);
 struct Host {
     state: Entity<PaginationState>,
     events: Vec<usize>,
@@ -18,6 +19,8 @@ struct Host {
 impl Render for Host {
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
         div()
+            .on_action(|_: &FocusNext, window, cx| window.focus_next(cx))
+            .on_action(|_: &FocusPrevious, window, cx| window.focus_prev(cx))
             .tab_group()
             .w(px(360.))
             .flex()
@@ -71,7 +74,15 @@ fn host(
     total: PaginationTotal,
     accept: bool,
 ) -> (Entity<Host>, &mut VisualTestContext) {
-    cx.update(crate::init);
+    cx.update(|cx| {
+        crate::init(cx);
+        // Match the gallery's global traversal path. Select handles Tab itself
+        // while open; surviving ordinary controls use the host's actions.
+        cx.bind_keys([
+            gpui_kit::KeyBinding::new("tab", FocusNext, None),
+            gpui_kit::KeyBinding::new("shift-tab", FocusPrevious, None),
+        ]);
+    });
     let (view, cx) = cx.add_window_view(|window, cx| {
         let state = cx.new(|cx| PaginationState::new(page, 10, total, window, cx));
         let events = cx.subscribe_in(&state, window, |h: &mut Host, state, event, window, cx| {
@@ -972,9 +983,11 @@ fn dropdown_source_joins_and_disabled_border_paint_in_both_themes(cx: &mut TestA
             assert!(last.right() <= px(360.));
             let t = theme(cx);
             assert!(
-                window.painted_quads().iter().any(|q| q.bounds
-                    == first.dilate(px(1.)).scale(window.scale_factor())
-                    && q.border_color == t.colors.line),
+                window
+                    .painted_quads()
+                    .iter()
+                    .any(|q| q.bounds == first.scale(window.scale_factor())
+                        && q.border_color == t.colors.line),
                 "disabled joined border must remain full-opacity source line"
             );
             assert!(
