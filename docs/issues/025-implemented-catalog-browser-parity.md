@@ -32,3 +32,7 @@ Baseline: Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`; GPUI Kit/Base 0.7.0; 
 ## Consolidated SkeletonLine acceptance — 2026-10-03
 
 SkeletonLine implementation #29 is resolved; browser geometry/gradient comparison and supported-platform OS reduced-motion preference delivery remain tracked here in #10. Component reduced-motion policy/frame regressions already pass. Current coverage32/43 working,11unported. Source/native Tabs/Dropdown/Dialog/Toast matrices are bounded passes; Pagination/Select matrices remain partial.
+
+## Consolidated quick-win validation — 2026-10-03
+
+Meter#25, Breadcrumbs#12 and InlineCopyText#22 bounded implementation work is complete. Keep shared browser comparisons for caller Meter track/fill styles, styled Breadcrumbs and100ms copy fades here; OS reduced-motion delivery remains here, and actual copied-message speech stays #2–#4. Native Metal1040/520 Light/Dark results and rendered regression outcomes are recorded in [quick-win evidence](../evidence/quick-wins/README.md). This does not claim catalog/platform acceptance. Select#27 sizing is fixed; its other capabilities and #26 matrix remain open.

@@ -9,7 +9,7 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-03. This
 | autocomplete | Unported — [#11](https://github.com/msmps/gpui-kumo/issues/11) |
 | badge | Implemented; see component acceptance/gaps |
 | banner | Implemented; see component acceptance/gaps |
-| breadcrumbs | Implemented; [acceptance/gaps](breadcrumbs-validation.md), [#12](https://github.com/msmps/gpui-kumo/issues/12) remains open |
+| breadcrumbs | Implemented; [acceptance/gaps](breadcrumbs-validation.md), [implementation #12 resolved](https://github.com/msmps/gpui-kumo/issues/12); shared browser/platform gates remain |
 | button | Implemented; see component acceptance/gaps |
 | button-group | Implemented; see component acceptance/gaps |
 | checkbox | Implemented; see component acceptance/gaps |
@@ -24,7 +24,7 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-03. This
 | empty | Implemented; see component acceptance/gaps |
 | field | Implemented; see component acceptance/gaps |
 | grid | Unported — [#21](https://github.com/msmps/gpui-kumo/issues/21) |
-| inline-copy-text | Implemented; [acceptance/gaps](inline-copy-text-validation.md), [#22](https://github.com/msmps/gpui-kumo/issues/22) remains open |
+| inline-copy-text | Implemented; [acceptance/gaps](inline-copy-text-validation.md), [implementation #22 resolved](https://github.com/msmps/gpui-kumo/issues/22); shared browser/platform gates remain |
 | input | Implemented; see component acceptance/gaps |
 | input-area | Implemented; [acceptance/gaps](input-area-validation.md), [#23](https://github.com/msmps/gpui-kumo/issues/23) remains open |
 | input-group | Implemented; see component acceptance/gaps |
@@ -33,7 +33,7 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-03. This
 | layer-dialog | Unported — [#24](https://github.com/msmps/gpui-kumo/issues/24) |
 | link | Implemented; see component acceptance/gaps |
 | loader | Implemented; see component acceptance/gaps |
-| meter | Implemented; [acceptance/gaps](meter-validation.md), [#25](https://github.com/msmps/gpui-kumo/issues/25) remains open |
+| meter | Implemented; [acceptance/gaps](meter-validation.md), [implementation #25 resolved](https://github.com/msmps/gpui-kumo/issues/25); shared browser/platform gates remain |
 | pagination | Input/simple, Dropdown, Info/Separator and PageSize implemented; Dropdown is published; partial native matrix and popup/platform fidelity remain, [acceptance/gaps](pagination-validation.md) — [#26](https://github.com/msmps/gpui-kumo/issues/26) |
 | popover | Implemented; see component acceptance/gaps |
 | radio | Implemented; see component acceptance/gaps |

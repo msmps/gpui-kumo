@@ -28,3 +28,7 @@ After reconciliation: **34 open /11 closed GitHub issues**. Open queue comprises
 ## Verification scope
 
 Cleanup changes tracking/documentation only. Check Markdown targets, local IDs/status/index consistency, missing-family open state and updated GitHub bodies; verify diff whitespace and identical published tree. No new component tests, visual measurements, spoken acceptance or OS preference validation are claimed. Existing full locked gate is226library/1gallery/9doctests and adapter12/14. GitHub issue edits preserve concrete remaining work rather than treating every working family as fully accepted.
+
+## Subsequent quick-win implementation checkpoint
+
+Meter#25 (`e0af6e5`), Breadcrumbs#12 (`1981c7c`) and InlineCopyText#22 (`e28957a`) implementation follow-ups are resolved after rendered/native verification; shared browser/platform gates remain #10/#2–#4. Select#27 numeric popup sizing is fixed (`638a174`), with its remaining composition/validation issue retained. Queue now31open/14closed; coverage remains32/43 working,11unported. [Measured native evidence and full Rust gate](evidence/quick-wins/README.md). Earlier audit table records its historical34-issue checkpoint.

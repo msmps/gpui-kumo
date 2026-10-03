@@ -2,7 +2,7 @@
 
 Component implementation paused for the requested tracker cleanup. All45 GitHub issues were audited: SkeletonLine #29 is resolved as implementation-complete, with browser/OS-preference validation consolidated into #10;13 implemented-family issues now describe concrete remaining work, and #9 no longer lists implemented leading actions as missing. All11 missing-family issues remain open and unchanged. The local index matches; obsolete resume history is archived behind the shorter [handoff](cloud-handoff-prompt.md). [Disposition and evidence](issue-audit-2026-10-03.md).
 
-Current queue34open/11closed. Coverage stays32/43 working,11unported; no acceptance gap was discarded. Previewc1026fe passes [macOS37139317488](https://github.com/msmps/gpui-kumo/actions/runs/37139317488), alongside Toast94351f4. After cleanup, resume LayerDialog #24 and intended-platform recording review. Historical checkpoints below retain their original validation scope.
+Current queue31open/14closed. Meter#25, Breadcrumbs#12 and InlineCopyText#22 implementation follow-ups are resolved; Select#27 numeric popup sizing is repaired while its remaining composition/validation stays open. [Quick-win evidence](evidence/quick-wins/README.md). Coverage stays32/43 working,11unported; no acceptance gap was discarded. Previewc1026fe passes [macOS37139317488](https://github.com/msmps/gpui-kumo/actions/runs/37139317488), alongside Toast94351f4. After cleanup, resume LayerDialog #24 and intended-platform recording review. Historical checkpoints below retain their original validation scope.
 
 ## Announcement rehearsal and composition polish — 2026-10-03
 
