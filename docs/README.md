@@ -70,3 +70,5 @@ Pagination: [source contract, acceptance and continuation](pagination-validation
 Readable text: [Label value authoring and native evidence](readable-label-validation.md).
 
 Linux availability: [pinned disabled-state patch and consumer setup](linux-disabled-state-patch.md).
+
+Linux loading semantics: [authored Busy acceptance and evidence](linux-busy-state-validation.md).

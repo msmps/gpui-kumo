@@ -92,4 +92,6 @@ Completed foundation: [KUMO-052 — readable values on Label nodes](052-readable
 
 Visual follow-up: [KUMO-053 — rich Text highlight font fidelity](053-rich-text-highlight-font.md) ([#38](https://github.com/msmps/gpui-kumo/issues/38)), Open. Native review discovered an existing serif-looking highlight; inspect pinned shaping/font resolution before changing typography.
 
-Shared follow-up: [KUMO-054 — authored busy-state export on Linux](054-linux-busy-state.md) ([#39](https://github.com/msmps/gpui-kumo/issues/39)), Open. Discovered in #36 native fixture validation; selected after #36 before remaining Pagination parts.
+Shared follow-up: [KUMO-054 — authored busy-state export on Linux](054-linux-busy-state.md) ([#39](https://github.com/msmps/gpui-kumo/issues/39)), Resolved. Authored Busy now exports independently of availability, with actual state/event and four-combination native checks.
+
+Necessary example repair: [KUMO-055 — Button gallery narrow composition](055-button-gallery-narrow-layout.md) ([#40](https://github.com/msmps/gpui-kumo/issues/40)), Resolved. Intrinsic Button geometry preserved; counter, variant and size-row wrapping verified natively in all four combinations.

@@ -650,6 +650,34 @@ mod tests {
         fn do_action(&mut self, _request: ActionRequest) {}
     }
 
+    type StateChanges = Arc<Mutex<Vec<(atspi_common::State, bool)>>>;
+    struct StateCallback(StateChanges);
+    impl AdapterCallback for StateCallback {
+        fn register_interfaces(&self, _: &Adapter, _: NodeId, _: InterfaceSet) {}
+        fn unregister_interfaces(&self, _: &Adapter, _: NodeId, _: InterfaceSet) {}
+        fn emit_event(&self, _: &Adapter, event: Event) {
+            if let Event::Object {
+                event: crate::ObjectEvent::StateChanged(state, value),
+                ..
+            } = event
+            {
+                self.0.lock().unwrap().push((state, value));
+            }
+        }
+    }
+    fn state_adapter(initial: TreeUpdate) -> (Adapter, StateChanges) {
+        let events = Arc::new(Mutex::new(Vec::new()));
+        let adapter = Adapter::new(
+            &AppContext::new(None),
+            StateCallback(events.clone()),
+            initial,
+            false,
+            WindowBounds::default(),
+            NoOpActionHandler,
+        );
+        (adapter, events)
+    }
+
     fn with_children(role: Role, children: &[LocalNodeId]) -> Node {
         let mut node = Node::new(role);
         node.set_children(children.to_vec());
@@ -889,32 +917,9 @@ mod tests {
 
     #[test]
     fn button_availability_changes_emit_enabled_and_sensitive_events() {
-        use crate::ObjectEvent;
         use atspi_common::State;
 
-        struct StateCallback(Arc<Mutex<Vec<(State, bool)>>>);
-        impl AdapterCallback for StateCallback {
-            fn register_interfaces(&self, _: &Adapter, _: NodeId, _: InterfaceSet) {}
-            fn unregister_interfaces(&self, _: &Adapter, _: NodeId, _: InterfaceSet) {}
-            fn emit_event(&self, _: &Adapter, event: Event) {
-                if let Event::Object {
-                    event: ObjectEvent::StateChanged(state, value),
-                    ..
-                } = event
-                {
-                    self.0.lock().unwrap().push((state, value));
-                }
-            }
-        }
-        let events = Arc::new(Mutex::new(Vec::new()));
-        let mut adapter = Adapter::new(
-            &AppContext::new(None),
-            StateCallback(events.clone()),
-            initial_tree(),
-            false,
-            WindowBounds::default(),
-            NoOpActionHandler,
-        );
+        let (mut adapter, events) = state_adapter(initial_tree());
         let mut disabled = Node::new(Role::Button);
         disabled.set_disabled();
         adapter.update(update(vec![(LocalNodeId(1), disabled)]));
@@ -930,5 +935,45 @@ mod tests {
         assert_eq!(events.len(), 2);
         assert!(events.contains(&(State::Enabled, true)));
         assert!(events.contains(&(State::Sensitive, true)));
+    }
+    #[test]
+    fn busy_changes_export_state_and_events_without_changing_availability() {
+        use atspi_common::State;
+        for role in [Role::Button, Role::Switch] {
+            for disabled in [false, true] {
+                let mut idle = Node::new(role);
+                if disabled {
+                    idle.set_disabled();
+                }
+                let mut initial = initial_tree();
+                initial.nodes[1].1 = idle.clone();
+                let (mut adapter, events) = state_adapter(initial);
+                let id = adapter
+                    .context
+                    .read_tree()
+                    .state()
+                    .root()
+                    .children()
+                    .next()
+                    .unwrap()
+                    .id();
+                let initial_state = adapter.platform_node(id).state();
+                assert!(!initial_state.contains(State::Busy));
+                let mut busy = idle.clone();
+                busy.set_busy();
+                adapter.update(update(vec![(LocalNodeId(1), busy)]));
+                let busy_state = adapter.platform_node(id).state();
+                assert!(
+                    busy_state.contains(State::Busy),
+                    "{role:?}, disabled={disabled}"
+                );
+                assert_eq!(busy_state ^ initial_state, State::Busy.into());
+                assert_eq!(*events.lock().unwrap(), vec![(State::Busy, true)]);
+                events.lock().unwrap().clear();
+                adapter.update(update(vec![(LocalNodeId(1), idle)]));
+                assert_eq!(adapter.platform_node(id).state(), initial_state);
+                assert_eq!(*events.lock().unwrap(), vec![(State::Busy, false)]);
+            }
+        }
     }
 }

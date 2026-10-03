@@ -14,7 +14,9 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--binary', type=Path, default=Path('target/debug/kumo-gallery'))
 parser.add_argument('--output', type=Path, default=Path('/tmp'))
 parser.add_argument('--require-disabled-state', action='store_true', help='Require corrected disabled-state export from the pinned #36 patch')
+parser.add_argument('--require-busy-state', action='store_true', help='Require authored Busy export, including disabled-state checks')
 args = parser.parse_args()
+args.require_disabled_state |= args.require_busy_state
 
 import tkinter
 from gi.repository import Gio, GLib
@@ -123,6 +125,8 @@ try:
                 assert not node.getState().contains(pyatspi.STATE_ENABLED), node.name
                 assert not node.getState().contains(pyatspi.STATE_SENSITIVE), node.name
                 assert not has_click(node), node.name
+                if args.require_busy_state:
+                    assert node.getState().contains(pyatspi.STATE_BUSY), node.name
         r = next_button.queryComponent().getExtents(pyatspi.DESKTOP_COORDS)
         subprocess.run(['xdotool', 'mousemove', str(r.x + r.width // 2), str(r.y + r.height // 2)], check=True)
         time.sleep(0.4)

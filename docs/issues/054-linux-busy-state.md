@@ -1,6 +1,6 @@
 # KUMO-054: Export authored busy state on Linux
 
-Status: Open
+Status: Resolved
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/39
 
@@ -9,3 +9,7 @@ The six loading Button samples author AccessKit busy plus disabled and a Loading
 Acceptance: verify actual flags versus exported Busy; smallest pinned mapping; observable Busy set/clear state/event regressions for enabled and disabled Button/Switch; native loading metadata/action guard both themes1040/520; required workspace/vendor gates, appearance review and independent review. Preserve readonly/disabled mapping and all Kumo/Base behavior. Speech/other-platform workflows remain separate.
 
 Next selected after #36, then #26 Pagination parts. Exact source/checksum/root consumer policy follows [the disabled-state patch](../linux-disabled-state-patch.md).
+
+Baseline actual Adapter regression fails for enabled Button Busy after set_busy. Added role matrix covers Button/Switch, enabled/disabled, state set/clear and emitted notifications; only Busy is allowed to change. Shared private state-event fixture extracted from existing concrete test duplication. Production candidate maps is_busy to State::Busy using installed getter.
+
+Resolved in the joint Busy/narrow-gallery checkpoint; [validation and evidence](../linux-busy-state-validation.md).166 workspace tests/nine doctests plus required Rust/vendor gates and actual four-combination native probes passed. No OS speech/other-platform claim.

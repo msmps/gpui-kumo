@@ -103,7 +103,7 @@ struct Gallery {
 }
 
 impl Render for Gallery {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = current_theme(cx).clone();
         let root = div()
             .id("gallery")
@@ -228,7 +228,12 @@ impl Render for Gallery {
         .child(self.popovers.clone())
         .child(self.inputs.clone())
         .child(buttons::interaction_panel(self, &theme, cx))
-        .child(buttons::variant_panel(&theme))
+        .child(buttons::variant_panel(
+            &theme,
+            // 160px label + three200px cells + three16px gaps,
+            // plus32px gallery and24px panel padding on each side.
+            window.viewport_size().width < px(920.),
+        ))
         .child(buttons::size_panel(&theme))
         .child(
             div().flex().gap(px(24.)).child(color_panel(&theme)).child(

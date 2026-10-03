@@ -1,7 +1,8 @@
 use gpui_kit::{Context, Div, ParentElement, Styled, div, px};
 use gpui_kumo::{
-    Button, Icon, Theme,
+    Button, Icon, Text, Theme,
     button::{Shape, Size, Variant},
+    text::{Size as TextSize, Style as TextStyle, Tone},
 };
 
 use super::{Gallery, panel};
@@ -11,6 +12,7 @@ pub(super) fn interaction_panel(gallery: &Gallery, theme: &Theme, cx: &Context<G
         .child(
             div()
                 .flex()
+                .flex_wrap()
                 .items_center()
                 .gap(theme.spacing.sixteen)
                 .child(
@@ -52,9 +54,15 @@ pub(super) fn interaction_panel(gallery: &Gallery, theme: &Theme, cx: &Context<G
                     })),
                 )
                 .child(
-                    div()
-                        .text_color(theme.text.subtle)
-                        .child(format!("Activations: {}", gallery.activations)),
+                    Text::new(
+                        "button-activation-count",
+                        format!("Activations: {}", gallery.activations),
+                    )
+                    .style(TextStyle::Copy {
+                        tone: Tone::Secondary,
+                        size: TextSize::Base,
+                        bold: false,
+                    }),
                 ),
         )
         .child(div().text_color(theme.text.subtle).child(
@@ -62,9 +70,10 @@ pub(super) fn interaction_panel(gallery: &Gallery, theme: &Theme, cx: &Context<G
         ))
 }
 
-pub(super) fn variant_panel(theme: &Theme) -> Div {
-    panel(theme, "Variants")
-        .child(
+pub(super) fn variant_panel(theme: &Theme, narrow: bool) -> Div {
+    let mut panel = panel(theme, "Variants");
+    if !narrow {
+        panel = panel.child(
             div()
                 .flex()
                 .gap(theme.spacing.sixteen)
@@ -73,39 +82,54 @@ pub(super) fn variant_panel(theme: &Theme) -> Div {
                 .children(
                     ["Enabled", "Disabled", "Loading"].map(|label| div().w(px(200.)).child(label)),
                 ),
-        )
-        .children(
-            [
-                ("Primary", Variant::Primary),
-                ("Secondary", Variant::Secondary),
-                ("Ghost", Variant::Ghost),
-                ("Destructive", Variant::Destructive),
-                ("Secondary destructive", Variant::SecondaryDestructive),
-                ("Outline", Variant::Outline),
-            ]
-            .into_iter()
-            .enumerate()
-            .map(|(index, (label, variant))| {
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(theme.spacing.sixteen)
-                    .child(div().w(px(160.)).child(label))
-                    .children(
-                        [(false, false), (true, false), (false, true)]
-                            .into_iter()
-                            .enumerate()
-                            .map(|(state, (disabled, loading))| {
-                                div().w(px(200.)).child(
-                                    Button::new(("variant", index * 3 + state), label)
-                                        .variant(variant)
-                                        .disabled(disabled)
-                                        .loading(loading),
+        );
+    }
+    panel.children(
+        [
+            ("Primary", Variant::Primary),
+            ("Secondary", Variant::Secondary),
+            ("Ghost", Variant::Ghost),
+            ("Destructive", Variant::Destructive),
+            ("Secondary destructive", Variant::SecondaryDestructive),
+            ("Outline", Variant::Outline),
+        ]
+        .into_iter()
+        .enumerate()
+        .map(|(index, (label, variant))| {
+            let mut row = div().flex().gap(theme.spacing.sixteen);
+            if narrow {
+                row = row.flex_col().child(div().child(label));
+            } else {
+                row = row.items_center().child(div().w(px(160.)).child(label));
+            }
+            row.children(
+                [(false, false), (true, false), (false, true)]
+                    .into_iter()
+                    .enumerate()
+                    .map(|(state, (disabled, loading))| {
+                        let control = Button::new(("variant", index * 3 + state), label)
+                            .variant(variant)
+                            .disabled(disabled)
+                            .loading(loading);
+                        if narrow {
+                            div()
+                                .flex()
+                                .items_center()
+                                .gap(theme.spacing.sixteen)
+                                .child(
+                                    div()
+                                        .w(px(160.))
+                                        .text_color(theme.text.subtle)
+                                        .child(["Enabled", "Disabled", "Loading"][state]),
                                 )
-                            }),
-                    )
-            }),
-        )
+                                .child(control)
+                        } else {
+                            div().w(px(200.)).child(control)
+                        }
+                    }),
+            )
+        }),
+    )
 }
 
 pub(super) fn size_panel(theme: &Theme) -> Div {
@@ -125,6 +149,7 @@ pub(super) fn size_panel(theme: &Theme) -> Div {
                 };
                 div()
                     .flex()
+                    .flex_wrap()
                     .items_center()
                     .gap(theme.spacing.sixteen)
                     .child(div().w(px(160.)).child(label))
@@ -152,6 +177,7 @@ pub(super) fn size_panel(theme: &Theme) -> Div {
         .child(
             div()
                 .flex()
+                .flex_wrap()
                 .gap(theme.spacing.sixteen)
                 .child(Button::new("open-trigger", "Open trigger").open(true))
                 .child(

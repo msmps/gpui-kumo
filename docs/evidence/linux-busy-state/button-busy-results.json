@@ -1,0 +1,214 @@
+[
+  {
+    "theme": "Light",
+    "width": 1040,
+    "initial": {
+      "busy": false,
+      "enabled": true,
+      "sensitive": true,
+      "click": true,
+      "description": ""
+    },
+    "long_example_inside_panel": [
+      187,
+      1146,
+      359,
+      36
+    ],
+    "pointer_space_enter_once": true,
+    "unavailable_pointer_guarded": true,
+    "long_controls_inside_panel": [
+      [
+        233,
+        760,
+        182,
+        36
+      ],
+      [
+        449,
+        760,
+        182,
+        36
+      ],
+      [
+        665,
+        760,
+        202,
+        36
+      ]
+    ],
+    "loading": {
+      "busy": true,
+      "enabled": false,
+      "sensitive": false,
+      "click": false,
+      "description": "Loading"
+    },
+    "restored": {
+      "busy": false,
+      "enabled": true,
+      "sensitive": true,
+      "click": true,
+      "description": ""
+    }
+  },
+  {
+    "theme": "Dark",
+    "width": 1040,
+    "initial": {
+      "busy": false,
+      "enabled": true,
+      "sensitive": true,
+      "click": true,
+      "description": ""
+    },
+    "long_example_inside_panel": [
+      187,
+      1146,
+      359,
+      36
+    ],
+    "pointer_space_enter_once": true,
+    "unavailable_pointer_guarded": true,
+    "long_controls_inside_panel": [
+      [
+        233,
+        760,
+        182,
+        36
+      ],
+      [
+        449,
+        760,
+        182,
+        36
+      ],
+      [
+        665,
+        760,
+        202,
+        36
+      ]
+    ],
+    "loading": {
+      "busy": true,
+      "enabled": false,
+      "sensitive": false,
+      "click": false,
+      "description": "Loading"
+    },
+    "restored": {
+      "busy": false,
+      "enabled": true,
+      "sensitive": true,
+      "click": true,
+      "description": ""
+    }
+  },
+  {
+    "theme": "Dark",
+    "width": 520,
+    "initial": {
+      "busy": false,
+      "enabled": true,
+      "sensitive": true,
+      "click": true,
+      "description": ""
+    },
+    "long_example_inside_panel": [
+      57,
+      2262,
+      359,
+      36
+    ],
+    "pointer_space_enter_once": true,
+    "unavailable_pointer_guarded": true,
+    "long_controls_inside_panel": [
+      [
+        233,
+        1393,
+        182,
+        36
+      ],
+      [
+        233,
+        1445,
+        182,
+        36
+      ],
+      [
+        233,
+        1497,
+        202,
+        36
+      ]
+    ],
+    "loading": {
+      "busy": true,
+      "enabled": false,
+      "sensitive": false,
+      "click": false,
+      "description": "Loading"
+    },
+    "restored": {
+      "busy": false,
+      "enabled": true,
+      "sensitive": true,
+      "click": true,
+      "description": ""
+    }
+  },
+  {
+    "theme": "Light",
+    "width": 520,
+    "initial": {
+      "busy": false,
+      "enabled": true,
+      "sensitive": true,
+      "click": true,
+      "description": ""
+    },
+    "long_example_inside_panel": [
+      57,
+      2262,
+      359,
+      36
+    ],
+    "pointer_space_enter_once": true,
+    "unavailable_pointer_guarded": true,
+    "long_controls_inside_panel": [
+      [
+        233,
+        1393,
+        182,
+        36
+      ],
+      [
+        233,
+        1445,
+        182,
+        36
+      ],
+      [
+        233,
+        1497,
+        202,
+        36
+      ]
+    ],
+    "loading": {
+      "busy": true,
+      "enabled": false,
+      "sensitive": false,
+      "click": false,
+      "description": "Loading"
+    },
+    "restored": {
+      "busy": false,
+      "enabled": true,
+      "sensitive": true,
+      "click": true,
+      "description": ""
+    }
+  }
+]
