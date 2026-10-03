@@ -16,10 +16,11 @@ pub struct Dialogs {
     toasts: Entity<ToastState>,
     result: String,
     count: usize,
+    announcement: bool,
     _events: Vec<Subscription>,
 }
 impl Dialogs {
-    pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn new(window: &mut Window, cx: &mut Context<Self>, announcement: bool) -> Self {
         let edit = cx.new(|cx| DialogState::new("Edit document", cx));
         let toasts = cx.new(ToastState::new);
         let delete = cx.new(|cx| DialogState::new("Delete document?", cx));
@@ -108,7 +109,7 @@ impl Dialogs {
                         toasts.update(cx, |state, cx| {
                             state.add(
                                 Toast::new("document-deleted", "Document deleted")
-                                    .description("The demo operation completed."),
+                                    .description("Your document has been removed."),
                                 window,
                                 cx,
                             );
@@ -124,8 +125,14 @@ impl Dialogs {
             delete,
             draft,
             toasts,
-            result: "No changes yet".into(),
+            result: if announcement {
+                "Draft ready to review"
+            } else {
+                "No changes yet"
+            }
+            .into(),
             count: 0,
+            announcement,
             _events: vec![menu_events, edit_events, delete_events],
         }
     }
@@ -134,12 +141,14 @@ impl Render for Dialogs {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let draft = self.draft.clone();
         let focus = draft.read(cx).focus_handle(cx);
-        crate::panel(theme(cx), "Dialog · document workflow")
-            .child(Dropdown::new("document-menu", &self.menu, "Document options"))
-            .child(DialogTrigger::new("edit-trigger", &self.edit, Button::new("open-editor", "Edit document")))
-            .child(DialogTrigger::new("delete-trigger", &self.delete, Button::new("open-delete", "Delete document").variant(Variant::Destructive)))
-            .child(Text::new("result", format!("{} operations · {}", self.count, self.result)))
-            .child(crate::toasts::controls(&self.toasts))
+        crate::panel(theme(cx), if self.announcement { "Announcement draft" } else { "Dialog · document workflow" })
+            .when(self.announcement, |panel| panel.child(Text::new("document-summary", "Review the launch announcement, edit its title, or manage it from the document menu.")))
+            .child(div().flex().flex_wrap().gap(px(12.))
+                .child(Dropdown::new("document-menu", &self.menu, "Document options"))
+                .child(DialogTrigger::new("edit-trigger", &self.edit, Button::new("open-editor", "Edit document")))
+                .child(DialogTrigger::new("delete-trigger", &self.delete, Button::new("open-delete", "Delete document").variant(Variant::Destructive))))
+            .child(Text::new("result", if self.announcement { self.result.clone() } else { format!("{} operations · {}", self.count, self.result) }))
+            .when(!self.announcement, |panel| panel.child(crate::toasts::controls(&self.toasts)))
             .child(ToastViewport::new("document-feedback", &self.toasts))
             .child(Dialog::new("editor", &self.edit, move |close, _, cx| {
                 let save = close.clone(); let _ = cx;
@@ -152,15 +161,17 @@ impl Render for Dialogs {
                         .child(Button::new("save-document", "Save changes").variant(Variant::Primary).on_click(move |_, window, cx| { save.request(DialogCloseReason::Action, window, cx); })))
                     .into_any_element()
             }).size(DialogSize::Large).description("Update the name, then save your changes.").initial_focus(&focus))
-            .child(Dialog::new("delete-dialog", &self.delete, |close, _, cx| {
+            .child(Dialog::new("delete-dialog", &self.delete, {
+                let announcement = self.announcement;
+                move |close, _, cx| {
                 let confirm = close.clone(); let _ = cx;
                 div().p(px(32.)).flex().flex_col().gap(px(16.))
                     .child(div().text_size(px(24.)).line_height(px(32.)).font_weight(FontWeight::SEMIBOLD).child("Delete document?"))
-                    .child(Text::new("delete-description", "This demo records the operation. Outside clicks keep this confirmation open.").style(gpui_kumo::text::Style::Copy { tone: gpui_kumo::text::Tone::Secondary, size: gpui_kumo::text::Size::Base, bold: false }))
+                    .child(Text::new("delete-description", if announcement { "Delete this document? You can cancel to keep it." } else { "This demo records the operation. Outside clicks keep this confirmation open." }).style(gpui_kumo::text::Style::Copy { tone: gpui_kumo::text::Tone::Secondary, size: gpui_kumo::text::Size::Base, bold: false }))
                     .child(div().flex().justify_end().gap(px(8.))
                         .child(close.button(Button::new("cancel-delete", "Cancel")))
                         .child(Button::new("confirm-delete", "Delete").variant(Variant::Destructive).on_click(move |_, window, cx| { confirm.request(DialogCloseReason::Action, window, cx); })))
                     .into_any_element()
-            }).size(DialogSize::Large).description("Confirm deletion of this document"))
+            }}).size(DialogSize::Large).description("Confirm deletion of this document"))
     }
 }

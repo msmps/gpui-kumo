@@ -1,4 +1,4 @@
-//! Focused native Dialog review: --dark and --width=520 (default1040).
+//! Announcement workflow preview: --dark and --width=520 (default1040).
 #[path = "../src/panel.rs"]
 mod panel;
 use panel::panel;
@@ -35,9 +35,38 @@ impl Render for Review {
             .font_family(theme.typography.font_family.clone())
             .text_size(theme.typography.base.size)
             .line_height(theme.typography.base.line_height)
-            .child(gpui_kumo::Button::new("before", "Before menu"))
+            .child(
+                div()
+                    .flex()
+                    .items_center()
+                    .justify_between()
+                    .child(
+                        div()
+                            .text_size(px(28.))
+                            .line_height(px(36.))
+                            .font_weight(gpui_kit::FontWeight::SEMIBOLD)
+                            .child("Kumo for GPUI"),
+                    )
+                    .child(
+                        gpui_kumo::Button::new("appearance", "Switch theme").on_click(
+                            |_, _, cx| {
+                                let appearance =
+                                    if gpui_kumo::theme(cx).appearance == Appearance::Dark {
+                                        Appearance::Light
+                                    } else {
+                                        Appearance::Dark
+                                    };
+                                set_appearance(appearance, cx);
+                            },
+                        ),
+                    ),
+            )
+            .child(
+                div()
+                    .text_color(theme.text.subtle)
+                    .child("Native components for Rust applications."),
+            )
             .child(self.menu.clone())
-            .child(gpui_kumo::Button::new("after", "After menu"))
     }
 }
 fn main() {
@@ -75,12 +104,12 @@ fn main() {
             },
             |_window, cx| {
                 cx.new(|cx| Review {
-                    menu: cx.new(|cx| dialogs::Dialogs::new(_window, cx, false)),
+                    menu: cx.new(|cx| dialogs::Dialogs::new(_window, cx, true)),
                     focus: cx.focus_handle(),
                 })
             },
         )
-        .expect("open toolbar review window");
+        .expect("open announcement preview window");
         cx.activate(true);
     });
 }

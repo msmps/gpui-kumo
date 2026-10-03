@@ -59,6 +59,21 @@ pub fn controls(toasts: &Entity<ToastState>) -> Div {
         }),
     );
     let update = toasts.downgrade();
+    let long = toasts.downgrade();
+    root = root.child(Button::new("long", "Show long toast").on_click(move |_, window, cx| {
+        let _ = long.update(cx, |state, cx| {
+            state.add(
+                Toast::new("long-toast", "Your announcement document has been saved and is ready to share")
+                    .description("Review the final copy with your team before publishing. Your changes are retained while you decide what to do next.")
+                    .variant(ToastVariant::Success)
+                    .timeout(std::time::Duration::ZERO)
+                    .action(ToastAction::new("review", "Review changes"))
+                    .action(ToastAction::new("later", "Later")),
+                window,
+                cx,
+            );
+        });
+    }));
     root.child(
         Button::new("update", "Update saved toast").on_click(move |_, window, cx| {
             let _ = update.update(cx, |state, cx| {

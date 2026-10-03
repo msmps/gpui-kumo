@@ -341,7 +341,7 @@ fn main() {
                             toolbar_editors: cx
                                 .new(|cx| toolbar_editors::ToolbarEditors::new(window, cx)),
                             dropdowns: cx.new(dropdowns::Dropdowns::new),
-                            dialogs: cx.new(|cx| dialogs::Dialogs::new(window, cx)),
+                            dialogs: cx.new(|cx| dialogs::Dialogs::new(window, cx, false)),
                             activations: 0,
                             disabled: false,
                             loading: false,

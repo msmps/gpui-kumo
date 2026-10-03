@@ -1,3 +1,7 @@
+## Announcement preview continuation — 2026-10-03
+
+Toast core94351f4 passes macOS37138801443. The focused `announcement` example composes native Dropdown/Dialog/Toast with live theme switching; source/native dense-content and full composed-workflow matrices pass. [Preview/evidence/rehearsal](evidence/announcement/README.md), [current progress](port-progress.md). Run `cargo run -p kumo-gallery --example announcement --locked`. Coverage32/43 working,11unported. No extra family is required for this demo path. Next: intended-platform visual acceptance and final recording, while preserving the full migration backlog. Linux rehearsal is not a macOS visual/speech/IME or full-fidelity claim. Preserve pins/vendor provenance and publish coherent commits regularly. Earlier entries are historical.
+
 ## Current continuation: Toast feedback core — 2026-10-03
 
 The announcement path now composes Dropdown → Dialog → confirmed operation → Toast. Native Toast core and Light/Dark1040/520 browser/native evidence pass; full locked Rust gate passes226library/1gallery/9doctests and adapter12/14. Coverage is32/43 working,11unported; working core does not mean full-fidelity acceptance. See [current progress](port-progress.md), [Toast contract/gaps](toast-validation.md) and [evidence](evidence/toast/README.md). Preserve exact pins/vendor provenance and commit/push coherent checkpoints. Next: composed workflow and target-platform polish/recording, then continue the full migration. Older entries below are historical.

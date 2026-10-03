@@ -1,0 +1,174 @@
+[
+  {
+    "case": "light-1040",
+    "result": "PASS",
+    "geometry": {
+      "panel": {
+        "x": 264,
+        "y": 64,
+        "width": 512,
+        "height": 237
+      },
+      "editor": {
+        "x": 308,
+        "y": 181,
+        "width": 424,
+        "height": 36
+      },
+      "cancel": {
+        "x": 542,
+        "y": 233,
+        "width": 72,
+        "height": 36
+      },
+      "save": {
+        "x": 622,
+        "y": 233,
+        "width": 122,
+        "height": 36
+      }
+    },
+    "checks": [
+      "named modal role and bounds",
+      "explicit initial editor focus",
+      "Enter in editor does not confirm",
+      "Tab and reverse Tab wrap",
+      "rejected empty save retains dialog and focus",
+      "successful save once and retained draft",
+      "Escape and standard outside close",
+      "menu to dialog restores surviving menu trigger",
+      "alert outside press rejected",
+      "delete action once",
+      "save/delete produce nonmodal Toast feedback"
+    ]
+  },
+  {
+    "case": "light-520",
+    "result": "PASS",
+    "geometry": {
+      "panel": {
+        "x": 16,
+        "y": 32,
+        "width": 488,
+        "height": 237
+      },
+      "editor": {
+        "x": 60,
+        "y": 149,
+        "width": 400,
+        "height": 36
+      },
+      "cancel": {
+        "x": 270,
+        "y": 201,
+        "width": 72,
+        "height": 36
+      },
+      "save": {
+        "x": 350,
+        "y": 201,
+        "width": 122,
+        "height": 36
+      }
+    },
+    "checks": [
+      "named modal role and bounds",
+      "explicit initial editor focus",
+      "Enter in editor does not confirm",
+      "Tab and reverse Tab wrap",
+      "rejected empty save retains dialog and focus",
+      "successful save once and retained draft",
+      "Escape and standard outside close",
+      "menu to dialog restores surviving menu trigger",
+      "alert outside press rejected",
+      "delete action once",
+      "save/delete produce nonmodal Toast feedback"
+    ]
+  },
+  {
+    "case": "dark-1040",
+    "result": "PASS",
+    "geometry": {
+      "panel": {
+        "x": 264,
+        "y": 64,
+        "width": 512,
+        "height": 237
+      },
+      "editor": {
+        "x": 308,
+        "y": 181,
+        "width": 424,
+        "height": 36
+      },
+      "cancel": {
+        "x": 542,
+        "y": 233,
+        "width": 72,
+        "height": 36
+      },
+      "save": {
+        "x": 622,
+        "y": 233,
+        "width": 122,
+        "height": 36
+      }
+    },
+    "checks": [
+      "named modal role and bounds",
+      "explicit initial editor focus",
+      "Enter in editor does not confirm",
+      "Tab and reverse Tab wrap",
+      "rejected empty save retains dialog and focus",
+      "successful save once and retained draft",
+      "Escape and standard outside close",
+      "menu to dialog restores surviving menu trigger",
+      "alert outside press rejected",
+      "delete action once",
+      "save/delete produce nonmodal Toast feedback"
+    ]
+  },
+  {
+    "case": "dark-520",
+    "result": "PASS",
+    "geometry": {
+      "panel": {
+        "x": 16,
+        "y": 32,
+        "width": 488,
+        "height": 237
+      },
+      "editor": {
+        "x": 60,
+        "y": 149,
+        "width": 400,
+        "height": 36
+      },
+      "cancel": {
+        "x": 270,
+        "y": 201,
+        "width": 72,
+        "height": 36
+      },
+      "save": {
+        "x": 350,
+        "y": 201,
+        "width": 122,
+        "height": 36
+      }
+    },
+    "checks": [
+      "named modal role and bounds",
+      "explicit initial editor focus",
+      "Enter in editor does not confirm",
+      "Tab and reverse Tab wrap",
+      "rejected empty save retains dialog and focus",
+      "successful save once and retained draft",
+      "Escape and standard outside close",
+      "menu to dialog restores surviving menu trigger",
+      "alert outside press rejected",
+      "delete action once",
+      "save/delete produce nonmodal Toast feedback"
+    ]
+  }
+]
