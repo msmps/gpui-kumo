@@ -34,7 +34,7 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-02. This
 | link | Implemented; see component acceptance/gaps |
 | loader | Implemented; see component acceptance/gaps |
 | meter | Implemented; [acceptance/gaps](meter-validation.md), [#25](https://github.com/msmps/gpui-kumo/issues/25) remains open |
-| pagination | Input/simple, Info/Separator and PageSize implemented; Dropdown and platform fidelity in progress, [acceptance/gaps](pagination-validation.md) — [#26](https://github.com/msmps/gpui-kumo/issues/26) |
+| pagination | Input/simple, Dropdown, Info/Separator and PageSize implemented; recreated Dropdown validation and platform fidelity in progress, [acceptance/gaps](pagination-validation.md) — [#26](https://github.com/msmps/gpui-kumo/issues/26) |
 | popover | Implemented; see component acceptance/gaps |
 | radio | Implemented; see component acceptance/gaps |
 | select | Core implemented; composition in progress, [acceptance/gaps](select-validation.md) — [#27](https://github.com/msmps/gpui-kumo/issues/27) |

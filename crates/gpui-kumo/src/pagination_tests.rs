@@ -953,6 +953,20 @@ fn dropdown_focus_mode_removal_availability_and_unmount_cleanup(cx: &mut TestApp
     });
     cx.run_until_parked();
     assert!(view.read_with(cx, |v, _| v.events.is_empty()));
+    // A proposal activated just before its entire root is removed must not
+    // reach a still-retained owner after the Select mount has disappeared.
+    cx.update(|window, cx| {
+        open_page_select(window, cx);
+        window.click(("pagination-page", 4usize), cx);
+        view.update(cx, |v, cx| {
+            v.mounted = false;
+            cx.notify();
+        });
+        window.render_frame(cx);
+    });
+    cx.run_until_parked();
+    assert!(view.read_with(cx, |v, _| v.events.is_empty()));
+    assert_eq!(state.read_with(cx, |s, _| s.page()), 3);
 }
 
 #[gpui_kit::test]
