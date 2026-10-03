@@ -604,8 +604,10 @@ impl RenderOnce for Button {
                 .h(zone.height)
                 .border_1()
                 .border_color(theme.colors.line.alpha(0.));
-            button.style().corner_radii.top_left = Some(px(0.).into());
-            button.style().corner_radii.bottom_left = Some(px(0.).into());
+            button.style().corner_radii.top_left =
+                Some(if zone.first { zone.radius } else { px(0.) }.into());
+            button.style().corner_radii.bottom_left =
+                Some(if zone.first { zone.radius } else { px(0.) }.into());
             button.style().corner_radii.top_right =
                 Some(if zone.last { zone.radius } else { px(0.) }.into());
             button.style().corner_radii.bottom_right =

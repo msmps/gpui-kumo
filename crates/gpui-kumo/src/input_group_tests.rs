@@ -751,3 +751,250 @@ fn input_group_field_optional_and_hidden_error_preserve_editor_contract(cx: &mut
         );
     });
 }
+
+struct Leading {
+    narrow: bool,
+    state: Entity<InputState>,
+    before: bool,
+    hybrid: bool,
+    size: Size,
+    calls: usize,
+    focus: gpui_kit::FocusHandle,
+}
+impl Render for Leading {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let owner = cx.entity().downgrade();
+        let focus = self.focus.clone();
+        let configure = move |button: crate::Button, _: &mut Window, _: &mut gpui_kit::App| {
+            let owner = owner.clone();
+            button.track_focus(&focus).on_click(move |_, _, cx| {
+                let _ = owner.update(cx, |v, cx| {
+                    v.calls += 1;
+                    cx.notify();
+                });
+            })
+        };
+        let mut group = InputGroup::new("leading-group", &self.state)
+            .size(self.size)
+            .editor_width(px(50.))
+            .text_align(gpui_kit::TextAlign::Center);
+        group = if self.before {
+            group.leading_button(
+                "leading-action",
+                "Previous",
+                crate::button::Variant::Secondary,
+                configure,
+            )
+        } else {
+            group.button(
+                "leading-action",
+                "Previous",
+                crate::button::Variant::Secondary,
+                configure,
+            )
+        };
+        if self.hybrid {
+            group = group.start(InputGroupAddon::text("Page"));
+        }
+        div()
+            .tab_group()
+            .flex()
+            .flex_col()
+            .w(px(if self.narrow { 190. } else { 220. }))
+            .child(crate::Button::new("leading-before", "Before"))
+            .child(group.button(
+                "leading-after",
+                "Next",
+                crate::button::Variant::Secondary,
+                |b, _, _| b,
+            ))
+            .child(crate::Button::new("leading-exit", "After"))
+    }
+}
+#[gpui_kit::test]
+fn leading_buttons_preserve_order_native_editing_and_focus_across_partitioning(
+    cx: &mut TestAppContext,
+) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| Leading {
+        state: cx.new(|cx| {
+            let mut s = InputState::new("Page", window, cx);
+            s.set_value("é🦀", window, cx);
+            s
+        }),
+        narrow: false,
+        before: true,
+        hybrid: false,
+        size: Size::Base,
+        calls: 0,
+        focus: cx.focus_handle(),
+    });
+    let state = cx.read(|cx| view.read(cx).state.clone());
+    cx.update(|window, cx| {
+        window.activate_window();
+        window.render_frame(cx);
+        state.read(cx).focus_handle(cx).focus(window, cx);
+    });
+    cx.run_until_parked();
+    #[cfg(target_os = "macos")]
+    cx.simulate_keystrokes("cmd-a");
+    #[cfg(not(target_os = "macos"))]
+    cx.simulate_keystrokes("ctrl-a");
+    cx.update(|window, cx| {
+        assert_eq!(state.read(cx).selected_value(cx).as_ref(), "é🦀");
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            for size in [Size::Xs, Size::Sm, Size::Base, Size::Lg] {
+                view.update(cx, |v, cx| {
+                    v.size = size;
+                    cx.notify();
+                });
+                window.render_frame(cx);
+                let before = window.find("leading-action").bounds();
+                let editor = window.find("surface").bounds();
+                let after = window.find("leading-after").bounds();
+                assert_eq!(editor.size.width, px(50.));
+                assert_eq!(before.right() - editor.left(), px(1.));
+                assert_eq!(editor.right() - after.left(), px(1.));
+                assert_eq!(before.size.height, height(size));
+                assert_eq!(editor.center().y, before.center().y);
+                assert_eq!(after.center().y, editor.center().y);
+                assert_eq!(state.read(cx).value(cx).as_ref(), "é🦀");
+                assert_eq!(state.read(cx).selected_value(cx).as_ref(), "é🦀");
+                assert_zone_focus_border(
+                    window,
+                    editor,
+                    crate::theme(cx).colors.focus.opacity(0.5),
+                );
+            }
+        }
+        window.click("leading-action", cx);
+        window.render_frame(cx);
+        assert_eq!(view.read(cx).calls, 1);
+        assert!(view.read(cx).focus.is_focused(window));
+        window.press("space", cx);
+        assert_eq!(view.read(cx).calls, 2);
+        window.press("enter", cx);
+        assert_eq!(view.read(cx).calls, 3);
+        window.focus_next(cx);
+        assert!(state.read(cx).focus_handle(cx).is_focused(window));
+        window.focus_prev(cx);
+        assert!(view.read(cx).focus.is_focused(window));
+        for (before, hybrid) in [(false, false), (true, true), (true, false)] {
+            view.update(cx, |v, cx| {
+                v.before = before;
+                v.hybrid = hybrid;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            assert!(view.read(cx).focus.is_focused(window));
+            let action = window.find("leading-action").bounds();
+            let surface = window.find("surface").bounds();
+            assert_eq!(action.left() < surface.left(), before && !hybrid);
+        }
+        view.update(cx, |v, cx| {
+            v.narrow = true;
+            v.size = Size::Base;
+            cx.notify();
+        });
+        state.update(cx, |s, cx| s.set_value("5", window, cx));
+        state.read(cx).focus_handle(cx).focus(window, cx);
+        window.render_frame(cx);
+        let editor = window.find("surface").bounds();
+        assert!(
+            editor.size.width > px(24.) && editor.size.width <= px(50.),
+            "narrow editor: {:?}; leading: {:?}; trailing: {:?}",
+            editor,
+            window.find("leading-action").bounds(),
+            window.find("leading-after").bounds()
+        );
+        assert!(window.find("leading-after").bounds().right() <= px(190.));
+        window.press("end", cx);
+        window.render_frame(cx);
+        assert_visible_caret(window, cx);
+        #[cfg(target_os = "macos")]
+        window.press("cmd-a", cx);
+        #[cfg(not(target_os = "macos"))]
+        window.press("ctrl-a", cx);
+        assert_eq!(state.read(cx).selected_value(cx).as_ref(), "5");
+        state.update(cx, |s, cx| s.set_disabled(true, cx));
+        window.render_frame(cx);
+        window.click("leading-action", cx);
+        window.press("space", cx);
+        window.press("enter", cx);
+        assert_eq!(view.read(cx).calls, 3);
+        window.click("leading-before", cx);
+        window.focus_next(cx);
+        window.render_frame(cx);
+        assert_eq!(window.find("leading-exit").focused(), Some(true));
+    });
+}
+
+struct GhostLeading {
+    state: Entity<InputState>,
+    calls: usize,
+}
+impl Render for GhostLeading {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let owner = cx.entity().downgrade();
+        div().w(px(220.)).child(
+            InputGroup::new("ghost-leading", &self.state)
+                .editor_width(px(50.))
+                .text_align(gpui_kit::TextAlign::Center)
+                .leading_button(
+                    "ghost-first",
+                    "First",
+                    crate::button::Variant::Ghost,
+                    move |b, _, _| {
+                        let owner = owner.clone();
+                        b.on_click(move |_, _, cx| {
+                            let _ = owner.update(cx, |v, cx| {
+                                v.calls += 1;
+                                cx.notify();
+                            });
+                        })
+                    },
+                )
+                .start(InputGroupAddon::text("#"))
+                .button(
+                    "ghost-last",
+                    "Last",
+                    crate::button::Variant::Ghost,
+                    |b, _, _| b,
+                ),
+        )
+    }
+}
+#[gpui_kit::test]
+fn shared_ghost_leading_width_preserves_containment_order_and_activation(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| GhostLeading {
+        state: cx.new(|cx| InputState::new("Page", window, cx)),
+        calls: 0,
+    });
+    cx.update(|window, cx| {
+        window.activate_window();
+        window.render_frame(cx);
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            window.render_frame(cx);
+            let surface = window.find("surface").bounds();
+            let first = window.find("ghost-first").bounds();
+            let editor = window.find("editor-zone").bounds();
+            let last = window.find("ghost-last").bounds();
+            assert_eq!(surface.size.width, px(220.));
+            assert_eq!(editor.size.width, px(50.));
+            assert!(first.right() <= editor.left());
+            assert!(editor.right() <= last.left());
+            assert!(last.right() <= surface.right());
+            assert_eq!(first.center().y, editor.center().y);
+        }
+        window.click("ghost-first", cx);
+        window.render_frame(cx);
+        assert_eq!(view.read(cx).calls, 1);
+        window.press("space", cx);
+        assert_eq!(view.read(cx).calls, 2);
+        window.press("enter", cx);
+        assert_eq!(view.read(cx).calls, 3);
+    });
+}

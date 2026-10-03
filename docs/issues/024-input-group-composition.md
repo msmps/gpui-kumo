@@ -26,3 +26,5 @@ Category: **Missing API/composition**.
 
 Baseline: Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`; GPUI Kit/Base 0.7.0; GPUI snapshot family 0.3.7. Current implementation checkpoint: `d07646f8d24acf72248f954a03c8da056d84848d`. Keep dependency versions pinned; do not claim full parity from compilation or screenshots alone.
 
+
+Leading direct actions and fixed/native-aligned editor composition now implemented;158 tests/nine doctests and Rust gates pass; review width/order repairs and both-theme1040/520 evidence in [InputGroup acceptance](../input-group-validation.md). Multiple editors/rich parts remain open.

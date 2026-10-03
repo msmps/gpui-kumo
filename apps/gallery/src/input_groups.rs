@@ -11,9 +11,10 @@ impl InputGroups {
         Self {
             actions: 0,
             _theme: cx.observe_global::<Theme>(|_, cx| cx.notify()),
-            inputs: (0..13)
+            inputs: (0..14)
                  .map(|i| cx.new(|cx| {
                     let mut state = InputState::new(if i == 7 { "Search query" } else { "API endpoint" }, window, cx);
+                    if i == 13 { state.set_value("5", window, cx); }
                     if i == 6 { state.set_value("a-long-domain-name-for-testing-horizontal-scrolling-and-suffix-clipping", window, cx); }
                     if i == 7 { state.set_value("café 🦀", window, cx); }
                     if i == 8 { state.set_value("/api/packages", window, cx); }
@@ -34,6 +35,31 @@ impl Render for InputGroups {
         super::panel(
             theme(cx),
             "InputGroup · shared container and retained editing",
+        )
+        .child(
+            gpui_kit::div().w(gpui_kit::px(260.)).child(
+                InputGroup::new("page-composition", &self.inputs[13])
+                    .editor_width(gpui_kit::px(50.))
+                    .text_align(gpui_kit::TextAlign::Center)
+                    .leading_button(
+                        "page-first",
+                        "First",
+                        gpui_kumo::button::Variant::Secondary,
+                        |b, _, _| b.disabled(true),
+                    )
+                    .leading_button(
+                        "page-prev",
+                        "Previous",
+                        gpui_kumo::button::Variant::Secondary,
+                        |b, _, _| b,
+                    )
+                    .button(
+                        "page-next",
+                        "Next",
+                        gpui_kumo::button::Variant::Secondary,
+                        |b, _, _| b,
+                    ),
+            ),
         )
         .child(
             InputGroup::new("joined-search", &self.inputs[10])

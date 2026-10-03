@@ -200,6 +200,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.input_groups.clone())
         .child(self.selects.clone())
         .child(self.breadcrumbs.clone())
         .child(self.meters.clone())
@@ -211,7 +212,6 @@ impl Render for Gallery {
         .child(self.checkboxes.clone())
         .child(self.fields.clone())
         .child(self.tooltips.clone())
-        .child(self.input_groups.clone())
         .child(self.button_groups.clone())
         .child(self.switches.clone())
         .child(self.radios.clone())

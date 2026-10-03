@@ -316,7 +316,7 @@ impl Render for InputState {
         let group_focus = group.and(self.group_focus.clone());
         let buttons: Vec<_> = group
             .into_iter()
-            .flat_map(|g| &g.buttons)
+            .flat_map(|g| g.leading_buttons.iter().chain(&g.buttons))
             .map(|render| render(self.presentation.size, window, cx))
             .collect();
         for (index, button) in buttons.iter().enumerate() {
@@ -342,7 +342,22 @@ impl Render for InputState {
         let borders = crate::button::JoinedRingQueue::default();
         let input_borders = borders.clone();
         let count = buttons.len();
-        let direct_buttons: Vec<_> = buttons
+        let hybrid = joined
+            && group.is_some_and(|g| {
+                g.start.as_ref().is_some_and(|a| !a.is_empty())
+                    || g.end.as_ref().is_some_and(|a| !a.is_empty())
+            });
+        let leading_count = if hybrid {
+            0
+        } else {
+            group.map_or(0, |g| g.leading_buttons.len())
+        };
+        let trailing_count = count - leading_count;
+        let editor_width = group.and_then(|g| g.editor_width);
+        let text_align = group.map_or(gpui_kit::TextAlign::Left, |g| g.text_align);
+        self.editor
+            .update(cx, |editor, cx| editor.set_text_align(text_align, cx));
+        let mut direct_buttons: Vec<_> = buttons
             .into_iter()
             .enumerate()
             .map(|(index, button)| {
@@ -361,7 +376,8 @@ impl Render for InputState {
                             crate::input_group::Zone {
                                 height: crate::input_group::height(self.presentation.size),
                                 radius,
-                                last: index + 1 == count,
+                                first: leading_count > 0 && index == 0,
+                                last: trailing_count > 0 && index + 1 == count,
                                 borders: borders.clone(),
                             },
                         )
@@ -373,7 +389,9 @@ impl Render for InputState {
                 div()
                     .flex()
                     .flex_shrink_0()
-                    .when(joined, |this| this.ml(px(-1.)))
+                    .when(joined && (index > 0 || leading_count == 0), |this| {
+                        this.ml(px(-1.))
+                    })
                     .on_mouse_down(gpui_kit::MouseButton::Left, |_, _, cx| {
                         cx.stop_propagation()
                     })
@@ -381,6 +399,8 @@ impl Render for InputState {
                     .into_any_element()
             })
             .collect();
+
+        let leading_buttons: Vec<_> = direct_buttons.drain(..leading_count).collect();
 
         if group.is_some() {
             height = f32::from(crate::input_group::height(self.presentation.size));
@@ -628,6 +648,9 @@ impl Render for InputState {
             } else {
                 padding + self.presentation.end_reserve
             })
+            .when_some(editor_width.filter(|_| !joined), |this, width| {
+                this.flex_initial().w(width).max_w_full()
+            })
             .when_some(editor_content_width, |this, width| {
                 this.flex_initial().w(width).max_w_full()
             })
@@ -636,6 +659,11 @@ impl Render for InputState {
             (Vec::new(), direct_buttons)
         } else {
             (direct_buttons, Vec::new())
+        };
+        let (container_leading, joined_leading) = if joined {
+            (Vec::new(), leading_buttons)
+        } else {
+            (leading_buttons, Vec::new())
         };
         let surface = div()
             .id("surface")
@@ -661,8 +689,15 @@ impl Render for InputState {
                 this.flex_1()
                     .border_1()
                     .border_color(theme.colors.line.alpha(0.))
-                    .rounded_tr(px(0.))
-                    .rounded_br(px(0.))
+                    .when(leading_count > 0, |this| {
+                        this.ml(px(-1.)).rounded_tl(px(0.)).rounded_bl(px(0.))
+                    })
+                    .when(trailing_count > 0, |this| {
+                        this.rounded_tr(px(0.)).rounded_br(px(0.))
+                    })
+            })
+            .when_some(editor_width.filter(|_| joined), |this, width| {
+                this.flex_initial().w(width).max_w_full()
             })
             .when_some(zone_focus, |this, focus| this.track_focus(&focus))
             .on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
@@ -681,6 +716,7 @@ impl Render for InputState {
                     .min_w_0()
                     .h_full()
                     .when(group.is_some(), |this| this.overflow_hidden())
+                    .children(container_leading)
                     .when_some(start, |this, addon| this.child(addon))
                     .child(editor_element)
                     .when_some(suffix, |this, suffix| {
@@ -715,10 +751,10 @@ impl Render for InputState {
                         }
                         if joined {
                             let radii = gpui_kit::Corners {
-                                top_left: radius,
-                                bottom_left: radius,
-                                top_right: px(0.),
-                                bottom_right: px(0.),
+                                top_left: if leading_count == 0 { radius } else { px(0.) },
+                                bottom_left: if leading_count == 0 { radius } else { px(0.) },
+                                top_right: if trailing_count == 0 { radius } else { px(0.) },
+                                bottom_right: if trailing_count == 0 { radius } else { px(0.) },
                             };
                             input_borders.borrow_mut().push((
                                 focused,
@@ -760,6 +796,7 @@ impl Render for InputState {
                         .w_full()
                         .min_w_0()
                         .h(px(height))
+                        .children(joined_leading)
                         .child(surface)
                         .children(joined_buttons)
                         .into_any_element(),

@@ -194,12 +194,16 @@ pub(crate) struct Container {
     pub end: Option<InputGroupAddon>,
     pub suffix: Option<SharedString>,
     pub buttons: Vec<std::rc::Rc<ActionFactory>>,
+    pub leading_buttons: Vec<std::rc::Rc<ActionFactory>>,
+    pub editor_width: Option<gpui_kit::Pixels>,
+    pub text_align: gpui_kit::TextAlign,
 }
 /// Initial shared-container slice. The retained InputState owns editing and availability.
 /// Passive addons use source padding and icon sizes; suffixes follow displayed text.
 /// Compact actions retain Base activation and shared focus-within.
 /// Direct non-ghost actions use individual or hybrid joined borders.
-/// This builder currently places the retained editor before direct actions.
+/// Individual mode preserves leading/editor/trailing order. Hybrid mode puts
+/// all direct actions after the shared editor zone, matching Kumo partitioning.
 #[derive(IntoElement)]
 #[must_use]
 pub struct InputGroup {
@@ -284,6 +288,37 @@ impl InputGroup {
             }));
         self
     }
+    /// A direct action before the editor in individual mode. With addons,
+    /// Kumo hybrid partitioning puts all direct actions after the editor zone.
+    /// Factories are retained; capture editor/owner entities weakly.
+    pub fn leading_button(
+        mut self,
+        id: impl Into<ElementId>,
+        label: impl Into<SharedString>,
+        variant: crate::button::Variant,
+        configure: impl Fn(crate::Button, &mut Window, &mut App) -> crate::Button + 'static,
+    ) -> Self {
+        self = self.button(id, label, variant, configure);
+        self.container
+            .leading_buttons
+            .push(self.container.buttons.pop().unwrap());
+        self
+    }
+    /// The complete editor surface width, including its source padding/border.
+    /// Suffix sizing and narrow parents can still constrain the editor.
+    pub fn editor_width(mut self, width: gpui_kit::Pixels) -> Self {
+        assert!(
+            f32::from(width).is_finite() && width > px(0.),
+            "editor width must be finite and positive"
+        );
+        self.container.editor_width = Some(width);
+        self
+    }
+    /// Native single-line alignment retains Base caret, selection and scrolling.
+    pub fn text_align(mut self, align: gpui_kit::TextAlign) -> Self {
+        self.container.text_align = align;
+        self
+    }
     pub fn end(mut self, addon: InputGroupAddon) -> Self {
         self.container.end = Some(addon);
         self
@@ -337,6 +372,7 @@ pub(crate) fn button_size(size: Size) -> crate::button::Size {
 pub(crate) struct Zone {
     pub height: gpui_kit::Pixels,
     pub radius: gpui_kit::Pixels,
+    pub first: bool,
     pub last: bool,
     pub borders: crate::button::JoinedRingQueue,
 }
