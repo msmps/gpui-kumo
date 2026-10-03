@@ -107,3 +107,6 @@ mod readable_label_tests;
 
 #[cfg(test)]
 mod animation_clock_tests;
+
+pub mod tabs;
+pub use tabs::{TabItem, Tabs, TabsEvent, TabsState};

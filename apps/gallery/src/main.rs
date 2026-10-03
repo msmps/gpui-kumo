@@ -36,6 +36,7 @@ mod selects;
 mod sensitive_inputs;
 mod skeletons;
 mod switches;
+mod tabs;
 mod texts;
 mod tooltips;
 
@@ -97,6 +98,7 @@ struct Gallery {
     breadcrumbs: gpui_kit::Entity<breadcrumbs::Trails>,
     selects: gpui_kit::Entity<selects::Selects>,
     paginations: gpui_kit::Entity<paginations::Paginations>,
+    tabs: gpui_kit::Entity<tabs::TabExamples>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -205,6 +207,7 @@ impl Render for Gallery {
                 )),
         )
         .child(self.paginations.clone())
+        .child(self.tabs.clone())
         .child(self.input_groups.clone())
         .child(self.selects.clone())
         .child(self.breadcrumbs.clone())
@@ -317,6 +320,7 @@ fn main() {
                             breadcrumbs: cx.new(|_| breadcrumbs::Trails::default()),
                             selects: cx.new(|cx| selects::Selects::new(window, cx)),
                             paginations: cx.new(|cx| paginations::Paginations::new(window, cx)),
+                            tabs: cx.new(tabs::TabExamples::new),
                             activations: 0,
                             disabled: false,
                             loading: false,

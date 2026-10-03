@@ -2,7 +2,7 @@
 
 Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-02. This is a count of catalog component families, not subparts or fidelity acceptance checkboxes. Checkbox.Group/Item, Radio.Item, TooltipProvider and Button subsidiary APIs count inside their families. InputArea, SkeletonLine and recommended CodeHighlighted have separate catalog pages and count separately even though some share source directories.
 
-43 in-scope families:27 with working implementations,16 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
+43 in-scope families:28 with working implementations,15 unported. Implemented components have differing documented API/visual/interaction/browser/platform gaps; this count does not declare full fidelity or platform acceptance. [Progress/parity backlog](port-progress.md) and individual matrices remain authoritative for acceptance.
 
 | Catalog component | State |
 | --- | --- |
@@ -43,7 +43,7 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-02. This
 | switch | Implemented; see component acceptance/gaps |
 | table | Unported — [#30](https://github.com/msmps/gpui-kumo/issues/30) |
 | table-of-contents | Unported — [#31](https://github.com/msmps/gpui-kumo/issues/31) |
-| tabs | Unported — [#32](https://github.com/msmps/gpui-kumo/issues/32) |
+| tabs | Core implemented; [contract and remaining overflow/motion/fidelity](tabs-validation.md) — [#32](https://github.com/msmps/gpui-kumo/issues/32) |
 | tag-input | Unported — [#33](https://github.com/msmps/gpui-kumo/issues/33) |
 | text | Implemented; see component acceptance/gaps |
 | toast | Unported — [#34](https://github.com/msmps/gpui-kumo/issues/34) |

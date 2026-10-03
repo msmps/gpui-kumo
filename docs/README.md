@@ -76,3 +76,5 @@ Linux loading semantics: [authored Busy acceptance and evidence](linux-busy-stat
 Linux disclosures: [authored expansion acceptance and evidence](linux-expansion-state-validation.md).
 
 Cloud continuation: [self-contained handoff prompt](cloud-handoff-prompt.md), [resume audit](issue-audit-2026-10-03.md).
+
+Tabs: [core contract, native acceptance and remaining overflow/motion work](tabs-validation.md).

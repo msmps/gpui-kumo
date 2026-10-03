@@ -1,5 +1,10 @@
 # Continue the GPUI Kumo migration from the pushed handoff checkpoint
 
+## Tabs implementation checkpoint — 2026-10-03
+
+Tabs #32 now has a working retained native core: segmented/underline, base/sm, typed local/controlled selection, manual/automatic keyboard activation, disabled skipping, stable reordered focus and removal recovery, gallery and shared focused preview. Coverage advances to **28/43 working families,15 unported**. [Contract, native evidence and explicit remaining work](tabs-validation.md). #32 stays open for overflow edge controls/drag, sliding indicator/motion, replacement/link composition and full fidelity/platform acceptance; complete that source capability slice next. Select repairs are pushed as4c5fa69, with partial Pagination evidence and popup-width gap retained. Prior checkpoints below are historical.
+
+
 ## Current migration checkpoint — 2026-10-03
 
 Foundations #42 and the reported Text glyph discrepancy #38 are resolved and pushed (f03da05 / 9a2a402); both remote CI gates pass. [Text evidence](evidence/text-fonts/README.md). Two further Select repairs address open-menu Tab/ShiftTab dismissal with consuming host bindings and hovered/open trigger paint. The pinned Rust gate passes177library/1gallery/9doctests and adapter12/14. [Browser and partial native evidence](evidence/pagination/native-browser/README.md) records remaining Pagination matrix and numbered Select popup-width gaps explicitly; #26/#27 remain open.

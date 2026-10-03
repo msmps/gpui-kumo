@@ -6,7 +6,7 @@ GitHub issue: https://github.com/msmps/gpui-kumo/issues/32
 
 ## Goal and status
 
-Port the supported **Tabs** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Tabs** Kumo family to Rust/GPUI. A retained native core is implemented; overflow/motion and full fidelity remain open; the issue covers its supported parts and public API, not just a static default-state demo.
 
 ## GPUI Kit/Base foundation
 
