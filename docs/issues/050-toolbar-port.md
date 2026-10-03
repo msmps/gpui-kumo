@@ -10,7 +10,7 @@ Port the supported **Toolbar** Kumo family to Rust/GPUI. The action/link core is
 
 ## Independent addon lifecycle continuation — 2026-10-03
 
-Retained scoped action handles, pruning, focused removal/unavailability/caller-handle replacement recovery, cancellation for newer focus/same-handle reinstatement, and retained Unicode selection/value are implemented. The shared gallery exercises removal/reinsertion without changing default action availability. [Evidence](../evidence/toolbar/addon-removal/README.md). Toolbar#35 remains open for direct actions, popup/richer composition and fidelity/platform acceptance.
+Published implementation **6fccb60409a2675bae27a2398c9de51a3c109d8f** passes the [remote macOS Rust gate37134143787](https://github.com/msmps/gpui-kumo/actions/runs/37134143787). Retained scoped action handles, pruning, focused removal/unavailability/caller-handle replacement recovery, cancellation for newer focus/same-handle reinstatement, and retained Unicode selection/value are implemented. The shared gallery exercises removal/reinsertion without changing default action availability. [Evidence](../evidence/toolbar/addon-removal/README.md). Toolbar#35 remains open for direct actions, popup/richer composition and fidelity/platform acceptance.
 
 ## Compact addon action continuation — 2026-10-03
 

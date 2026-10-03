@@ -47,7 +47,7 @@ Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, reviewed2026-10-03. This
 | tag-input | Unported — [#33](https://github.com/msmps/gpui-kumo/issues/33) |
 | text | Implemented; see component acceptance/gaps |
 | toast | Unported — [#34](https://github.com/msmps/gpui-kumo/issues/34) |
-| toolbar | Action/link and retained Input/passive InputGroup core implemented; [contract and remaining composition](toolbar-validation.md) — [#35](https://github.com/msmps/gpui-kumo/issues/35) |
+| toolbar | Action/link, retained Input/InputGroup and compact addon action lifecycle implemented; [contract and remaining composition](toolbar-validation.md) — [#35](https://github.com/msmps/gpui-kumo/issues/35) |
 | tooltip | Implemented; see component acceptance/gaps |
 
 Excluded: charts, Flow, Sidebar/application shells, Cloudflare branding and blocks. Deprecated Code/CodeBlock, Surface, MenuBar and DateRangePicker are omitted under AGENTS/task scope. Their recommended replacements remain in scope: CodeHighlighted, LayerCard, segmented Tabs and DatePicker range mode. CodeHighlighted highlighter dependency policy remains deferred, not excluded. InputArea and SkeletonLine were missing from the coarse early backlog and are explicitly restored here from the pinned catalog.

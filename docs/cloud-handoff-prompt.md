@@ -2,7 +2,7 @@
 
 Compact actions retain scoped caller-ID handles and prune removed entries. Focused removal/unavailability/caller-handle replacement now recovers after render without changing editor value/Unicode selection; newer focus and same-handle reinstatement cancel queued recovery. The shared gallery keeps actions visible by default and exercises owner removal/reinsertion. Native editor recovery differs explicitly from source BODY focus; both retain text/selection and exit to the next Toolbar on Tab. [Contract](toolbar-validation.md), [source/native evidence](evidence/toolbar/addon-removal/README.md).
 
-Local full pinned Rust gate passes201 library/1gallery/9doctests and adapter12/14; browser/native Light/Dark1040/520 pass. Coverage stays29/43 working families,14 unported; #35 stays open. Next: direct joined Toolbar InputGroup actions, followed by popup/replacement composition. Source disabled=false overrides, focus-visible modality parity, RTL and full-gallery/platform/speech acceptance remain. Older checkpoints below are historical.
+Published implementation **6fccb60409a2675bae27a2398c9de51a3c109d8f** passes the [remote macOS Rust gate37134143787](https://github.com/msmps/gpui-kumo/actions/runs/37134143787). Local full pinned Rust gate passes201 library/1gallery/9doctests and adapter12/14; browser/native Light/Dark1040/520 pass. Coverage stays29/43 working families,14 unported; #35 stays open. Next: direct joined Toolbar InputGroup actions, followed by popup/replacement composition. Source disabled=false overrides, focus-visible modality parity, RTL and full-gallery/platform/speech acceptance remain. Older checkpoints below are historical.
 
 ## Toolbar compact addon actions checkpoint — 2026-10-03
 

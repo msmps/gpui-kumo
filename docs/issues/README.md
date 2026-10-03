@@ -76,7 +76,7 @@ The following fidelity gaps are published on 2026-10-02. GitHub numbers differ f
 
 ## Remaining component family ports
 
-The original 25-family queue has one confirmed GitHub issue per family;16 remain unported. Family issues each (#11–#35), linked above and in [coverage](../component-coverage.md). Local IDs KUMO-026–050 distinguish these family ports from earlier fidelity follow-ups. Issues describe the pinned Base primitives, dependency order, limitations and acceptance gates: 11 direct counterparts, 7 partial compositions and 7 without a dedicated Base counterpart. A direct name does not establish complete behavior; Tabs keyboard navigation, Dropdown menu semantics and Meter range semantics require particular care. Publication does not change implementation coverage.
+The original 25-family queue has one confirmed GitHub issue per family;14 remain unported. Family issues each (#11–#35), linked above and in [coverage](../component-coverage.md). Local IDs KUMO-026–050 distinguish these family ports from earlier fidelity follow-ups. Issues describe the pinned Base primitives, dependency order, limitations and acceptance gates: 11 direct counterparts, 7 partial compositions and 7 without a dedicated Base counterpart. A direct name does not establish complete behavior; Tabs keyboard navigation, Dropdown menu semantics and Meter range semantics require particular care. Publication does not change implementation coverage.
 
 ## Maintaining the tracker
 

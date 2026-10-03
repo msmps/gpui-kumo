@@ -14,6 +14,8 @@ Three new rendered regressions cover independent removal/editor retention/Tab ex
 
 Direct joined Toolbar actions, popup/replacement/richer composition, disabled=false group overrides, focus-visible modality parity, RTL and full-gallery/platform/speech acceptance remain open. Coverage remains29/43 working families,14 unported; #35 stays open.
 
+Published implementation **6fccb60409a2675bae27a2398c9de51a3c109d8f** passes the [remote macOS Rust gate37134143787](https://github.com/msmps/gpui-kumo/actions/runs/37134143787).
+
 Final source/native Light/Dark1040/520: PASS. Full locked Rust gate:201 library/1gallery/9doctests; fmt/warnings-denied Clippy/locked builds/default gallery; exact adapter12 default/14 all-feature tests/format/lint: PASS.
 
 Alignment/layer review compares painted Gear/icon/control centres,14px editor and12px action baselines,6px addon gaps/4px end inset before removal, expanded editor edge padding after removal,220px group width, narrow reveal, joined separators/corners/surface/shadow and whole-group focus ring in both themes. The native focus indication after removal is deliberately different from source BODY. Existing source/native focus-visible modality differences remain documented by preceding evidence. No arbitrary-descendant clipping or full fidelity claim is added.
