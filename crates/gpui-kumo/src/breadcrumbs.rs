@@ -383,5 +383,4 @@ impl RenderOnce for Breadcrumbs {
     }
 }
 #[cfg(test)]
-#[path = "breadcrumbs_tests.rs"]
 mod tests;

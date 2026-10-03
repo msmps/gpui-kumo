@@ -935,5 +935,4 @@ impl RenderOnce for LinkControl {
     }
 }
 #[cfg(test)]
-#[path = "toolbar_tests.rs"]
 mod tests;

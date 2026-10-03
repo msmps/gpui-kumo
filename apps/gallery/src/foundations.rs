@@ -1,6 +1,4 @@
-#[path = "panel.rs"]
-mod panel;
-pub(crate) use panel::panel;
+use crate::panel::panel;
 
 use gpui_kit::base::TestSupportExt;
 use gpui_kit::{

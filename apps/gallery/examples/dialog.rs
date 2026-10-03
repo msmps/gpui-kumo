@@ -1,16 +1,11 @@
 //! Focused native Dialog review: --dark and --width=520 (default1040).
-#[path = "../src/panel.rs"]
-mod panel;
-use panel::panel;
-#[path = "../src/dialogs.rs"]
-mod dialogs;
-#[path = "../src/toasts.rs"]
-mod toasts;
+
 use gpui_kit::{
     App, AppContext, Bounds, Context, InteractiveElement, IntoElement, ParentElement, Render,
     Styled, Window, WindowBounds, WindowOptions, div, px, size,
 };
 use gpui_kumo::{Appearance, set_appearance};
+use kumo_gallery::dialogs;
 gpui_kit::actions!(dialog_review, [Next, Previous]);
 struct Review {
     focus: gpui_kit::FocusHandle,

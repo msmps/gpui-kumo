@@ -33,7 +33,6 @@ pub struct LayerCard {
 }
 
 #[cfg(test)]
-#[path = "layer_card_tests.rs"]
 mod tests;
 
 impl LayerCard {

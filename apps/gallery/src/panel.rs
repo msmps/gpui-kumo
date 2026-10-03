@@ -1,7 +1,8 @@
 use gpui_kit::{Div, FontWeight, ParentElement, Styled, div, px};
 use gpui_kumo::Theme;
 
-pub(crate) fn panel(theme: &Theme, title: &'static str) -> Div {
+/// Compose a consistently styled gallery section.
+pub fn panel(theme: &Theme, title: &'static str) -> Div {
     div()
         .flex()
         .flex_col()

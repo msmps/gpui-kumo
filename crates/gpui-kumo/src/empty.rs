@@ -268,5 +268,4 @@ impl RenderOnce for Empty {
 }
 
 #[cfg(test)]
-#[path = "empty_tests.rs"]
 mod tests;

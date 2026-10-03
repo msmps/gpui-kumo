@@ -340,5 +340,4 @@ impl RenderOnce for ExternalIcon {
 }
 
 #[cfg(test)]
-#[path = "link_tests.rs"]
 mod tests;

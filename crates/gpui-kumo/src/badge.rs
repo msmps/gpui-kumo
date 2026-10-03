@@ -321,5 +321,4 @@ where
 }
 
 #[cfg(test)]
-#[path = "badge_tests.rs"]
 mod tests;

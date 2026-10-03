@@ -4,7 +4,7 @@ use gpui_kumo::{
     text::{HeadingLevel, HeadingSize, MonoSize, MonoTone, Size, Style, Tone},
 };
 
-pub(super) fn panel(theme: &Theme) -> Div {
+pub fn panel(theme: &Theme) -> Div {
     super::panel(theme, "Text")
         .child(Text::new("rich", "Rich inline emphasis").rich_content(
             StyledText::new("Rich inline emphasis").with_highlights([(

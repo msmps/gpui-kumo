@@ -7,6 +7,8 @@ A native Kumo design system built on GPUI, with GPUI Base as the initial behavio
 - `crates/gpui-kumo`: typed Kumo theme and native design-system library. See the [component catalog](docs/component-coverage.md) for coverage and [Select acceptance/API](docs/select-validation.md) for retained single/multiple selection.
 - `apps/gallery`: native component examples and foundation previews with light/dark switching. See the [coverage inventory](docs/component-coverage.md) and [GitHub issues](https://github.com/msmps/gpui-kumo/issues) for outstanding work.
 
+Component modules live in `crates/gpui-kumo/src/<component>.rs`, with private helpers and unit tests under `src/<component>/`. The gallery binary and focused examples share the `kumo_gallery` library target. `GalleryAssets` composes application assets with `gpui_kumo::assets::Assets`, so consumers do not need filesystem paths into the library's source tree.
+
 Rust 1.99.0 is pinned in `rust-toolchain.toml`. GPUI Kit 0.7.0 is selected with its default features disabled, excluding the styled Component layer and bundled icons. Commit `Cargo.lock` when changing dependencies. The workspace applies an exact-version GPUI0.3.7 [tab-registration correction](docs/gpui-tab-registration-patch.md), preserving reverse Tab and Input accessibility focus. Downstream Cargo workspaces must apply the same root override; dependency patches do not propagate. See the linked setup and limitations before integrating this unreleased library.
 
 ## Development

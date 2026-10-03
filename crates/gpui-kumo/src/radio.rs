@@ -511,5 +511,4 @@ impl<T: Clone + Eq + 'static> RenderOnce for RadioGroup<T> {
 }
 
 #[cfg(test)]
-#[path = "radio_tests.rs"]
 mod tests;

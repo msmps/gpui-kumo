@@ -366,5 +366,4 @@ impl Render for InputAreaState {
 /// Discoverability alias matching Kumo's Textarea export.
 pub type Textarea = InputArea;
 #[cfg(test)]
-#[path = "input_area_tests.rs"]
 mod tests;

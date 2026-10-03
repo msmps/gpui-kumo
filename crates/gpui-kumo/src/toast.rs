@@ -827,5 +827,4 @@ impl Render for ToastState {
 }
 
 #[cfg(test)]
-#[path = "toast_tests.rs"]
 mod tests;

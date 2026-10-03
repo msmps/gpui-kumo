@@ -1,11 +1,10 @@
 //! Focused native foundation review: --dark and --width=520 (default1040).
-#[path = "../src/foundations.rs"]
-mod foundations;
 use gpui_kit::{
     App, AppContext, Bounds, Context, IntoElement, ParentElement, Render, Styled, Window,
     WindowBounds, WindowOptions, div, px, size,
 };
 use gpui_kumo::{Appearance, set_appearance};
+use kumo_gallery::foundations;
 struct Review;
 impl Render for Review {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {

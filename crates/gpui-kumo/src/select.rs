@@ -1,11 +1,8 @@
 //! Retained typed Kumo Select over Base disclosure and deferred positioning.
 #[cfg(test)]
-#[path = "select_overlay_tests.rs"]
 mod overlay_tests;
-#[path = "select_semantics.rs"]
 mod semantics;
 #[cfg(test)]
-#[path = "select_tests.rs"]
 mod tests;
 use crate::{Theme, theme};
 pub use crate::{input::Size, popover::Placement, tooltip::Align};
@@ -1515,3 +1512,6 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             })
     }
 }
+
+#[cfg(test)]
+mod base_tests;

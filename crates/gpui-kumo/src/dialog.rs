@@ -662,5 +662,4 @@ impl Render for DialogState {
 }
 
 #[cfg(test)]
-#[path = "dialog_tests.rs"]
 mod tests;

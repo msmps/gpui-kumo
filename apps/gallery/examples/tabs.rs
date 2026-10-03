@@ -1,14 +1,11 @@
 //! Focused native tabs review: --dark and --width=520 (default1040).
-#[path = "../src/panel.rs"]
-mod panel;
-use panel::panel;
-#[path = "../src/tabs.rs"]
-mod tabs;
+
 use gpui_kit::{
     App, AppContext, Bounds, Context, InteractiveElement, IntoElement, ParentElement, Render,
     Styled, Window, WindowBounds, WindowOptions, div, px, size,
 };
 use gpui_kumo::{Appearance, set_appearance};
+use kumo_gallery::tabs;
 gpui_kit::actions!(tabs_review, [Next, Previous, ToggleTabs]);
 struct Review {
     focus: gpui_kit::FocusHandle,

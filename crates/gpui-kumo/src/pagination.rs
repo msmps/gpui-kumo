@@ -1065,5 +1065,4 @@ impl Render for PaginationState {
 }
 
 #[cfg(test)]
-#[path = "pagination_tests.rs"]
 mod tests;

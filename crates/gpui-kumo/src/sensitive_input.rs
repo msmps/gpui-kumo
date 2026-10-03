@@ -577,5 +577,4 @@ fn focus_ring(focused: bool, color: gpui_kit::Hsla, radius: gpui_kit::Pixels) ->
 }
 
 #[cfg(test)]
-#[path = "sensitive_input_tests.rs"]
 mod tests;

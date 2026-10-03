@@ -12,7 +12,6 @@ use gpui_kit::{
 use crate::theme;
 
 #[cfg(test)]
-#[path = "text_tests.rs"]
 mod tests;
 
 /// Tone of copy text. Success intentionally uses Kumo's link color.

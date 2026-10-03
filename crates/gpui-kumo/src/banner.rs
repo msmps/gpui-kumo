@@ -476,5 +476,4 @@ impl RenderOnce for Banner {
 }
 
 #[cfg(test)]
-#[path = "banner_tests.rs"]
 mod tests;

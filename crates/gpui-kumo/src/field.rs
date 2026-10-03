@@ -202,5 +202,4 @@ fn text_message(
 }
 
 #[cfg(test)]
-#[path = "field_tests.rs"]
 mod tests;

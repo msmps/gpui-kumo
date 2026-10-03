@@ -10,8 +10,7 @@ use gpui_kit::{
 
 gpui_kit::actions!(native_frame_probe, [Quit]);
 
-#[path = "../src/banners.rs"]
-mod banners;
+use kumo_gallery::banners;
 
 struct Root {
     banners: gpui_kit::Entity<banners::Banners>,
@@ -32,20 +31,6 @@ impl Render for Root {
             .child(format!("Platform visibility: {:?}", window.visibility()))
             .child(self.banners.clone())
     }
-}
-
-fn panel(theme: &gpui_kumo::Theme, title: &'static str) -> gpui_kit::Div {
-    div()
-        .flex()
-        .flex_col()
-        .flex_shrink_0()
-        .gap(theme.spacing.sixteen)
-        .p(px(24.))
-        .bg(theme.colors.base)
-        .rounded(theme.radii.lg)
-        .border_1()
-        .border_color(theme.colors.hairline)
-        .child(div().font_weight(gpui_kit::FontWeight::MEDIUM).child(title))
 }
 
 fn main() {

@@ -1,14 +1,11 @@
 //! Focused native Dropdown review: --dark and --width=520 (default1040).
-#[path = "../src/panel.rs"]
-mod panel;
-use panel::panel;
-#[path = "../src/dropdowns.rs"]
-mod dropdowns;
+
 use gpui_kit::{
     App, AppContext, Bounds, Context, InteractiveElement, IntoElement, ParentElement, Render,
     Styled, Window, WindowBounds, WindowOptions, div, px, size,
 };
 use gpui_kumo::{Appearance, set_appearance};
+use kumo_gallery::dropdowns;
 gpui_kit::actions!(dropdown_review, [Next, Previous]);
 struct Review {
     focus: gpui_kit::FocusHandle,

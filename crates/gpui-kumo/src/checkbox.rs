@@ -262,5 +262,4 @@ impl RenderOnce for Checkbox {
     }
 }
 #[cfg(test)]
-#[path = "checkbox_tests.rs"]
 mod tests;

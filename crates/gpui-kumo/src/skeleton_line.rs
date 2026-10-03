@@ -261,5 +261,4 @@ fn paint_shimmer(
 }
 
 #[cfg(test)]
-#[path = "skeleton_line_tests.rs"]
 mod tests;

@@ -716,5 +716,4 @@ impl Render for DropdownState {
 }
 
 #[cfg(test)]
-#[path = "dropdown_tests.rs"]
 mod tests;

@@ -484,5 +484,4 @@ impl RenderOnce for SwitchGroup {
     }
 }
 #[cfg(test)]
-#[path = "switch_tests.rs"]
 mod tests;

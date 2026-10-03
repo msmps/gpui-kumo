@@ -11,13 +11,9 @@ use std::{
     cell::{Cell, RefCell},
     rc::Rc,
 };
-#[path = "tabs_lifecycle.rs"]
 mod lifecycle;
-#[path = "tabs_motion.rs"]
 mod motion;
-#[path = "tabs_overflow.rs"]
 mod overflow;
-#[path = "tabs_view.rs"]
 mod view;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -390,5 +386,4 @@ impl<T: Clone + Eq + 'static> RenderOnce for Tabs<T> {
     }
 }
 #[cfg(test)]
-#[path = "tabs_tests.rs"]
 mod tests;

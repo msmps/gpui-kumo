@@ -507,5 +507,4 @@ impl RenderOnce for TooltipProvider {
 }
 
 #[cfg(test)]
-#[path = "tooltip_tests.rs"]
 mod tests;

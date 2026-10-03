@@ -1,11 +1,10 @@
 //! Native Toast review: --dark and --width=520 (default1040).
-#[path = "../src/toasts.rs"]
-mod toasts;
 use gpui_kit::{
     App, AppContext, Bounds, Context, Entity, FocusHandle, Render, Subscription, Window,
     WindowBounds, WindowOptions, div, prelude::*, px, size,
 };
 use gpui_kumo::{Appearance, Button, ToastEvent, ToastState, ToastViewport, set_appearance};
+use kumo_gallery::toasts;
 gpui_kit::actions!(toast_review, [Next, Previous]);
 struct Review {
     toasts: Entity<ToastState>,

@@ -335,5 +335,4 @@ impl RenderOnce for Collapsible {
 }
 
 #[cfg(test)]
-#[path = "collapsible_tests.rs"]
 mod tests;

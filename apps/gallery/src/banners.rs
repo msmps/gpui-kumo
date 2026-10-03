@@ -7,7 +7,7 @@ use gpui_kumo::{
     theme,
 };
 
-pub(super) struct Banners {
+pub struct Banners {
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -16,7 +16,7 @@ pub(super) struct Banners {
 }
 
 impl Banners {
-    pub(super) fn new(cx: &mut Context<Self>) -> Self {
+    pub fn new(cx: &mut Context<Self>) -> Self {
         Self {
             activations: 0,
             disabled: false,

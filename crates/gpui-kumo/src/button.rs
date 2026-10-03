@@ -858,5 +858,4 @@ impl RenderOnce for Button {
 }
 
 #[cfg(test)]
-#[path = "button_tests.rs"]
 mod tests;

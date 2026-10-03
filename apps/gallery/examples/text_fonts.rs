@@ -1,14 +1,11 @@
 //! Native rich-font comparison: --dark and --width=520 (default1040).
-#[path = "../src/panel.rs"]
-mod panels;
-#[path = "../src/texts.rs"]
-mod texts;
+
 use gpui_kit::{
     App, AppContext, Bounds, Context, FontWeight, HighlightStyle, IntoElement, ParentElement,
     Render, Styled, StyledText, Window, WindowBounds, WindowOptions, div, px, size,
 };
 use gpui_kumo::{Appearance, Text, set_appearance};
-use panels::panel;
+use kumo_gallery::{panel, texts};
 
 struct Review {
     traced: bool,

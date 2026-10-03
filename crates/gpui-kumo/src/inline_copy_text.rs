@@ -366,5 +366,4 @@ impl RenderOnce for InlineCopyText {
     }
 }
 #[cfg(test)]
-#[path = "inline_copy_text_tests.rs"]
 mod tests;

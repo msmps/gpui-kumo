@@ -388,7 +388,6 @@ impl RenderOnce for InputGroup {
 }
 
 #[cfg(test)]
-#[path = "input_group_tests.rs"]
 mod tests;
 
 // Installed Base 0.7.0 reserves this right-side caret-scroll margin.

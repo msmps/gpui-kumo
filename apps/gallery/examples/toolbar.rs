@@ -1,14 +1,11 @@
 //! Focused native toolbar review: --dark and --width=520 (default1040).
-#[path = "../src/panel.rs"]
-mod panel;
-use panel::panel;
-#[path = "../src/toolbars.rs"]
-mod toolbars;
+
 use gpui_kit::{
     App, AppContext, Bounds, Context, InteractiveElement, IntoElement, ParentElement, Render,
     Styled, Window, WindowBounds, WindowOptions, div, px, size,
 };
 use gpui_kumo::{Appearance, set_appearance};
+use kumo_gallery::toolbars;
 gpui_kit::actions!(toolbar_review, [Next, Previous, ToggleItems]);
 struct Review {
     focus: gpui_kit::FocusHandle,
@@ -42,17 +39,6 @@ impl Render for Review {
             .child(gpui_kumo::Button::new("after", "After toolbar"))
     }
 }
-struct Assets;
-impl gpui_kit::AssetSource for Assets {
-    fn load(&self, path: &str) -> gpui_kit::Result<Option<std::borrow::Cow<'static, [u8]>>> {
-        Ok((path == "toolbar-settings.svg").then(|| {
-            std::borrow::Cow::Borrowed(include_bytes!("../assets/toolbar-settings.svg").as_slice())
-        }))
-    }
-    fn list(&self, _: &str) -> gpui_kit::Result<Vec<gpui_kit::SharedString>> {
-        Ok(vec!["toolbar-settings.svg".into()])
-    }
-}
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let width = args
@@ -64,7 +50,7 @@ fn main() {
         .unwrap_or(1040.);
     let dark = args.iter().any(|arg| arg == "--dark");
     gpui_kit::application()
-        .with_assets(Assets)
+        .with_assets(kumo_gallery::GalleryAssets)
         .run(move |cx: &mut App| {
             gpui_kumo::init(cx);
             cx.bind_keys([

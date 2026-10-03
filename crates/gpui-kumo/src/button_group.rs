@@ -158,5 +158,4 @@ impl gpui_kit::Element for Joined {
     }
 }
 #[cfg(test)]
-#[path = "button_group_tests.rs"]
 mod tests;
