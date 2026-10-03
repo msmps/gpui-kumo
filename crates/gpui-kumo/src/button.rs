@@ -245,6 +245,13 @@ impl Button {
         self.focus_handle = Some(focus.clone());
         self.disabled |= disabled;
         self.expanded = Some((expanded, None));
+        self.after_click(handler)
+    }
+
+    pub(crate) fn after_click(
+        mut self,
+        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
         let consumer = self.on_click.take();
         self.on_click = Some(Box::new(move |event, window, cx| {
             if let Some(consumer) = &consumer {

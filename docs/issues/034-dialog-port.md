@@ -6,7 +6,11 @@ GitHub issue: https://github.com/msmps/gpui-kumo/issues/19
 
 ## Goal and status
 
-Port the supported **Dialog** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Dialog** Kumo family to Rust/GPUI. A retained modal core and document workflow are implemented; the issue covers its supported parts and public API, not just a static default-state demo.
+
+## Current core checkpoint — 2026-10-03
+
+Retained Dialog/AlertDialog state, four source widths, guarded close reasons, weak Close capability and composed Button triggers, named modal accessibility, focus trapping/restoration/unmount and shared gallery are implemented. Pinned browser and native Linux Light/Dark1040/520 matrices pass. [Contract/results](../dialog-validation.md), [evidence](../evidence/dialog/README.md). Full-family boxes remain unchecked: scale/exit motion, embedded overlays/custom parts, parent removal, long-content native/browser and RTL/platform/speech/IME acceptance remain.
 
 ## GPUI Kit/Base foundation
 

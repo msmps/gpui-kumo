@@ -83,4 +83,4 @@ Toolbar: [retained actions/links/editors, source/native evidence and remaining c
 
 Dropdown: [retained action-menu contract, evidence and remaining composition](dropdown-validation.md).
 
-Dialog: [source audit for the next announcement slice](dialog-validation.md) (unported).
+Dialog: [retained modal core, validation and remaining composition/motion](dialog-validation.md).

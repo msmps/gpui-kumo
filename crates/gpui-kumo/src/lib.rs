@@ -42,6 +42,7 @@ pub fn init(cx: &mut App) {
     popover::init(cx);
     tooltip::init(cx);
     select::init(cx);
+    dialog::init(cx);
     set_theme(Theme::new(Appearance::Light), cx);
 }
 
@@ -117,4 +118,10 @@ pub use toolbar::{Toolbar, ToolbarEvent, ToolbarItem, ToolbarState};
 pub mod dropdown;
 pub use dropdown::{
     Dropdown, DropdownEvent, DropdownItem, DropdownPart, DropdownState, DropdownVariant,
+};
+
+pub mod dialog;
+pub use dialog::{
+    Dialog, DialogClose, DialogCloseReason, DialogEvent, DialogRole, DialogSize, DialogState,
+    DialogTrigger,
 };
