@@ -1,12 +1,12 @@
 # KUMO-040: Port Meter with Kumo fidelity over GPUI Base
 
-Status: Open
+Status: In progress
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/25
 
 ## Goal and status
 
-Port the supported **Meter** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **Meter** Kumo family to Rust/GPUI. Core port implemented; remaining generic style-slot and browser/platform acceptance keeps this issue open. See [Meter validation](../meter-validation.md).
 
 ## GPUI Kit/Base foundation
 
@@ -26,8 +26,8 @@ Build on: Text, Semantic tokens. These are dependencies, not a claim that every 
 
 ## Family acceptance criteria
 
-- [ ] Match source range normalization, label, customValue/showValue and track/indicator composition; distinguish invalid/out-of-range handling from progress indeterminate state.
-- [ ] Verify displayed percentage/range, empty/extreme values, readable value metadata, long labels, narrow track and light/dark fill/edge alignment.
+- [x] Match source range normalization, label, customValue/showValue and track/indicator composition; distinguish invalid/out-of-range handling from progress indeterminate state.
+- [x] Verify displayed percentage/range, empty/extreme values, readable value metadata, long labels, narrow track and light/dark fill/edge alignment.
 
 ## Shared fidelity and validation gate
 
@@ -42,3 +42,7 @@ Build on: Text, Semantic tokens. These are dependencies, not a claim that every 
 - [Kumo Meter source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/meter/meter.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
 - GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
 - Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+
+## Validated core checkpoint — 2026-10-03
+
+Actual Meter semantics, Base parts and retained width motion; four observable regressions and six Linux both-theme wide/narrow/update captures. Source arithmetic huge-number limitation recorded explicitly. Required Rust gate recorded in Meter validation. Generic track/indicator style overrides, browser comparison and OS speech acceptance remain pending; issue stays In progress.

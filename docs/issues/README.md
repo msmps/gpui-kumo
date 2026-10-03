@@ -45,7 +45,7 @@ Each issue has a stable `KUMO-NNN` ID, a problem statement, evidence and accepta
 | KUMO-037 | InlineCopyText | [port InlineCopyText](037-inline-copy-text-port.md) ([#22](https://github.com/msmps/gpui-kumo/issues/22)) | Open |
 | KUMO-038 | InputArea | [port InputArea](038-input-area-port.md) ([#23](https://github.com/msmps/gpui-kumo/issues/23)) | Open |
 | KUMO-039 | LayerDialog | [port LayerDialog](039-layer-dialog-port.md) ([#24](https://github.com/msmps/gpui-kumo/issues/24)) | Open |
-| KUMO-040 | Meter | [port Meter](040-meter-port.md) ([#25](https://github.com/msmps/gpui-kumo/issues/25)) | Open |
+| KUMO-040 | Meter | [port Meter](040-meter-port.md) ([#25](https://github.com/msmps/gpui-kumo/issues/25)) | In progress |
 | KUMO-041 | Pagination | [port Pagination](041-pagination-port.md) ([#26](https://github.com/msmps/gpui-kumo/issues/26)) | Open |
 | KUMO-042 | Select | [port Select](042-select-port.md) ([#27](https://github.com/msmps/gpui-kumo/issues/27)) | Open |
 | KUMO-043 | SensitiveInput | [port SensitiveInput](043-sensitive-input-port.md) ([#28](https://github.com/msmps/gpui-kumo/issues/28)) | Open |
