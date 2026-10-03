@@ -2,6 +2,8 @@
 
 Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, Kit/Base0.7.0, GPUI0.3.7 and Rust1.99.0. [Contract and remaining gaps](../../dialog-validation.md). These results cover the native modal core; #19 remains open.
 
+Implementation [096adf3597dd0ce6c5938c02feaacb0a12c7ffbd](https://github.com/msmps/gpui-kumo/commit/096adf3597dd0ce6c5938c02feaacb0a12c7ffbd) passes the [remote macOS gate37136949879](https://github.com/msmps/gpui-kumo/actions/runs/37136949879).
+
 ## Passing observed checks
 
 `browser/results.json` and `linux/results.json`: Light/Dark ×1040/520 pass. Each directory contains edit and alert screenshots for all four cases. The actual pinned Dialog, Button and Input source files are imported by the browser fixture; the native fixture uses the shared gallery `Dialogs` view.
