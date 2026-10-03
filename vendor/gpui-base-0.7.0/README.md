@@ -334,4 +334,5 @@ style and motion contracts.
 
 Apache-2.0. See [`../../LICENSE-APACHE`](../../LICENSE-APACHE).
 
-Local Kumo continuation: `src/link.rs` also preserves a supplied retained focus handle, matching Button's existing hook. Scope/provenance, consumer regressions, removal condition and downstream Cargo-root obligations: [retained Link focus correction](../../docs/gpui-base-link-focus-patch.md).
+
+Local Kumo correction: only the intrinsic Textarea growth repair remains; see [scope and downstream configuration](../../docs/gpui-base-textarea-growth-patch.md). Select and Link source now match published 0.7.0. Their retired corrections are referenced in [Select history](../../docs/gpui-base-select-focus-patch.md) and [Link history](../../docs/gpui-base-link-focus-patch.md) for upstream submission.

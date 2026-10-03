@@ -195,11 +195,6 @@ impl RenderOnce for Select {
         self.base
             .role(Role::ComboBox)
             .aria_expanded(open)
-            .when(disabled, |this| {
-                this.a11y_synthetic_children(|builder| {
-                    builder.parent_node().set_disabled();
-                })
-            })
             .when_some(self.accessibility_label, |this, label| {
                 this.aria_label(label)
             })
@@ -287,13 +282,12 @@ impl RenderOnce for Select {
                         if let Some(handler) = on_confirm.as_ref() {
                             handler(window, cx);
                         }
-                    } else {
-                        if let Some(handler) = on_open_change.as_ref() {
-                            handler(true, window, cx);
-                        }
-                        if let Some(handle) = content_focus_handle.as_ref() {
-                            handle.focus(window, cx);
-                        }
+                    } else if let Some(handler) = on_open_change.as_ref() {
+                        handler(true, window, cx);
+                    }
+
+                    if let Some(handle) = content_focus_handle.as_ref() {
+                        handle.focus(window, cx);
                     }
                 }
             })

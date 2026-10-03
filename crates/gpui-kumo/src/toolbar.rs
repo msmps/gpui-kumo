@@ -853,46 +853,43 @@ impl RenderOnce for LinkControl {
         let rings = self.rings;
         let id = self.id;
         let owner = self.owner;
-        let url = self.href.to_string();
-        let mut link = base::Link::new(id.clone())
-            .accessibility_label(self.control.name.clone())
-            .href(self.href)
-            .disabled(self.disabled)
-            .track_focus(&self.focus)
-            .tab_stop(self.entry)
-            .h(px(36.))
-            .flex()
-            .items_center()
-            .justify_center()
-            .gap(px(6.))
-            .px(px(if self.control.icon_only { 0. } else { 12. }))
-            .font_family(theme.typography.font_family.clone())
-            .text_size(px(14.))
-            .line_height(px(21.))
-            .font_weight(FontWeight::MEDIUM)
-            .text_color(theme.text.default)
-            .relative()
-            .rounded(px(8.))
-            .when(!first, |v| v.rounded_l(px(0.)))
-            .when(!last, |v| v.rounded_r(px(0.)))
-            .when(self.control.icon_only, |v| {
-                v.w(px(if first { 36. } else { 35. }))
-            })
-            .when(!self.disabled, |v| {
-                v.cursor_pointer().hover(|v| v.bg(theme.colors.tint))
-            })
-            .a11y_synthetic_children(move |b| {
-                b.parent_node().set_url(url.clone());
-                if self.disabled {
-                    b.parent_node().set_disabled();
-                }
-            })
-            .on_mouse_down(gpui_kit::MouseButton::Left, move |_, w, cx| {
-                (self.on_focus)(w, cx)
-            })
-            .on_activate(move |event, w, cx| {
+        let mut link = crate::link::control::root(
+            id.clone(),
+            self.control.name.clone(),
+            self.href,
+            &self.focus,
+            self.disabled,
+            self.entry,
+        )
+        .h(px(36.))
+        .flex()
+        .items_center()
+        .justify_center()
+        .gap(px(6.))
+        .px(px(if self.control.icon_only { 0. } else { 12. }))
+        .font_family(theme.typography.font_family.clone())
+        .text_size(px(14.))
+        .line_height(px(21.))
+        .font_weight(FontWeight::MEDIUM)
+        .text_color(theme.text.default)
+        .relative()
+        .rounded(px(8.))
+        .when(!first, |v| v.rounded_l(px(0.)))
+        .when(!last, |v| v.rounded_r(px(0.)))
+        .when(self.control.icon_only, |v| {
+            v.w(px(if first { 36. } else { 35. }))
+        })
+        .when(!self.disabled, |v| {
+            v.cursor_pointer().hover(|v| v.bg(theme.colors.tint))
+        })
+        .on_mouse_down(gpui_kit::MouseButton::Left, move |_, w, cx| {
+            (self.on_focus)(w, cx)
+        })
+        .when(!self.disabled, |link| {
+            link.on_click(move |event, w, cx| {
                 let _ = owner.update(cx, |s, cx| s.activate(&id, event, w, cx));
-            });
+            })
+        });
         if let Some(path) = self.control.icon {
             link = link.child(Icon::new(path).size(px(14.)));
         }

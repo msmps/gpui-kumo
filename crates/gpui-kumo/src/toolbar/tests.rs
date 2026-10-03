@@ -289,7 +289,7 @@ fn link_uses_current_target_and_retained_focus_with_actual_pointer_modifiers(
         let state = view.read(cx).toolbar.clone();
         assert!(
             state.read(cx).items[4].focus.is_focused(window),
-            "Base's actual pointer focus matches the retained handle"
+            "Actual pointer focus matches the retained handle"
         );
         state.update(cx, |s, cx| {
             let mut updated = items();

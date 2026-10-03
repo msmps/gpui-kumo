@@ -16,7 +16,7 @@ fn activate(cx: &mut VisualTestContext, key: &str) {
 }
 
 #[gpui_kit::test]
-fn navigation_uses_updated_target_once_and_preserves_base_focus(cx: &mut TestAppContext) {
+fn navigation_uses_updated_target_once_and_preserves_native_focus(cx: &mut TestAppContext) {
     struct Owner {
         href: SharedString,
         disabled: bool,
@@ -71,7 +71,7 @@ fn navigation_uses_updated_target_once_and_preserves_base_focus(cx: &mut TestApp
                 .painted_quads()
                 .iter()
                 .any(|quad| quad.border_color == crate::theme(cx).colors.focus),
-            "The observed keyed handle must paint the actual Base keyboard focus"
+            "The observed keyed handle must paint the actual native keyboard focus"
         );
     });
     assert_eq!(

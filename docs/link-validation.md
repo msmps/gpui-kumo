@@ -1,5 +1,7 @@
 # Link acceptance contract
 
+Current implementation: [library-owned controls](library-controls.md). The Base discussion and historical acceptance results below describe the original implementation.
+
 Selected as a prerequisite for Banner’s compact inline action, following Badge checkpoint `895432d`. Inspect the [pinned Link source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/link/link.tsx), [Link examples](https://kumo-ui.com/components/link/) and installed gpui-base 0.7.0 link.rs before implementation. The deprecated to routing alias is excluded; destinations use href semantics.
 
 ## Required branches
@@ -11,8 +13,8 @@ Selected as a prerequisite for Banner’s compact inline action, following Badge
 | Layout | Inline-flex centered children, gap0.1875em; direct Badge composition rounds the root | Narrow/long Unicode, em scaling, source-sized icon and repeated instances |
 | External icon | Decorative two-path 24-unit SVG, 1em size, round caps/joins, stroke1.75 light/2 dark | Inline SVG data avoids consumer asset registration; native light/dark and complete accessible name |
 | Navigation | Application-owned href target and injected open strategy; source LinkProvider/render adapt to explicit callback/content | Pointer and keyboard invoke open strategy once with destination/event; no implicit browser launch; updated href after rerender |
-| Focus/availability | Base Link retains focus and activation; disabled policy rejects input and tab participation | Tab traversal, visible keyboard focus, disabled/re-enabled paths, nested/repeated links |
-| Accessibility | Link role, complete label and URL target; disabled metadata on actual Base node | Rendered role/name/action/URL checks; native tree and spoken behavior recorded separately |
+| Focus/availability | Kumo retains focus; GPUI provides native activation; disabled policy rejects input and tab participation | Tab traversal, visible keyboard focus, disabled/re-enabled paths, nested/repeated links |
+| Accessibility | Link role, complete label and URL target; disabled metadata on actual Kumo node | Rendered role/name/action/URL checks; native tree and spoken behavior recorded separately |
 | Badge integration | Caller’s typed badge builder binds hover group; only hovered ancestor badge gains ring | Real hover and pointer/keyboard navigation, repeated group names, callback ordering and no duplicate state |
 | Styling | Caller refinements after recipe; application owns content and routing | Label/icon composition, nonempty names, color/layout overrides and focus paint bounds |
 

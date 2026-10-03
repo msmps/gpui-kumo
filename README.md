@@ -28,6 +28,6 @@ For the announcement workflow, run `cargo run -p kumo-gallery --example announce
 
 Read the [maintenance index](docs/README.md) before implementing components.
 
-The retained Textarea uses a narrow [gpui-base0.7.0 growth patch](docs/gpui-base-textarea-growth-patch.md). Base also carries a narrow [Select confirmation focus repair](docs/gpui-base-select-focus-patch.md). Downstream Cargo roots must override both GPUI and Base as documented to reproduce this workspace behavior.
+The retained Textarea uses a narrow [gpui-base0.7.0 growth patch](docs/gpui-base-textarea-growth-patch.md). [Library-owned Select and Link controls](docs/library-controls.md) use stock Base source for those components; their retired patches remain referenced for upstreaming. Downstream Cargo roots must override both GPUI and Base as documented to reproduce this workspace behavior.
 
 For the full locked workspace and exact AccessKit adapter checks, run `bash scripts/check-rust.sh`. The same commands run in `.github/workflows/validation.yml`; native visual/input/OS acceptance remains separately tracked. Outstanding work and acceptance criteria are tracked in [GitHub issues](https://github.com/msmps/gpui-kumo/issues).

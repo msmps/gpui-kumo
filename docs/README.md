@@ -27,11 +27,13 @@ These documents specify the correction boundary, downstream root configuration, 
 - [Repeated focus registration](gpui-tab-registration-patch.md)
 - [Duration-animation executor clock](gpui-animation-clock-patch.md)
 - [Base Textarea growth](gpui-base-textarea-growth-patch.md)
-- [Base Select confirmation focus](gpui-base-select-focus-patch.md)
-- [Base retained Link focus](gpui-base-link-focus-patch.md)
 - [Linux disabled state](linux-disabled-state-patch.md)
 - [Linux authored busy state](linux-busy-state-validation.md)
 - [Linux authored expansion state](linux-expansion-state-validation.md)
+
+## Retired corrections retained for upstreaming
+
+[Library-owned Select and Link controls](library-controls.md) no longer require Base modifications. The historical source and regression references remain in [Select confirmation focus](gpui-base-select-focus-patch.md) and [retained Link focus](gpui-base-link-focus-patch.md).
 
 ## Component contracts
 

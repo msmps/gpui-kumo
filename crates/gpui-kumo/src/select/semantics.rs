@@ -1,4 +1,4 @@
-//! Enrich Base's actual control node without introducing a second role/focus target.
+//! Enrich Select's actual control node without introducing a second role/focus target.
 use gpui_kit::{
     A11ySubtreeBuilder, App, Bounds, Element, ElementId, GlobalElementId, InspectorElementId,
     IntoElement, LayoutId, Pixels, Role, SharedString, Window, accesskit,
@@ -68,7 +68,7 @@ impl<E: Element> Element for Control<E> {
     ) -> Self::PrepaintState {
         if let Some(id) = id {
             // GPUI keys persistent state by (element ID, state TypeId), so this
-            // does not replace Base's own state. Unseen elements release it.
+            // does not replace the inner element's own state. Unseen elements release it.
             window.with_element_state(id, |mount: Option<Rc<Mount>>, window| {
                 let mount = mount.unwrap_or_else(|| (self.mount)(window, cx));
                 ((), mount)

@@ -1,4 +1,4 @@
-//! Kumo navigation-link presentation over Base's retained focus and activation.
+//! Kumo navigation links with GPUI-owned focus and activation.
 
 #![deny(missing_docs)]
 
@@ -6,7 +6,7 @@ use gpui_kit::base::TestSupportExt;
 use gpui_kit::{
     AbsoluteLength, AnyElement, App, Bounds, ClickEvent, Corners, Edges, ElementId,
     InteractiveElement, IntoElement, ParentElement, Refineable, RenderOnce, SharedString,
-    StatefulInteractiveElement, StyleRefinement, Styled, UnderlineStyle, Window, base, canvas, div,
+    StatefulInteractiveElement, StyleRefinement, Styled, UnderlineStyle, Window, canvas, div,
     point, quad, size, svg,
 };
 
@@ -109,7 +109,7 @@ impl Link {
         self
     }
 
-    /// Inject the application's routing/open strategy. Base dispatches this
+    /// Inject the application's routing/open strategy. Dispatches this
     /// before any activation observer and preserves the actual input event.
     pub fn on_navigate(
         mut self,
@@ -130,7 +130,7 @@ impl Link {
     }
 
     /// Reject activation and remove keyboard traversal while retaining the label.
-    /// This follows Base's native availability policy; no opacity is invented.
+    /// Disabled links retain their appearance and expose unavailable metadata.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
@@ -171,8 +171,7 @@ impl Styled for Link {
 
 impl RenderOnce for Link {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
-        // Base resolves this same scoped key; this only observes its retained
-        // handle for native focus painting, rather than creating a second state.
+        // One keyed handle owns activation, traversal and focus painting.
         let focus = window
             .use_keyed_state(self.id.clone(), cx, |_, cx| cx.focus_handle())
             .read(cx)
@@ -190,24 +189,20 @@ impl RenderOnce for Link {
             _ => theme.text.link,
         });
         let disabled = self.disabled;
-        let href = self.href.clone();
-        let mut link = base::Link::new(self.id)
-            .href(self.href)
-            .accessibility_label(self.label.clone())
-            .disabled(disabled)
-            .group(BADGE_GROUP)
-            .flex()
-            .items_center()
-            .self_start()
-            .gap(font_size * 0.1875)
-            .text_color(foreground)
-            .a11y_synthetic_children(move |builder| {
-                let node = builder.parent_node();
-                node.set_url(href.to_string());
-                if disabled {
-                    node.set_disabled();
-                }
-            });
+        let mut link = control::root(
+            self.id,
+            self.label.clone(),
+            self.href.clone(),
+            &focus,
+            disabled,
+            true,
+        )
+        .group(BADGE_GROUP)
+        .flex()
+        .items_center()
+        .self_start()
+        .gap(font_size * 0.1875)
+        .text_color(foreground);
         if self.badge_content {
             link = link.rounded_full();
         }
@@ -238,20 +233,22 @@ impl RenderOnce for Link {
             link = link.cursor_pointer();
         }
         link.style().refine(&self.style);
-        if let Some(handler) = self.on_navigate {
-            link = link.open_with(move |href, event, window, cx| {
-                handler(
-                    &NavigationRequest {
-                        href: href.into(),
-                        activation: event.clone(),
-                    },
-                    window,
-                    cx,
-                );
+        if !disabled {
+            link = link.on_click(move |event, window, cx| {
+                if let Some(handler) = &self.on_navigate {
+                    handler(
+                        &NavigationRequest {
+                            href: self.href.clone(),
+                            activation: event.clone(),
+                        },
+                        window,
+                        cx,
+                    );
+                }
+                if let Some(handler) = &self.on_activate {
+                    handler(event, window, cx);
+                }
             });
-        }
-        if let Some(handler) = self.on_activate {
-            link = link.on_activate(handler);
         }
         let radii = Corners::<AbsoluteLength>::default().refined(link.style().corner_radii.clone());
         let borders =
@@ -311,9 +308,7 @@ impl RenderOnce for Link {
         if self.external_icon {
             link = link.child(ExternalIcon);
         }
-        // Render Base within this component's namespace so its keyed focus
-        // state and the presentation observer refer to the same handle.
-        link.render(window, cx)
+        link
     }
 }
 
@@ -341,3 +336,5 @@ impl RenderOnce for ExternalIcon {
 
 #[cfg(test)]
 mod tests;
+
+pub(crate) mod control;

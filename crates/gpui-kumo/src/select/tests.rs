@@ -1151,3 +1151,30 @@ fn compact_numeric_popup_reserves_check_space_only_for_selected_options(cx: &mut
         }
     });
 }
+
+#[gpui_kit::test]
+fn confirmation_preserves_owner_selected_outside_focus(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx, false);
+    let (state, after) = view.read_with(cx, |v, _| (v.state.clone(), v.after.clone()));
+    state.update(cx, |s, _| {
+        s.set_proposal_handler(move |_, window, cx| after.focus(window, cx));
+    });
+    cx.update(|window, cx| {
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            state.update(cx, |s, cx| s.set_value(SelectValue::Single(Some(1)), cx));
+            state.read(cx).trigger.clone().focus(window, cx);
+            window.render_frame(cx);
+            window.press("enter", cx);
+            window.render_frame(cx);
+            assert!(state.read(cx).content.is_focused(window));
+            window.press("down", cx);
+            window.press("enter", cx);
+            window.render_frame(cx);
+            assert!(!state.read(cx).is_open());
+            assert_eq!(state.read(cx).value(), &SelectValue::Single(Some(3)));
+            assert!(view.read(cx).after.is_focused(window));
+            assert!(!state.read(cx).content.is_focused(window));
+        }
+    });
+}

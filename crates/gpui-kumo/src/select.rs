@@ -1,4 +1,4 @@
-//! Retained typed Kumo Select over Base disclosure and deferred positioning.
+//! Retained typed Kumo Select with library-owned disclosure and Base positioning.
 #[cfg(test)]
 mod overlay_tests;
 mod semantics;
@@ -911,29 +911,24 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         let owner = cx.entity().downgrade();
         let open_owner = cx.entity().downgrade();
         let mount_owner = open_owner.clone();
-        let confirm_owner = open_owner.clone();
         let ring_focus = self.trigger.clone();
         let invalid = self.invalid;
         let colors = t.colors.clone();
         let joined_middle = self.joined_middle;
         let joined_borders = self.joined_borders.clone();
-        let trigger = base::Select::new("trigger")
-            .open(open)
-            .disabled(disabled)
-            .focus_handle(&self.trigger)
-            .content_focus_handle(&self.content)
-            .key_context(if open {
-                "KumoSelect select_open"
-            } else {
-                "KumoSelect"
-            })
-            .accessibility_label(self.name.clone())
-            .accessibility_value(readable)
-            .on_open_change(move |open, window, cx| {
-                let _ = open_owner.update(cx, |v, cx| v.set_open(open, window, cx));
-            })
-            .on_confirm(move |window, cx| {
-                let _ = confirm_owner.update(cx, |v, cx| v.confirm(window, cx));
+        let trigger = div()
+            .id("trigger")
+            .test_support()
+            .role(Role::ComboBox)
+            .aria_label(self.name.clone())
+            .aria_value(readable)
+            .aria_expanded(open)
+            .when(!disabled, |trigger| {
+                trigger
+                    .track_focus(&self.trigger.clone().tab_stop(true))
+                    .on_a11y_action(gpui_kit::AccessibleAction::Click, move |_, window, cx| {
+                        let _ = open_owner.update(cx, |v, cx| v.set_open(!v.open, window, cx));
+                    })
             })
             .relative()
             .w_full()
@@ -1073,7 +1068,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
                 .size_full(),
             );
         semantics::Control {
-            inner: trigger.render(window, cx).into_element(),
+            inner: trigger.into_element(),
             disabled,
             read_only: self.read_only,
             invalid: self.invalid,
@@ -1154,25 +1149,40 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
                 }
             }))
             .on_key_down(cx.listener(Self::keys))
-            .on_action(cx.listener(move |v, _: &base::actions::SelectDown, _, cx| {
-                if open && !v.unavailable() {
-                    v.move_highlight(1, cx);
-                }
-                cx.stop_propagation();
-            }))
-            .on_action(cx.listener(move |v, _: &base::actions::SelectUp, _, cx| {
-                if open && !v.unavailable() {
-                    v.move_highlight(-1, cx);
-                }
-                cx.stop_propagation();
-            }))
+            .on_action(
+                cx.listener(move |v, _: &base::actions::SelectDown, window, cx| {
+                    if !v.unavailable() {
+                        if v.open {
+                            v.move_highlight(1, cx);
+                        } else {
+                            v.set_open(true, window, cx);
+                        }
+                    }
+                    cx.stop_propagation();
+                }),
+            )
+            .on_action(
+                cx.listener(move |v, _: &base::actions::SelectUp, window, cx| {
+                    if !v.unavailable() {
+                        if v.open {
+                            v.move_highlight(-1, cx);
+                        } else {
+                            v.set_open(true, window, cx);
+                        }
+                    }
+                    cx.stop_propagation();
+                }),
+            )
             .on_action(
                 cx.listener(move |v, _: &base::actions::Confirm, window, cx| {
-                    if open {
-                        v.confirm(window, cx);
-                    } else {
-                        cx.stop_propagation();
+                    if !v.unavailable() {
+                        if v.open {
+                            v.confirm(window, cx);
+                        } else {
+                            v.set_open(true, window, cx);
+                        }
                     }
+                    cx.stop_propagation();
                 }),
             )
             .on_action(cx.listener(|v, _: &base::actions::Cancel, window, cx| {
@@ -1512,6 +1522,3 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             })
     }
 }
-
-#[cfg(test)]
-mod base_tests;
