@@ -1,6 +1,6 @@
 # Kumo native port progress
 
-Updated 2026-10-02. Task branch: `work`. This is the continuation checkpoint and dependency-aware backlog; individual first-slice issues remain in [issues](issues/README.md).
+Updated 2026-10-03. Task branch: `work`. This is the continuation checkpoint and dependency-aware backlog; individual first-slice issues remain in [issues](issues/README.md).
 
 ## Baseline and scope
 
@@ -10,7 +10,7 @@ Continue the component library beyond the first Button/Input/Popover evaluation.
 
 ## Coverage and ordered backlog
 
-Pinned catalog inventory: **43 in-scope component families,20 implemented with documented gaps,23 unported**. [Complete family list and counting rules](component-coverage.md). This is coverage, not a full-fidelity completion claim. Deprecated MenuBar/DateRangePicker/Surface are excluded; use segmented Tabs/DatePicker range/LayerCard. InputArea and SkeletonLine are supported catalog entries omitted by the earlier coarse backlog and now tracked explicitly.
+Pinned catalog inventory: **43 in-scope component families,21 implemented with documented gaps,22 unported**. [Complete family list and counting rules](component-coverage.md). This is coverage, not a full-fidelity completion claim. Deprecated MenuBar/DateRangePicker/Surface are excluded; use segmented Tabs/DatePicker range/LayerCard. InputArea and SkeletonLine are supported catalog entries omitted by the earlier coarse backlog and now tracked explicitly.
 
 | Priority | Components or work | Status / dependencies |
 | --- | --- | --- |
@@ -220,3 +220,9 @@ Next selected: InputArea [#23](https://github.com/msmps/gpui-kumo/issues/23). Hi
 InputArea/alias Textarea over retained Base Textarea implemented: four source sizes, fixed and bounded/unbounded auto rows, native Tab exit, Field/helper/error/help, availability and editing. Source default is browser2 rows (demo4 explicitly configured). Observable sizing regression exposed Base policy/rewrap/font intrinsic-height defect; narrow [two-file published-source repair](gpui-base-textarea-growth-patch.md) preserves editor/history/selection, no version churn. Independent review and disabled-click outside-focus regression fixed capture semantics.113 tests/nine doctests, Rust gates and native both-theme wide/narrow cap/shrink/policy/clipboard/Tab checks pass. [Matrix/evidence/gaps](input-area-validation.md). #23 remains open for manual resize/scrollbar presentation, rich slots, multiline synthetic accessibility/platform/browser acceptance.20 working/43 scoped families;23 unported.
 
 Next selected: InlineCopyText #22. Common composition after retained forms, existing Text/Button foundations; no unported Toast dependency unlike ClipboardText tooltip mode. Pinned source inspected; read complete docs/demos/tests before coding. Acceptance: text and rich content with explicit copy value, supported non-heading Text recipes, hover/focus/enclosing-group icon visibility, disabled/current-focus rejection, pointer/Space/Enter, cancelled consumer activation, retained1500ms feedback/reset, localisation and Unicode native clipboard; own focus ring/14px glyph alignment and light/dark/narrow layouts. Validate actual callback counts, timer replacement, themes, native clipboard, gallery compositions and independent review; source live-region/native clipboard failure limits documented.
+
+## InlineCopyText validated checkpoint / next milestone — 2026-10-03
+
+InlineCopyText over Base Button and existing Text implemented with explicit rich payload/name, valid non-heading recipes, localized copy labels, native enclosing-group visibility, consumer cancellation, disabled gating and retained1500ms feedback.117 tests/nine doctests and required Rust gates pass. Native both-theme wide/narrow, pointer/Space/Enter three callbacks and actual clipboard paste reviewed. Review fixed inherited glyph tone, column width, taller-row centering and concrete Linux mono font fallback; regression guards row composition. [Matrix/evidence/gaps](inline-copy-text-validation.md). #22 stays open for source motion, live-region/platform/browser acceptance and unreportable native clipboard failure.21 working/43 scoped;22 unported.
+
+Next selected: Collapsible #15. Highest-value disclosure family unlocks form/settings composition using Base Collapsible, Base Button, existing tokens and retained inputs. Complete pinned source/docs/all seven demos and installed Base Collapsible/MotionReveal inspected; no matching source tests found. Base supplies controlled conditional content/reveal, not state or trigger behavior. Acceptance: default/custom parts, controlled/uncontrolled open proposals, disabled pointer/keyboard, once-only callbacks, closed panel excluded from focus/semantics, focus restoration on close, retained editor values, keep-mounted adaptation, repeated/nested controls, default16px caret slot/12px bold glyph and source panel border/padding in both themes and narrow layouts. Do not assume MotionReveal's zero-height clip removes hidden descendants from native Tab/a11y; verify before exposing keep-mounted/motion. Define the state/parts matrix, implement, run meaningful rendered-input tests and native visual checks, review, fix, commit and push.

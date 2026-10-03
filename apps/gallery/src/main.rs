@@ -18,6 +18,7 @@ mod cards;
 mod checkboxes;
 mod empties;
 mod fields;
+mod inline_copies;
 mod input_areas;
 mod input_groups;
 mod inputs;
@@ -81,6 +82,7 @@ struct Gallery {
     tooltips: gpui_kit::Entity<tooltips::Tooltips>,
     sensitive_inputs: gpui_kit::Entity<sensitive_inputs::SensitiveInputs>,
     input_areas: gpui_kit::Entity<input_areas::InputAreas>,
+    inline_copies: gpui_kit::Entity<inline_copies::InlineCopies>,
     activations: usize,
     disabled: bool,
     loading: bool,
@@ -188,6 +190,7 @@ impl Render for Gallery {
                     }),
                 )),
         )
+        .child(self.inline_copies.clone())
         .child(self.input_areas.clone())
         .child(self.sensitive_inputs.clone())
         .child(self.checkboxes.clone())
@@ -429,6 +432,7 @@ fn main() {
                             sensitive_inputs: cx
                                 .new(|cx| sensitive_inputs::SensitiveInputs::new(window, cx)),
                             input_areas: cx.new(|cx| input_areas::InputAreas::new(window, cx)),
+                            inline_copies: cx.new(|_| inline_copies::InlineCopies::new()),
                             activations: 0,
                             disabled: false,
                             loading: false,

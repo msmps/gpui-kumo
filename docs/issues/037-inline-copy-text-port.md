@@ -1,18 +1,18 @@
 # KUMO-037: Port InlineCopyText with Kumo fidelity over GPUI Base
 
-Status: Open
+Status: Working core checkpoint; open fidelity/platform gates
 
 GitHub issue: https://github.com/msmps/gpui-kumo/issues/22
 
 ## Goal and status
 
-Port the supported **InlineCopyText** Kumo family to Rust/GPUI. This family is currently unported; the issue covers its supported parts and public API, not just a static default-state demo.
+Port the supported **InlineCopyText** Kumo family to Rust/GPUI. Working core implemented; the issue still covers its supported parts and public API, not just a static default-state demo.
 
 ## GPUI Kit/Base foundation
 
 **Match: No dedicated counterpart.**
 
-Use/evaluate: Button + Tooltip and existing Kumo Text styling; GPUI clipboard API.
+Use/evaluate: Base Button and existing Kumo Text styling; GPUI clipboard API.
 
 Limits: No Base inline-copy primitive. Display content and copy payload may differ, so derive the source contract explicitly rather than copying whatever happens to render.
 
@@ -21,7 +21,7 @@ Limits: No Base inline-copy primitive. Display content and copy payload may diff
 
 ## Dependencies and scope
 
-Build on: Button, Tooltip, Text. These are dependencies, not a claim that every dependency is already complete. Preserve the existing project and API patterns.
+Build on: Button, Text. The pinned component does not contain a Tooltip. These are dependencies, not a claim that every dependency is already complete. Preserve the existing project and API patterns.
 
 [Full coverage/backlog](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md); [progress and selected milestone](https://github.com/msmps/gpui-kumo/blob/work/docs/port-progress.md).
 
@@ -43,3 +43,7 @@ Build on: Button, Tooltip, Text. These are dependencies, not a claim that every 
 - [Kumo InlineCopyText source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/inline-copy-text/inline-copy-text.tsx) — revision `3fd5b648df578cb1ba214dedd30f475009f6a668`.
 - GPUI Kit/Base `0.7.0`; GPUI family `0.3.7` (local documented tab-registration patch retained). Do not silently chase upstream APIs.
 - Repository checkpoint `f9bb821cf2523951765e443867ca42c2cdd5a444`; component counts: 43 scoped /18 implemented /25 unported. Deprecated components, charts, Flow, Sidebar/app shells, branding and blocks remain excluded.
+
+## Checkpoint — 2026-10-03
+
+Working core,117 tests/nine doctests, Rust gate and native light/dark wide/narrow/clipboard/activation checks pass. [Acceptance, review findings and remaining gates](../inline-copy-text-validation.md). Source feedback motion/live-region speech, OS clipboard failure reporting and browser/platform comparisons remain open.

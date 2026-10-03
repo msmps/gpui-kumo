@@ -182,6 +182,8 @@ pub struct Spacing {
 
 #[derive(Clone, Copy, Debug)]
 pub struct Radii {
+    /// Tailwind rounded-xs, used by inline copy controls.
+    pub xs: Pixels,
     pub sm: Pixels,
     pub md: Pixels,
     pub lg: Pixels,
@@ -498,6 +500,7 @@ impl Theme {
                 sixteen: px(16.),
             },
             radii: Radii {
+                xs: px(2.),
                 sm: px(4.),
                 md: px(6.),
                 lg: px(8.),
@@ -557,7 +560,8 @@ fn system_mono_font() -> &'static str {
     } else if cfg!(target_os = "windows") {
         "Consolas"
     } else {
-        "monospace"
+        // Cosmic Text resolves concrete family names rather than CSS generics.
+        "DejaVu Sans Mono"
     }
 }
 

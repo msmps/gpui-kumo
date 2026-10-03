@@ -52,3 +52,5 @@ For current catalog counts and explicit exclusions, see [component coverage](com
 SensitiveInput: [acceptance, native adaptations and evidence](sensitive-input-validation.md).
 
 InputArea: [acceptance/evidence](input-area-validation.md), [Base growth patch](gpui-base-textarea-growth-patch.md).
+
+InlineCopyText: [acceptance/evidence](inline-copy-text-validation.md).

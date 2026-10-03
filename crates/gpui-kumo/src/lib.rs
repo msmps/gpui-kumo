@@ -70,3 +70,6 @@ pub use sensitive_input::{SensitiveInput, SensitiveInputEvent, SensitiveInputSta
 
 pub mod input_area;
 pub use input_area::{InputArea, InputAreaEvent, InputAreaState, Textarea};
+
+pub mod inline_copy_text;
+pub use inline_copy_text::InlineCopyText;
