@@ -568,7 +568,9 @@ fn editor_owner_availability_recovery_and_group_disabled_edit_guard_are_current(
         let state = view.read(cx).toolbar.clone();
         state.update(cx, |s, cx| {
             let mut items = editor_items(&view.read(cx).inputs);
-            items[1] = items[1].clone().focusable_when_disabled(false);
+            items[1] = ToolbarItem::input("query", &view.read(cx).inputs[0], px(180.))
+                .focusable_when_disabled(false)
+                .build();
             s.set_items(items, window, cx);
             s.focus_item(&"query".into(), window, cx);
         });

@@ -531,34 +531,20 @@ impl RenderOnce for TooltipProvider {
     }
 }
 
-impl std::fmt::Debug for TooltipState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("TooltipState");
-        debug.field("open", &self.open);
-        debug.field("disabled", &self.disabled);
-        debug.field("hovered", &self.hovered);
-        debug.field("keyboard_focus", &self.keyboard_focus);
-        debug.field("suppressed", &self.suppressed);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(TooltipState {
+    open,
+    disabled,
+    hovered,
+    keyboard_focus,
+    suppressed
+});
 
-impl std::fmt::Debug for Tooltip {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Tooltip");
-        debug.field("id", &self.presentation.id);
-        debug.field("state", &self.state.entity_id());
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Tooltip {
+    id: |this| this.presentation.id,
+    state: |this| this.state.entity_id()
+});
 
-impl std::fmt::Debug for TooltipProvider {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("TooltipProvider");
-        debug.field("id", &self.id);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(TooltipProvider { id });
 
 #[cfg(test)]
 mod tests;

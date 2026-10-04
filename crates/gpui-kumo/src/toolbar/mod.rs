@@ -148,43 +148,6 @@ impl ToolbarItem {
             .as_mut()
             .expect("addons require Toolbar InputGroup")
     }
-    /// Text, icon or compact action addons; nested parts are supported.
-    fn start(mut self, addon: InputGroupAddon) -> Self {
-        self.group_mut().start = Some(addon);
-        self
-    }
-    /// Trailing addons under the same InputGroup contract as `start`.
-    fn end(mut self, addon: InputGroupAddon) -> Self {
-        self.group_mut().end = Some(addon);
-        self
-    }
-    /// A suffix follows the displayed editor text using the existing InputGroup recipe.
-    fn suffix(mut self, text: impl Into<SharedString>) -> Self {
-        self.group_mut().suffix = Some(text.into());
-        self
-    }
-    fn disabled(mut self, disabled: bool) -> Self {
-        self.disabled = disabled;
-        self
-    }
-    /// A Button loading indicator also gates activation. Links do not expose loading.
-    fn loading(mut self, loading: bool) -> Self {
-        assert!(
-            matches!(self.kind, Kind::Button),
-            "Toolbar links do not load"
-        );
-        self.loading = loading;
-        self
-    }
-    /// Source Buttons/Inputs default to focusable when unavailable. Disabled native links leave traversal.
-    fn focusable_when_disabled(mut self, focusable: bool) -> Self {
-        assert!(
-            !matches!(self.kind, Kind::Link(_)),
-            "Toolbar.Link has no focusableWhenDisabled prop"
-        );
-        self.focusable_when_disabled = focusable;
-        self
-    }
 }
 /// Typed toolbar builders are converted to the common collection item with `build`.
 impl ToolbarItem {
@@ -257,7 +220,7 @@ impl ToolbarButton {
     }
     /// Gate activation or editing according to this kind's availability policy.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        self.0 = self.0.disabled(disabled);
+        self.0.disabled = disabled;
         self
     }
     /// Add a decorative icon without changing text visibility.
@@ -271,13 +234,15 @@ impl ToolbarButton {
         self
     }
     /// Show progress and reject repeat activation.
+    /// A Button loading indicator also gates activation. Links do not expose loading.
     pub fn loading(mut self, loading: bool) -> Self {
-        self.0 = self.0.loading(loading);
+        self.0.loading = loading;
         self
     }
     /// Choose whether an unavailable control remains in roving focus.
+    /// Source Buttons/Inputs default to focusable when unavailable. Disabled native links leave traversal.
     pub fn focusable_when_disabled(mut self, focusable: bool) -> Self {
-        self.0 = self.0.focusable_when_disabled(focusable);
+        self.0.focusable_when_disabled = focusable;
         self
     }
 }
@@ -309,7 +274,7 @@ impl ToolbarLink {
     }
     /// Gate activation or editing according to this kind's availability policy.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        self.0 = self.0.disabled(disabled);
+        self.0.disabled = disabled;
         self
     }
     /// Add a decorative icon without changing text visibility.
@@ -334,12 +299,12 @@ impl ToolbarInput {
     }
     /// Gate activation or editing according to this kind's availability policy.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        self.0 = self.0.disabled(disabled);
+        self.0.disabled = disabled;
         self
     }
     /// Choose whether an unavailable control remains in roving focus.
     pub fn focusable_when_disabled(mut self, focusable: bool) -> Self {
-        self.0 = self.0.focusable_when_disabled(focusable);
+        self.0.focusable_when_disabled = focusable;
         self
     }
 }
@@ -354,27 +319,30 @@ impl ToolbarInputGroup {
     }
     /// Gate activation or editing according to this kind's availability policy.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        self.0 = self.0.disabled(disabled);
+        self.0.disabled = disabled;
         self
     }
     /// Choose whether an unavailable control remains in roving focus.
     pub fn focusable_when_disabled(mut self, focusable: bool) -> Self {
-        self.0 = self.0.focusable_when_disabled(focusable);
+        self.0.focusable_when_disabled = focusable;
         self
     }
     /// Configure the group's start slot using the shared InputGroup recipe.
+    /// Text, icon or compact action addons; nested parts are supported.
     pub fn start(mut self, addon: InputGroupAddon) -> Self {
-        self.0 = self.0.start(addon);
+        self.0.group_mut().start = Some(addon);
         self
     }
     /// Configure the group's end slot using the shared InputGroup recipe.
+    /// Trailing addons under the same InputGroup contract as `start`.
     pub fn end(mut self, addon: InputGroupAddon) -> Self {
-        self.0 = self.0.end(addon);
+        self.0.group_mut().end = Some(addon);
         self
     }
     /// Configure the group's suffix slot using the shared InputGroup recipe.
+    /// A suffix follows the displayed editor text using the existing InputGroup recipe.
     pub fn suffix(mut self, text: impl Into<SharedString>) -> Self {
-        self.0 = self.0.suffix(text);
+        self.0.group_mut().suffix = Some(text.into());
         self
     }
 }
@@ -1181,41 +1149,29 @@ impl RenderOnce for LinkControl {
         )
     }
 }
-impl std::fmt::Debug for ToolbarItem {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("ToolbarItem");
-        debug.field("id", &self.id);
-        debug.field("name", &self.name);
-        debug.field("icon_only", &self.icon_only);
-        debug.field("disabled", &self.disabled);
-        debug.field("loading", &self.loading);
-        debug.field("focusable_when_disabled", &self.focusable_when_disabled);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(ToolbarItem {
+    id,
+    name,
+    icon_only,
+    disabled,
+    loading,
+    focusable_when_disabled
+});
 
-impl std::fmt::Debug for ToolbarState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("ToolbarState");
-        debug.field("items_count", &self.items.len());
-        debug.field("disabled", &self.disabled);
-        debug.field("orientation", &self.orientation);
-        debug.field("loop_focus", &self.loop_focus);
-        debug.field("name", &self.name);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(ToolbarState {
+    items_count: |this| this.items.len(),
+    disabled,
+    orientation,
+    loop_focus,
+    name
+});
 
-impl std::fmt::Debug for Toolbar {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Toolbar");
-        debug.field("id", &self.id);
-        debug.field("name", &self.name);
-        debug.field("orientation", &self.orientation);
-        debug.field("loop_focus", &self.loop_focus);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Toolbar {
+    id,
+    name,
+    orientation,
+    loop_focus
+});
 
 #[cfg(test)]
 mod tests;

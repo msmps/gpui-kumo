@@ -915,21 +915,17 @@ impl RenderOnce for Button {
     }
 }
 
-impl std::fmt::Debug for Button {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Button");
-        debug.field("id", &self.id);
-        debug.field("name", &self.name);
-        debug.field("variant", &self.variant);
-        debug.field("size", &self.size);
-        debug.field("disabled", &self.disabled);
-        debug.field("loading", &self.loading);
-        debug.field("input_group_action", &self.input_group_action);
-        debug.field("open", &self.open);
-        debug.field("menu_trigger", &self.menu_trigger);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Button {
+    id,
+    name,
+    variant,
+    size,
+    disabled,
+    loading,
+    input_group_action,
+    open,
+    menu_trigger
+});
 
 #[cfg(test)]
 mod tests;

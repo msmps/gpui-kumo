@@ -1170,24 +1170,14 @@ impl crate::field::FieldControl for Input {
     }
 }
 
-impl std::fmt::Debug for InputState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("InputState");
-        debug.field("name", &self.name);
-        debug.field("disabled", &self.disabled);
-        debug.field("read_only", &self.read_only);
-        debug.field("toolbar_disabled", &self.toolbar_disabled);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(InputState {
+    name,
+    disabled,
+    read_only,
+    toolbar_disabled
+});
 
-impl std::fmt::Debug for Input {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Input");
-        debug.field("id", &self.id);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Input { id });
 
 #[cfg(test)]
 mod tests;

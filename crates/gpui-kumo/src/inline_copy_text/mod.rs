@@ -382,16 +382,12 @@ impl RenderOnce for InlineCopyText {
         div().flex().min_w_0().max_w_full().child(control)
     }
 }
-impl std::fmt::Debug for InlineCopyText {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("InlineCopyText");
-        debug.field("id", &self.id);
-        debug.field("truncate", &self.truncate);
-        debug.field("disabled", &self.disabled);
-        debug.field("group_active", &self.group_active);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(InlineCopyText {
+    id,
+    truncate,
+    disabled,
+    group_active
+});
 
 #[cfg(test)]
 mod tests;

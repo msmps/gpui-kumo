@@ -267,14 +267,7 @@ impl RenderOnce for Empty {
     }
 }
 
-impl std::fmt::Debug for Empty {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Empty");
-        debug.field("id", &self.id);
-        debug.field("size", &self.size);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Empty { id, size });
 
 #[cfg(test)]
 mod tests;

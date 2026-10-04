@@ -358,29 +358,21 @@ impl RenderOnce for CheckboxGroup {
             })
     }
 }
-impl std::fmt::Debug for CheckboxItem {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("CheckboxItem");
-        debug.field("label", &self.label);
-        debug.field("disabled", &self.disabled);
-        debug.field("variant", &self.variant);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(CheckboxItem {
+    label,
+    disabled,
+    variant
+});
 
-impl std::fmt::Debug for CheckboxGroup {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("CheckboxGroup");
-        debug.field("id", &self.id);
-        debug.field("name", &self.name);
-        debug.field("hidden_legend", &self.hidden_legend);
-        debug.field("items_count", &self.items.len());
-        debug.field("disabled", &self.disabled);
-        debug.field("control_first", &self.control_first);
-        debug.field("show_error", &self.show_error);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(CheckboxGroup {
+    id,
+    name,
+    hidden_legend,
+    items_count: |this| this.items.len(),
+    disabled,
+    control_first,
+    show_error
+});
 
 #[cfg(test)]
 mod tests;

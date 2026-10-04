@@ -273,13 +273,7 @@ fn paint_shimmer(
     }
 }
 
-impl std::fmt::Debug for SkeletonLine {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("SkeletonLine");
-        debug.field("id", &self.id);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(SkeletonLine { id });
 
 #[cfg(test)]
 mod tests;

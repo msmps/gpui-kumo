@@ -1125,53 +1125,20 @@ impl Render for PaginationState {
     }
 }
 
-impl std::fmt::Debug for PaginationInfo {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("PaginationInfo");
-        debug.field("value", &self.value);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(PaginationInfo { value });
 
-impl std::fmt::Debug for PaginationSeparator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("PaginationSeparator");
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(PaginationSeparator {});
 
-impl std::fmt::Debug for PaginationPageSize {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("PaginationPageSize");
-        debug.field("show_label", &self.show_label);
-        debug.field("value", &self.value);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(PaginationPageSize { show_label, value });
 
-impl std::fmt::Debug for PaginationParts {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("PaginationParts");
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(PaginationParts {});
 
-impl std::fmt::Debug for PaginationState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("PaginationState");
-        debug.field("per_page", &self.per_page);
-        debug.field("draft_dirty", &self.draft_dirty);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(PaginationState {
+    per_page,
+    draft_dirty
+});
 
-impl std::fmt::Debug for Pagination {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Pagination");
-        debug.field("id", &self.id);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Pagination { id });
 
 #[cfg(test)]
 mod tests;

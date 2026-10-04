@@ -146,13 +146,9 @@ impl RenderOnce for Label {
     }
 }
 
-impl std::fmt::Debug for Label {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Label");
-        debug.field("id", &self.id);
-        debug.field("optional", &self.optional);
-        debug.field("disabled", &self.disabled);
-        debug.field("as_content", &self.as_content);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Label {
+    id,
+    optional,
+    disabled,
+    as_content
+});

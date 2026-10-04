@@ -263,22 +263,9 @@ impl RenderOnce for Section {
     }
 }
 
-impl std::fmt::Debug for LayerCard {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("LayerCard");
-        debug.field("id", &self.id);
-        debug.field("layered", &self.layered);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(LayerCard { id, layered });
 
-impl std::fmt::Debug for Section {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Section");
-        debug.field("id", &self.id);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Section { id });
 
 #[cfg(test)]
 mod tests;

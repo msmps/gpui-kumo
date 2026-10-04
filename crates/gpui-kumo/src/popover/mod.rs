@@ -609,31 +609,18 @@ impl Render for PopoverState {
 
 pub(crate) mod arrow;
 
-impl std::fmt::Debug for PopoverClose {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("PopoverClose");
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(PopoverClose {});
 
-impl std::fmt::Debug for PopoverState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("PopoverState");
-        debug.field("name", &self.name);
-        debug.field("open", &self.open);
-        debug.field("disabled", &self.disabled);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(PopoverState {
+    name,
+    open,
+    disabled
+});
 
-impl std::fmt::Debug for Popover {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Popover");
-        debug.field("id", &self.id);
-        debug.field("state", &self.state.entity_id());
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Popover {
+    id,
+    state: |this| this.state.entity_id()
+});
 
 #[cfg(test)]
 mod tests;

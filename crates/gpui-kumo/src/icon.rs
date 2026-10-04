@@ -35,10 +35,4 @@ impl RenderOnce for Icon {
     }
 }
 
-impl std::fmt::Debug for Icon {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Icon");
-        debug.field("path", &self.path);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Icon { path });

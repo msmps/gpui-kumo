@@ -29,9 +29,4 @@ impl AssetSource for Assets {
     }
 }
 
-impl std::fmt::Debug for Assets {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Assets");
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Assets {});

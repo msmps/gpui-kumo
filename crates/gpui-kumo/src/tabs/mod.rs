@@ -440,41 +440,20 @@ impl<T: Clone + Eq + 'static> RenderOnce for Tabs<T> {
             .child(self.state)
     }
 }
-impl<T> std::fmt::Debug for TabItem<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("TabItem");
-        debug.field("id", &self.id);
-        debug.field("label", &self.label);
-        debug.field("disabled", &self.disabled);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!([T] TabItem<T> { id, label, disabled });
 
-impl<T: Clone + Eq + 'static> std::fmt::Debug for TabsState<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("TabsState");
-        debug.field("items_count", &self.items.len());
-        debug.field("controlled", &self.controlled);
-        debug.field("activate_on_focus", &self.activate_on_focus);
-        debug.field("disabled", &self.disabled);
-        debug.field("variant", &self.variant);
-        debug.field("size", &self.size);
-        debug.field("name", &self.name);
-        debug.field("scroll_generation", &self.scroll_generation);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!([T: Clone + Eq + 'static] TabsState<T> {
+    items_count: |this| this.items.len(),
+    controlled,
+    activate_on_focus,
+    disabled,
+    variant,
+    size,
+    name,
+    scroll_generation,
+});
 
-impl<T: Clone + Eq + 'static> std::fmt::Debug for Tabs<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Tabs");
-        debug.field("id", &self.id);
-        debug.field("name", &self.name);
-        debug.field("variant", &self.variant);
-        debug.field("size", &self.size);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!([T: Clone + Eq + 'static] Tabs<T> { id, name, variant, size });
 
 #[cfg(test)]
 mod tests;

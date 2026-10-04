@@ -360,26 +360,17 @@ impl RenderOnce for ExternalIcon {
 
 pub(crate) mod control;
 
-impl std::fmt::Debug for Link {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Link");
-        debug.field("id", &self.id);
-        debug.field("label", &self.label);
-        debug.field("variant", &self.variant);
-        debug.field("badge_content", &self.badge_content);
-        debug.field("breadcrumb", &self.breadcrumb);
-        debug.field("external_icon", &self.external_icon);
-        debug.field("disabled", &self.disabled);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(Link {
+    id,
+    label,
+    variant,
+    badge_content,
+    breadcrumb,
+    external_icon,
+    disabled
+});
 
-impl std::fmt::Debug for ExternalIcon {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("ExternalIcon");
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(ExternalIcon {});
 
 #[cfg(test)]
 mod tests;

@@ -1673,66 +1673,31 @@ impl<T: Clone + PartialEq + 'static> crate::field::FieldControl for Select<T> {
     }
 }
 
-impl std::fmt::Debug for SelectValueContent {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("SelectValueContent");
-        debug.field("value_text", &"<redacted>");
-        debug.field("content", &"<element>");
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!(SelectValueContent {
+    value_text: |_this| "<redacted>",
+    content: |_this| "<element>"
+});
 
-impl<T> std::fmt::Debug for SelectOption<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("SelectOption");
-        debug.field("id", &self.id);
-        debug.field("label", &self.label);
-        debug.field("disabled", &self.disabled);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!([T] SelectOption<T> { id, label, disabled });
 
-impl<T> std::fmt::Debug for SelectGroup<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("SelectGroup");
-        debug.field("id", &self.id);
-        debug.field("label", &self.label);
-        debug.field("options_count", &self.options.len());
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!([T] SelectGroup<T> { id, label, options_count: |this| this.options.len() });
 
-impl<T: Clone + PartialEq + 'static> std::fmt::Debug for SelectState<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("SelectState");
-        debug.field("name", &self.name);
-        debug.field("parts_count", &self.parts.len());
-        debug.field("controlled", &self.controlled);
-        debug.field("joined_middle", &self.joined_middle);
-        debug.field("disabled", &self.disabled);
-        debug.field("read_only", &self.read_only);
-        debug.field("open", &self.open);
-        debug.field("size", &self.size);
-        debug.field("invalid", &self.invalid);
-        debug.field("loading", &self.loading);
-        debug.field("hovered", &self.hovered);
-        debug.field("mounted_once", &self.mounted_once);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!([T: Clone + PartialEq + 'static] SelectState<T> {
+    name,
+    parts_count: |this| this.parts.len(),
+    controlled,
+    joined_middle,
+    disabled,
+    read_only,
+    open,
+    size,
+    invalid,
+    loading,
+    hovered,
+    mounted_once,
+});
 
-impl<T: Clone + PartialEq + 'static> std::fmt::Debug for Select<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug = f.debug_struct("Select");
-        debug.field("id", &self.id);
-        debug.field("size", &self.size);
-        debug.field("invalid", &self.invalid);
-        debug.field("loading", &self.loading);
-        debug.field("label", &self.label);
-        debug.field("required", &self.required);
-        debug.finish_non_exhaustive()
-    }
-}
+debug_struct!([T: Clone + PartialEq + 'static] Select<T> { id, size, invalid, loading, label, required });
 
 impl<T> std::fmt::Debug for SelectPart<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
