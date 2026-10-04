@@ -251,7 +251,7 @@ impl RenderOnce for PaginationPageSize {
                 div()
                     .w(width)
                     .flex_shrink_0()
-                    .child(Select::new("pagination-size-select", &self.state)),
+                    .child(Select::new("pagination-size-select", &self.state).show_label(false)),
             )
     }
 }
@@ -817,6 +817,7 @@ impl PaginationState {
                     .child(
                         div().w(width).flex_shrink_0().child(
                             Select::new("pagination-page-select", &self.page_select)
+                                .show_label(false)
                                 .joined_middle(borders.clone()),
                         ),
                     )
@@ -847,6 +848,7 @@ impl PaginationState {
                 .w(px(214.))
                 .child(
                     InputGroup::new("pagination-input-group", &self.input)
+                        .show_label(false)
                         .editor_width(px(50.))
                         .text_align(gpui_kit::TextAlign::Center)
                         .leading_button(

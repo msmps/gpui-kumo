@@ -288,6 +288,7 @@ pub(crate) struct Container {
 /// all direct actions after the shared editor zone, matching Kumo partitioning.
 #[derive(IntoElement)]
 #[must_use]
+/// The retained name is shown by default; use `show_label(false)` for embedded presentation.
 pub struct InputGroup {
     input: Input,
     container: Container,
@@ -339,10 +340,10 @@ impl InputGroup {
         self.input = self.input.label_tooltip(state, content);
         self
     }
-    /// Explicit false adds the optional indicator to a visible label.
+    /// Show or hide the optional indicator beside a visible label.
     /// This is presentation; validation and editor required semantics stay owner-controlled.
-    pub fn required(mut self, required: bool) -> Self {
-        self.input = self.input.required(required);
+    pub fn optional_indicator(mut self, optional: bool) -> Self {
+        self.input = self.input.optional_indicator(optional);
         self
     }
     /// An error suppresses helper text even when its message is hidden.
@@ -582,12 +583,12 @@ impl gpui_kit::Element for Zoned {
 
 impl crate::field::sealed::Sealed for InputGroup {}
 impl crate::field::FieldControl for InputGroup {
-    fn into_field_parts(
-        self,
-        cx: &App,
-    ) -> (SharedString, gpui_kit::FocusHandle, gpui_kit::AnyElement) {
-        let (label, focus) = self.input.field_identity(cx);
-        (label, focus, self.show_label(false).into_any_element())
+    fn into_field(mut self, id: impl Into<ElementId>, cx: &App) -> crate::Field {
+        let presentation = self.input.take_field_presentation(cx);
+        crate::Field::associated(id.into(), presentation, move |error, description| {
+            self.input = self.input.field_error(error, description);
+            self.into_any_element()
+        })
     }
 }
 

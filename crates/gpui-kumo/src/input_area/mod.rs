@@ -168,6 +168,7 @@ struct Presentation {
     accessible_name: Option<SharedString>,
     optional: bool,
     description: Option<SharedString>,
+    field_description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
     tooltip: Option<(Entity<crate::TooltipState>, SharedString)>,
 }
@@ -177,11 +178,12 @@ impl Default for Presentation {
             size: Size::Base,
             rows: 2,
             auto_resize: None,
-            label: false,
+            label: true,
             label_text: None,
             accessible_name: None,
             optional: false,
             description: None,
+            field_description: None,
             error: None,
             tooltip: None,
         }
@@ -196,7 +198,7 @@ pub struct InputArea {
     presentation: Presentation,
 }
 impl InputArea {
-    /// Present the retained multiline editor under a stable element identity.
+    /// Present the retained multiline editor under a stable element identity. Its label is visible by default.
     pub fn new(id: impl Into<ElementId>, state: &Entity<InputAreaState>) -> Self {
         Self {
             id: id.into(),
@@ -243,9 +245,9 @@ impl InputArea {
         self.presentation.label = show;
         self
     }
-    /// Choose the optional indicator: false shows “(optional)”. This does not perform validation.
-    pub fn required(mut self, required: bool) -> Self {
-        self.presentation.optional = !required;
+    /// Show or hide “(optional)”. This does not validate or author required state.
+    pub fn optional_indicator(mut self, optional: bool) -> Self {
+        self.presentation.optional = optional;
         self
     }
     /// Supply supporting text; errors take precedence even when their message is hidden.
@@ -348,7 +350,13 @@ impl Render for InputAreaState {
             .accessibility_label(self.accessible_name())
             .aria_value(self.value(cx))
             .aria_placeholder(self.editor.read(cx).presentation().placeholder().clone())
-            .when_some(message, |this, (text, _)| this.aria_description(text))
+            .when_some(
+                self.presentation
+                    .field_description
+                    .clone()
+                    .or_else(|| message.map(|(text, _)| text)),
+                |this, text| this.aria_description(text),
+            )
             .a11y_synthetic_children(move |builder| {
                 let node = builder.parent_node();
                 if disabled {
@@ -430,9 +438,9 @@ impl Render for InputAreaState {
             );
         crate::Field::new("field", self.label_text(), surface)
             .focus_target(&focus)
-            .disabled(disabled)
+            .label_disabled(disabled)
             .show_label(self.presentation.label)
-            .required(!self.presentation.optional)
+            .optional_indicator(self.presentation.optional)
             .when_some(self.presentation.description.clone(), |field, text| {
                 field.description(text)
             })
@@ -448,14 +456,26 @@ impl Render for InputAreaState {
 pub type Textarea = InputArea;
 impl crate::field::sealed::Sealed for InputArea {}
 impl crate::field::FieldControl for InputArea {
-    fn into_field_parts(self, cx: &App) -> (SharedString, FocusHandle, gpui_kit::AnyElement) {
-        let label = self
-            .presentation
-            .label_text
-            .clone()
-            .unwrap_or_else(|| self.state.read(cx).name.clone());
-        let focus = self.state.read(cx).focus_handle(cx);
-        (label, focus, self.show_label(false).into_any_element())
+    fn into_field(mut self, id: impl Into<ElementId>, cx: &App) -> crate::Field {
+        let presentation = crate::field::ControlPresentation {
+            label: self
+                .presentation
+                .label_text
+                .clone()
+                .unwrap_or_else(|| self.state.read(cx).name.clone()),
+            focus: self.state.read(cx).focus_handle(cx),
+            disabled: self.state.read(cx).is_disabled(),
+            show_label: self.presentation.label,
+            optional: self.presentation.optional,
+            tooltip: self.presentation.tooltip.take(),
+            description: self.presentation.description.take(),
+            error: self.presentation.error.take(),
+        };
+        crate::Field::associated(id.into(), presentation, move |error, description| {
+            self.presentation.field_description = description;
+            self.presentation.error = error.map(|(text, _)| (text, false));
+            self.show_label(false).into_any_element()
+        })
     }
 }
 

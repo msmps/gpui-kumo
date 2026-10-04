@@ -100,3 +100,5 @@ The pinned source mounts ItemIndicator only for selected items. Native rows now 
 macOS Metal1040/520 Light/Dark captures measure61px for selected3 and68px for selected10; both fit on one line. Earlier DejaVu browser measurements were60.92/69.83px, so these system-font captures establish selected-only layout and native fit, not exact cross-font pixel identity. [Native fixture/results/alignment and corners](validation-fixtures.md). Full locked gate passes232library/1gallery/9doctests and adapter12/14, formatting, warnings-denied lint and builds.
 
 The confirmed numeric width/check-slot defect is resolved. #27 stays open for trigger/placement/rich-help/replacement capabilities and narrow collision/moving-anchor/native-browser acceptance; #26's remaining native matrix is unchanged.
+
+Standalone Select shows its label by default; label activation focuses the retained trigger. Disabled/loading labels reject forwarding. `optional_indicator(true)` displays the optional marker. Typed Field composition transfers feedback and makes outer errors drive trigger invalid semantics; compact Pagination Selects explicitly hide their internal label.

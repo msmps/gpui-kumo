@@ -12,15 +12,19 @@ impl Render for Harness {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let focus = self.input.read(cx).focus_handle(cx);
         div().w(px(300.)).child(
-            Field::new("field", "Phone", crate::Input::new("input", &self.input))
-                .required(false)
-                .focus_target(&focus)
-                .disabled(self.disabled)
-                .layout(self.layout)
-                .description("Account recovery only")
-                .when_some(self.error, |field, show| {
-                    field.error_visible("Invalid phone", show)
-                }),
+            Field::new(
+                "field",
+                "Phone",
+                crate::Input::new("input", &self.input).show_label(false),
+            )
+            .optional_indicator(true)
+            .focus_target(&focus)
+            .label_disabled(self.disabled)
+            .layout(self.layout)
+            .description("Account recovery only")
+            .when_some(self.error, |field, show| {
+                field.error_visible("Invalid phone", show)
+            }),
         )
     }
 }
@@ -144,11 +148,11 @@ impl Render for HelpHarness {
                     Field::new(
                         "help-field",
                         self.label.clone(),
-                        crate::Input::new("help-input", &self.input),
+                        crate::Input::new("help-input", &self.input).show_label(false),
                     )
-                    .required(false)
+                    .optional_indicator(true)
                     .focus_target(&focus)
-                    .disabled(self.disabled)
+                    .label_disabled(self.disabled)
                     .show_label(!self.hide)
                     .label_tooltip(&self.tooltip, self.content.clone())
                     .description("Keep this number up to date."),
@@ -286,4 +290,94 @@ fn contextual_help_is_independent_of_label_focus_and_control_availability(cx: &m
             });
         });
     }
+}
+
+struct Associated {
+    input: Entity<crate::InputState>,
+    help: Entity<crate::TooltipState>,
+    inherited_error: bool,
+    outer_error: Option<bool>,
+    optional: Option<bool>,
+    width: f32,
+}
+impl Render for Associated {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let input = crate::Input::new("email", &self.input)
+            .optional_indicator(true)
+            .label_tooltip(&self.help, "Use your account email")
+            .description("We keep this private")
+            .when(self.inherited_error, |input| input.error("Inherited error"));
+        let field = Field::control("associated", input, cx)
+            .when_some(self.outer_error, |field, show| {
+                field.error_visible("Outer error", show)
+            })
+            .when_some(self.optional, |field, optional| {
+                field.optional_indicator(optional)
+            });
+        div().w(px(self.width)).child(field)
+    }
+}
+
+#[gpui_kit::test]
+fn associated_field_transfers_metadata_and_follows_retained_availability(cx: &mut TestAppContext) {
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| Associated {
+        input: cx.new(|cx| crate::InputState::new("Email", window, cx)),
+        help: cx.new(|cx| crate::TooltipState::new(window, cx)),
+        inherited_error: true,
+        outer_error: None,
+        optional: None,
+        width: 400.,
+    });
+    cx.update(|window, cx| {
+        let input = view.read(cx).input.clone();
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            for width in [400., 180.] {
+                view.update(cx, |view, cx| {
+                    view.width = width;
+                    cx.notify();
+                });
+                window.render_frame(cx);
+                assert_eq!(window.find("label").value(), Some("Email (optional)"));
+                assert_eq!(window.find("label-help").label(), Some("More information"));
+                assert_eq!(window.find("message").value(), Some("Inherited error"));
+                let label = window.find("label").bounds();
+                let help = window.find("label-help").bounds();
+                assert_eq!(help.center().y, label.center().y);
+                assert_eq!(
+                    window.find("control").bounds().top() - label.bottom(),
+                    px(8.)
+                );
+                window.click("label", cx);
+                assert!(input.read(cx).focus_handle(cx).is_focused(window));
+                window.input("draft", cx);
+                let value = input.read(cx).value(cx);
+                input.update(cx, |state, cx| state.set_disabled(true, cx));
+                window.render_frame(cx);
+                window.input("blocked", cx);
+                assert_eq!(input.read(cx).value(cx), value);
+                window.blur(cx);
+                window.click("label", cx);
+                assert!(!input.read(cx).focus_handle(cx).is_focused(window));
+                assert!(window.find("label-help").visible());
+                input.update(cx, |state, cx| state.set_disabled(false, cx));
+            }
+        }
+        view.update(cx, |view, cx| {
+            view.outer_error = Some(false);
+            view.optional = Some(false);
+            cx.notify();
+        });
+        window.render_frame(cx);
+        assert_eq!(window.find("label").value(), Some("Email"));
+        assert!(window.try_find("message").is_none());
+        view.update(cx, |view, cx| {
+            view.inherited_error = false;
+            view.outer_error = None;
+            cx.notify();
+        });
+        window.render_frame(cx);
+        assert_eq!(window.find("message").value(), Some("We keep this private"));
+    });
 }

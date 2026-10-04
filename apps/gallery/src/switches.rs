@@ -67,7 +67,7 @@ impl Render for Switches {
                         .checked(true)
                         .variant(Variant::Neutral)
                         .control_first(false)
-                        .required(false),
+                        .optional_indicator(true),
                 )
                 .child(
                     Switch::new("disabled", "Disabled on")

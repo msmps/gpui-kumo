@@ -8,7 +8,9 @@
 //! Explicit accessible names win over default labels in either builder order.
 //! [`AccessibleName`] validates external names; infallible named-control APIs reject blanks.
 //!
-//! Use [`Field::control`] to associate one ordinary label with a supported retained control.
+//! Standalone form labels are visible by default; `optional_indicator(true)` adds “(optional)”.
+//! Use [`Field::control`] to carry label/help/feedback into one associated wrapper.
+//! Field errors update supported controls; label availability follows their retained state.
 //! Name changes notify without resetting its value, focus, selection or editing history:
 //! ```no_run
 //! use gpui_kit::{App, Entity};

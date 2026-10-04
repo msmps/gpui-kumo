@@ -810,14 +810,15 @@ pub struct Select<T: Clone + PartialEq + 'static> {
     label: bool,
     label_text: Option<SharedString>,
     accessible_name: Option<SharedString>,
-    required: bool,
+    optional: bool,
     description: Option<SharedString>,
+    field_description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
     parent: Option<crate::popover::PopoverClose>,
     joined_borders: Option<crate::button::JoinedRingQueue>,
 }
 impl<T: Clone + PartialEq + 'static> Select<T> {
-    /// Present a retained selection model under a stable element identity.
+    /// Present a retained selection model under a stable element identity. Its label is visible by default.
     pub fn new(id: impl Into<ElementId>, state: &Entity<SelectState<T>>) -> Self {
         Self {
             id: id.into(),
@@ -829,11 +830,12 @@ impl<T: Clone + PartialEq + 'static> Select<T> {
             placeholder: "Select…".into(),
             invalid: false,
             loading: false,
-            label: false,
+            label: true,
             label_text: None,
             accessible_name: None,
-            required: true,
+            optional: false,
             description: None,
+            field_description: None,
             error: None,
             parent: None,
             joined_borders: None,
@@ -897,9 +899,9 @@ impl<T: Clone + PartialEq + 'static> Select<T> {
         self.label = label;
         self
     }
-    /// Choose the optional indicator: false shows “(optional)”. This does not perform validation.
-    pub fn required(mut self, required: bool) -> Self {
-        self.required = required;
+    /// Show or hide “(optional)”. This does not validate or author required state.
+    pub fn optional_indicator(mut self, optional: bool) -> Self {
+        self.optional = optional;
         self
     }
     /// Supply supporting text; errors take precedence even when their message is hidden.
@@ -984,18 +986,24 @@ impl<T: Clone + PartialEq + 'static> RenderOnce for Select<T> {
             v.offset = self.offset;
             v.placeholder = self.placeholder;
             v.invalid = self.invalid || self.error.is_some();
-            v.description =
+            v.description = self.field_description.or_else(|| {
                 crate::field::resolve_message(self.description.clone(), self.error.clone())
-                    .map(|(text, _)| text);
+                    .map(|(text, _)| text)
+            });
             v.loading = self.loading;
             if v.loading {
                 v.set_open(false, window, cx);
             }
         });
         let name = self.state.read(cx).label_text();
+        let state = self.state.read(cx);
+        let focus = state.focus_handle();
+        let disabled = state.is_disabled() || self.loading;
         crate::Field::new(self.id, name, self.state)
+            .focus_target(&focus)
+            .label_disabled(disabled)
             .show_label(self.label)
-            .required(self.required)
+            .optional_indicator(self.optional)
             .when_some(self.description, |v, d| v.description(d))
             .when_some(self.error, |v, (e, show)| v.error_visible(e, show))
     }
@@ -1663,13 +1671,25 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
 
 impl<T: Clone + PartialEq + 'static> crate::field::sealed::Sealed for Select<T> {}
 impl<T: Clone + PartialEq + 'static> crate::field::FieldControl for Select<T> {
-    fn into_field_parts(self, cx: &App) -> (SharedString, FocusHandle, gpui_kit::AnyElement) {
-        let label = self
-            .label_text
-            .clone()
-            .unwrap_or_else(|| self.state.read(cx).name.clone());
-        let focus = self.state.read(cx).focus_handle();
-        (label, focus, self.show_label(false).into_any_element())
+    fn into_field(mut self, id: impl Into<ElementId>, cx: &App) -> crate::Field {
+        let presentation = crate::field::ControlPresentation {
+            label: self
+                .label_text
+                .clone()
+                .unwrap_or_else(|| self.state.read(cx).name.clone()),
+            focus: self.state.read(cx).focus_handle(),
+            disabled: self.state.read(cx).is_disabled() || self.loading,
+            show_label: self.label,
+            optional: self.optional,
+            tooltip: None,
+            description: self.description.take(),
+            error: self.error.take(),
+        };
+        crate::Field::associated(id.into(), presentation, move |error, description| {
+            self.field_description = description;
+            self.error = error.map(|(text, _)| (text, false));
+            self.show_label(false).into_any_element()
+        })
     }
 }
 
@@ -1729,7 +1749,7 @@ impl<T: Clone + PartialEq + 'static> std::fmt::Debug for Select<T> {
             .field("invalid", &self.invalid)
             .field("loading", &self.loading)
             .field("label", &self.label)
-            .field("required", &self.required)
+            .field("optional", &self.optional)
             .finish_non_exhaustive()
     }
 }

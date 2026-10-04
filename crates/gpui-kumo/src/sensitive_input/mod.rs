@@ -292,7 +292,6 @@ impl Focusable for SensitiveInputState {
         }
     }
 }
-#[derive(Default)]
 struct Presentation {
     size: Size,
     label: bool,
@@ -300,12 +299,29 @@ struct Presentation {
     accessible_name: Option<SharedString>,
     optional: bool,
     description: Option<SharedString>,
+    field_description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
     tooltip: Option<(Entity<TooltipState>, SharedString)>,
 }
+impl Default for Presentation {
+    fn default() -> Self {
+        Self {
+            size: Default::default(),
+            label: true,
+            label_text: Default::default(),
+            accessible_name: Default::default(),
+            optional: Default::default(),
+            description: Default::default(),
+            field_description: None,
+            error: Default::default(),
+            tooltip: Default::default(),
+        }
+    }
+}
+
 #[derive(IntoElement)]
 #[must_use]
-/// Masked or revealed presentation of a retained sensitive editor.
+/// Masked or revealed presentation of a retained sensitive editor. Labels are visible by default.
 pub struct SensitiveInput {
     id: ElementId,
     state: Entity<SensitiveInputState>,
@@ -347,9 +363,9 @@ impl SensitiveInput {
         self.presentation.label = show;
         self
     }
-    /// Choose the optional indicator: false shows “(optional)”. This does not perform validation.
-    pub fn required(mut self, required: bool) -> Self {
-        self.presentation.optional = !required;
+    /// Show or hide “(optional)”. This does not validate or author required state.
+    pub fn optional_indicator(mut self, optional: bool) -> Self {
+        self.presentation.optional = optional;
         self
     }
     /// Supply supporting text; errors take precedence even when their message is hidden.
@@ -425,10 +441,27 @@ impl Render for SensitiveInputState {
             theme.effects.control_ring_width
         };
         let instruction = !disabled && (self.hovered || focused);
+        let feedback = self.presentation.field_description.clone().or_else(|| {
+            crate::field::resolve_message(
+                self.presentation.description.clone(),
+                self.presentation.error.clone(),
+            )
+            .map(|(text, _)| text)
+        });
         let content = if masked {
             base::Button::new("masked")
                 .accessibility_label(format!("{}, masked.", self.accessible_name()))
-                .aria_description("Click or press Enter to reveal.")
+                .aria_description(match feedback.clone() {
+                    Some(text) => format!("{text}. Click or press Enter to reveal."),
+                    None => "Click or press Enter to reveal.".to_owned(),
+                })
+                .a11y_synthetic_children(move |builder| {
+                    if invalid {
+                        builder
+                            .parent_node()
+                            .set_invalid(gpui_kit::accesskit::Invalid::True);
+                    }
+                })
                 .track_focus(&self.masked_focus)
                 .disabled(disabled)
                 .on_click(cx.listener(|state, _, window, cx| state.reveal(window, cx)))
@@ -487,6 +520,8 @@ impl Render for SensitiveInputState {
                 .into_any_element()
         } else {
             Input::new("editor", &self.input)
+                .field_description(feedback)
+                .show_label(false)
                 .accessibility_label(self.accessible_name())
                 .size(size)
                 .sensitive(
@@ -626,9 +661,9 @@ impl Render for SensitiveInputState {
             });
         Field::new("sensitive-field", self.label_text(), body)
             .focus_target(&self.focus_handle(cx))
-            .disabled(disabled)
+            .label_disabled(disabled)
             .show_label(self.presentation.label)
-            .required(!self.presentation.optional)
+            .optional_indicator(self.presentation.optional)
             .when_some(self.presentation.description.clone(), |field, text| {
                 field.description(text)
             })
@@ -665,14 +700,26 @@ fn focus_ring(focused: bool, color: gpui_kit::Hsla, radius: gpui_kit::Pixels) ->
 
 impl crate::field::sealed::Sealed for SensitiveInput {}
 impl crate::field::FieldControl for SensitiveInput {
-    fn into_field_parts(self, cx: &App) -> (SharedString, FocusHandle, gpui_kit::AnyElement) {
-        let label = self
-            .presentation
-            .label_text
-            .clone()
-            .unwrap_or_else(|| self.state.read(cx).name.clone());
-        let focus = self.state.read(cx).focus_handle(cx);
-        (label, focus, self.show_label(false).into_any_element())
+    fn into_field(mut self, id: impl Into<ElementId>, cx: &App) -> crate::Field {
+        let presentation = crate::field::ControlPresentation {
+            label: self
+                .presentation
+                .label_text
+                .clone()
+                .unwrap_or_else(|| self.state.read(cx).name.clone()),
+            focus: self.state.read(cx).focus_handle(cx),
+            disabled: self.state.read(cx).is_disabled(cx),
+            show_label: self.presentation.label,
+            optional: self.presentation.optional,
+            tooltip: self.presentation.tooltip.take(),
+            description: self.presentation.description.take(),
+            error: self.presentation.error.take(),
+        };
+        crate::Field::associated(id.into(), presentation, move |error, description| {
+            self.presentation.field_description = description;
+            self.presentation.error = error.map(|(text, _)| (text, false));
+            self.show_label(false).into_any_element()
+        })
     }
 }
 

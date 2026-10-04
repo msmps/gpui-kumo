@@ -292,7 +292,6 @@ impl Focusable for InputState {
     }
 }
 
-#[derive(Default)]
 struct Presentation {
     size: Size,
     label: bool,
@@ -301,11 +300,31 @@ struct Presentation {
     tooltip: Option<(Entity<crate::TooltipState>, SharedString)>,
     optional: bool,
     description: Option<SharedString>,
+    field_description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
     group: Option<crate::input_group::Container>,
     end_reserve: gpui_kit::Pixels,
     focus_scope: Option<FocusHandle>,
     toolbar: Option<crate::toolbar::InputFocus>,
+}
+impl Default for Presentation {
+    fn default() -> Self {
+        Self {
+            size: Default::default(),
+            label: true,
+            label_text: Default::default(),
+            accessible_name: Default::default(),
+            tooltip: Default::default(),
+            optional: Default::default(),
+            description: Default::default(),
+            field_description: None,
+            error: Default::default(),
+            group: Default::default(),
+            end_reserve: Default::default(),
+            focus_scope: Default::default(),
+            toolbar: Default::default(),
+        }
+    }
 }
 
 /// Consumed presentation over an application-retained `Entity<InputState>`.
@@ -320,6 +339,35 @@ pub struct Input {
 }
 
 impl Input {
+    pub(crate) fn take_field_presentation(
+        &mut self,
+        cx: &App,
+    ) -> crate::field::ControlPresentation {
+        let (label, focus) = self.field_identity(cx);
+        crate::field::ControlPresentation {
+            label,
+            focus,
+            disabled: self.state.read(cx).effectively_disabled(),
+            show_label: self.presentation.label,
+            optional: self.presentation.optional,
+            tooltip: self.presentation.tooltip.take(),
+            description: self.presentation.description.take(),
+            error: self.presentation.error.take(),
+        }
+    }
+    pub(crate) fn field_description(mut self, description: Option<SharedString>) -> Self {
+        self.presentation.field_description = description;
+        self
+    }
+    pub(crate) fn field_error(
+        mut self,
+        error: Option<(SharedString, bool)>,
+        description: Option<SharedString>,
+    ) -> Self {
+        self.presentation.field_description = description;
+        self.presentation.error = error.map(|(text, _)| (text, false));
+        self.show_label(false)
+    }
     pub(crate) fn field_identity(&self, cx: &App) -> (SharedString, FocusHandle) {
         (
             self.presentation
@@ -329,7 +377,7 @@ impl Input {
             self.state.read(cx).focus_handle(cx),
         )
     }
-    /// Present a retained single-line editor under a stable element identity.
+    /// Present a retained single-line editor under a stable element identity. Its label is visible by default.
     pub fn new(id: impl Into<ElementId>, state: &Entity<InputState>) -> Self {
         Self {
             id: id.into(),
@@ -338,6 +386,7 @@ impl Input {
         }
     }
     pub(crate) fn toolbar_focus(mut self, hooks: crate::toolbar::InputFocus) -> Self {
+        self.presentation.label = false;
         self.presentation.toolbar = Some(hooks);
         self
     }
@@ -393,9 +442,9 @@ impl Input {
         self.presentation.error = Some((error.into(), true));
         self
     }
-    /// Choose the optional indicator: false shows “(optional)”. This does not perform validation.
-    pub fn required(mut self, required: bool) -> Self {
-        self.presentation.optional = !required;
+    /// Show or hide “(optional)”. This does not validate or author required state.
+    pub fn optional_indicator(mut self, optional: bool) -> Self {
+        self.presentation.optional = optional;
         self
     }
     pub(crate) fn sensitive(mut self, reserve: gpui_kit::Pixels, scope: &FocusHandle) -> Self {
@@ -729,7 +778,10 @@ impl Render for InputState {
         )
         .map(|(text, _)| text);
         let semantic_description = [
-            description.as_deref(),
+            self.presentation
+                .field_description
+                .as_deref()
+                .or(description.as_deref()),
             self.disabled.then_some("Unavailable"),
             self.read_only.then_some("Read only"),
             invalid.then_some("Invalid"),
@@ -1159,14 +1211,11 @@ impl Render for InputState {
 
 impl crate::field::sealed::Sealed for Input {}
 impl crate::field::FieldControl for Input {
-    fn into_field_parts(self, cx: &App) -> (SharedString, FocusHandle, gpui_kit::AnyElement) {
-        let label = self
-            .presentation
-            .label_text
-            .clone()
-            .unwrap_or_else(|| self.state.read(cx).name.clone());
-        let focus = self.state.read(cx).focus_handle(cx);
-        (label, focus, self.show_label(false).into_any_element())
+    fn into_field(mut self, id: impl Into<ElementId>, cx: &App) -> crate::Field {
+        let presentation = self.take_field_presentation(cx);
+        crate::Field::associated(id.into(), presentation, move |error, description| {
+            self.field_error(error, description).into_any_element()
+        })
     }
 }
 

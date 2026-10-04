@@ -1,8 +1,9 @@
 //! Public API verification fixture: --dark, --width=520; F6 renames, F8 hides,
-//! F9 changes theme, F10 toggles availability, F11 removes the focused action.
+//! F7 toggles Field errors; F9 changes theme, F10 toggles availability, F11 removes the focused action.
 use gpui_kit::{
     App, AppContext, Bounds, Context, Entity, FocusHandle, InteractiveElement, IntoElement,
-    KeyBinding, ParentElement, Render, Styled, Window, WindowBounds, WindowOptions, div, px, size,
+    KeyBinding, ParentElement, Render, Styled, Window, WindowBounds, WindowOptions, div,
+    prelude::FluentBuilder, px, size,
 };
 use gpui_kumo::{
     Appearance, Button, Dialog, DialogState, DialogTrigger, Dropdown, DropdownItem, DropdownPart,
@@ -12,12 +13,23 @@ use gpui_kumo::{
 };
 gpui_kit::actions!(
     public_api_review,
-    [Next, Previous, Rename, Hide, Theme, Availability, Remove]
+    [
+        Next,
+        Previous,
+        Rename,
+        Error,
+        Hide,
+        Theme,
+        Availability,
+        Remove
+    ]
 );
 struct Review {
     focus: FocusHandle,
     input: Entity<InputState>,
     field: Entity<InputState>,
+    help: Entity<gpui_kumo::TooltipState>,
+    error: bool,
     area: Entity<InputAreaState>,
     secret: Entity<SensitiveInputState>,
     select: Entity<SelectState<u32>>,
@@ -49,6 +61,8 @@ impl Review {
             focus: cx.focus_handle(),
             input: cx.new(|cx| InputState::new("Project name", window, cx)),
             field: cx.new(|cx| InputState::new("Endpoint", window, cx)),
+            help: cx.new(|cx| gpui_kumo::TooltipState::new(window, cx)),
+            error: false,
             area: cx.new(|cx| InputAreaState::new("Notes", window, cx)),
             secret: cx.new(|cx| SensitiveInputState::new("API key", "", window, cx)),
             select: cx.new(|cx| {
@@ -126,8 +140,11 @@ impl Render for Review {
         let dialog_input = self.input.clone();
         let owner = cx.entity().downgrade();
         let t = gpui_kumo::theme(cx).clone();
-        let field_control =
-            InputGroup::new("endpoint", &self.field).start(InputGroupAddon::text("/api/"));
+        let field_control = InputGroup::new("endpoint", &self.field)
+            .optional_indicator(true)
+            .label_tooltip(&self.help, "Choose the endpoint for your project")
+            .description("Field inherits this helper and the optional marker")
+            .start(InputGroupAddon::text("/api/"));
         let field_control = if self.removed {
             field_control
         } else {
@@ -158,6 +175,10 @@ impl Render for Review {
             .on_action(cx.listener(|s, _: &Rename, _, cx| s.rename(cx)))
             .on_action(cx.listener(|s, _: &Remove, _, cx| {
                 s.removed = !s.removed;
+                cx.notify();
+            }))
+            .on_action(cx.listener(|s, _: &Error, _, cx| {
+                s.error = !s.error;
                 cx.notify();
             }))
             .on_action(cx.listener(|s, _: &Hide, _, cx| {
@@ -255,12 +276,12 @@ impl Render for Review {
             .child(
                 Input::new("project", &self.input)
                     .show_label(!self.hidden)
-                    .required(false),
+                    .optional_indicator(true),
             )
             .child(
                 Field::control("endpoint-field", field_control, cx)
                     .show_label(!self.hidden)
-                    .disabled(self.unavailable),
+                    .when(self.error, |field| field.error("Invalid endpoint")),
             )
             .child(
                 InputArea::new("notes", &self.area)
@@ -328,6 +349,7 @@ fn main() {
             KeyBinding::new("tab", Next, None),
             KeyBinding::new("shift-tab", Previous, None),
             KeyBinding::new("f6", Rename, None),
+            KeyBinding::new("f7", Error, None),
             KeyBinding::new("f8", Hide, None),
             KeyBinding::new("f9", Theme, None),
             KeyBinding::new("f10", Availability, None),

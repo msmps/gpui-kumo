@@ -44,7 +44,7 @@ impl Render for Fields {
                 .optional(true).focus_target(&focus))
             .child(
                 Field::control("phone", Input::new("phone-control", &self.input), cx)
-                .required(false)
+                .optional_indicator(true)
                 .label_tooltip(
                     &self.tooltip,
                     "Used only for account recovery. We never publish your phone number.",

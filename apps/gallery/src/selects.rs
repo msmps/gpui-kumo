@@ -158,7 +158,7 @@ impl Render for Selects {
             Select::new("region", &self.single)
                 .show_label(true)
                 .loading(self.loading)
-                .required(false)
+                .optional_indicator(true)
                 .description("Disabled options, long labels and scrolling"),
         )
         .child("Allowed regions · grouped multiple selection stays open")

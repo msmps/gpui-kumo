@@ -25,8 +25,26 @@ pub(crate) mod sealed {
 /// A supported retained form control whose label and focus target can be associated safely.
 /// Implementations are sealed; arbitrary content uses [`Field::new`] and owns its semantics.
 pub trait FieldControl: sealed::Sealed + Sized {
-    /// Consume the control with its built-in visible label hidden, retaining its semantic name.
-    fn into_field_parts(self, cx: &App) -> (SharedString, FocusHandle, AnyElement);
+    /// Transfer label and feedback presentation, retaining the control until Field renders.
+    fn into_field(self, id: impl Into<ElementId>, cx: &App) -> Field;
+}
+
+type ErrorPresentation = Option<(SharedString, bool)>;
+type FinishControl = Box<dyn FnOnce(ErrorPresentation, Option<SharedString>) -> AnyElement>;
+enum Control {
+    Custom(AnyElement),
+    Associated(FinishControl),
+}
+
+pub(crate) struct ControlPresentation {
+    pub label: SharedString,
+    pub focus: FocusHandle,
+    pub disabled: bool,
+    pub show_label: bool,
+    pub optional: bool,
+    pub tooltip: Option<(Entity<TooltipState>, SharedString)>,
+    pub description: Option<SharedString>,
+    pub error: ErrorPresentation,
 }
 
 /// A stateless field. Controls retain their own Base behavior and accessible name.
@@ -36,9 +54,10 @@ pub trait FieldControl: sealed::Sealed + Sized {
 pub struct Field {
     id: ElementId,
     label: SharedString,
-    control: AnyElement,
+    control: Control,
     focus: Option<FocusHandle>,
-    disabled: bool,
+    label_disabled: bool,
+    control_disabled: bool,
     optional: bool,
     hide_label: bool,
     layout: Layout,
@@ -47,19 +66,51 @@ pub struct Field {
     error: Option<(SharedString, bool)>,
 }
 impl Field {
+    pub(crate) fn associated(
+        id: ElementId,
+        presentation: ControlPresentation,
+        finish: impl FnOnce(ErrorPresentation, Option<SharedString>) -> AnyElement + 'static,
+    ) -> Self {
+        Self {
+            id,
+            label: presentation.label,
+            focus: Some(presentation.focus),
+            control: Control::Associated(Box::new(finish)),
+            control_disabled: presentation.disabled,
+            label_disabled: false,
+            optional: presentation.optional,
+            hide_label: !presentation.show_label,
+            layout: Layout::default(),
+            description: presentation.description,
+            tooltip: presentation.tooltip,
+            error: presentation.error,
+        }
+    }
     /// Compose a supported control using its label once, with automatic focus association.
-    /// Accessible-name overrides remain authoritative. Name changes are read on each owner render.
+    /// Label visibility, optional indicator, tooltip, description and error are inherited.
+    /// Field props override inherited presentation; errors also mark the control invalid.
+    /// Availability follows retained state; accessible-name overrides remain authoritative.
     ///
     /// ```no_run
     /// use gpui_kumo::{Field, Input, InputState};
     /// use gpui_kit::{App, Entity};
     /// fn field(input: &Entity<InputState>, cx: &App) -> Field {
-    ///     Field::control("project-field", Input::new("project", input), cx)
+    ///     Field::control("project-field", Input::new("project", input).optional_indicator(true), cx)
+    /// }
+    /// fn disable(input: &Entity<InputState>, cx: &mut App) {
+    ///     input.update(cx, |state, cx| state.set_disabled(true, cx));
+    /// }
+    /// ```
+    /// Whole-control availability belongs to retained state, not the wrapper:
+    /// ```compile_fail,E0599
+    /// use gpui_kumo::{Field, Input, InputState};
+    /// use gpui_kit::{App, Entity};
+    /// fn invalid(input: &Entity<InputState>, cx: &App) {
+    ///     Field::control("field", Input::new("input", input), cx).disabled(true);
     /// }
     /// ```
     pub fn control(id: impl Into<ElementId>, control: impl FieldControl, cx: &App) -> Self {
-        let (label, focus, control) = control.into_field_parts(cx);
-        Self::new(id, label, control).focus_target(&focus)
+        control.into_field(id, cx)
     }
     /// Compose a named label and arbitrary caller-owned content.
     /// This path cannot infer or update a child's accessible name. Set its semantics explicitly,
@@ -72,9 +123,10 @@ impl Field {
         Self {
             id: id.into(),
             label: label.into(),
-            control: control.into_any_element(),
+            control: Control::Custom(control.into_any_element()),
             focus: None,
-            disabled: false,
+            label_disabled: false,
+            control_disabled: false,
             optional: false,
             hide_label: false,
             layout: Layout::default(),
@@ -88,15 +140,16 @@ impl Field {
         self.focus = Some(focus.clone());
         self
     }
-    /// Explicit false adds the optional label indicator; other values omit it.
+    /// Show or hide the optional label indicator.
     /// This is presentation, not an application validation rule.
-    pub fn required(mut self, required: bool) -> Self {
-        self.optional = !required;
+    pub fn optional_indicator(mut self, optional: bool) -> Self {
+        self.optional = optional;
         self
     }
-    /// Gate label focus forwarding. The consumer must also disable the control.
-    pub fn disabled(mut self, disabled: bool) -> Self {
-        self.disabled = disabled;
+    /// Gate label activation for custom content without disabling the child.
+    /// Supported controls automatically inherit availability from their retained state.
+    pub fn label_disabled(mut self, disabled: bool) -> Self {
+        self.label_disabled = disabled;
         self
     }
     /// Show or hide the label without changing control semantics or its focus target.
@@ -124,7 +177,8 @@ impl Field {
         self
     }
     /// Show an application-owned error, suppressing the description.
-    /// Error presentation does not validate or discard the control's value.
+    /// Supported controls also receive invalid appearance/semantics; values are retained.
+    /// Custom content owns its own invalid state.
     pub fn error(self, text: impl Into<SharedString>) -> Self {
         self.error_visible(text, true)
     }
@@ -136,6 +190,13 @@ impl Field {
 }
 impl RenderOnce for Field {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
+        let control = match self.control {
+            Control::Custom(control) => control,
+            Control::Associated(finish) => finish(
+                self.error.clone(),
+                resolve_message(self.description.clone(), self.error.clone()).map(|(text, _)| text),
+            ),
+        };
         if self.hide_label
             && let Some((state, _)) = &self.tooltip
         {
@@ -145,7 +206,7 @@ impl RenderOnce for Field {
         let label = (!self.hide_label).then(|| {
             Label::new("label", self.label)
                 .optional(self.optional)
-                .disabled(self.disabled)
+                .disabled(self.label_disabled || self.control_disabled)
                 .when_some(self.focus, |label, focus| label.focus_target(&focus))
                 .when_some(self.tooltip, |label, (state, content)| {
                     label.tooltip(&state, content)
@@ -167,7 +228,7 @@ impl RenderOnce for Field {
                     label.into_any_element()
                 }
             }))
-            .child(self.control);
+            .child(control);
         let message = resolve_message(self.description, self.error);
         div()
             .id(self.id)
@@ -238,7 +299,8 @@ impl std::fmt::Debug for Field {
         f.debug_struct("Field")
             .field("id", &self.id)
             .field("label", &self.label)
-            .field("disabled", &self.disabled)
+            .field("label_disabled", &self.label_disabled)
+            .field("control_disabled", &self.control_disabled)
             .field("optional", &self.optional)
             .field("hide_label", &self.hide_label)
             .field("layout", &self.layout)

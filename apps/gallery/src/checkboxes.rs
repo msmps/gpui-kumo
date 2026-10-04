@@ -79,7 +79,7 @@ impl Render for Checkboxes {
                 .child(
                     Checkbox::new("optional", "Email updates")
                         .content(gpui_kit::StyledText::new("Email updates").with_highlights([(6..13, gpui_kit::HighlightStyle { font_style: Some(gpui_kit::FontStyle::Italic), ..Default::default() })]))
-                        .required(false)
+                        .optional_indicator(true)
                         .control_first(false),
                 )
                 .child(Checkbox::new("error", "Invalid option").variant(Variant::Error))

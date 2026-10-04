@@ -650,7 +650,7 @@ impl Render for GroupField {
             .show_label(self.label)
             .description("Account recovery only");
         if let Some(required) = self.required {
-            group = group.required(required);
+            group = group.optional_indicator(!required);
         }
         if let Some(show) = self.error {
             group = group.error_visible("Invalid phone", show);

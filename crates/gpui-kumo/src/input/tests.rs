@@ -853,3 +853,53 @@ fn name_update_preserves_focused_selection_and_undo_history(cx: &mut TestAppCont
         assert_eq!(input.read(cx).value(cx).as_ref(), "");
     });
 }
+
+#[gpui_kit::test]
+fn associated_field_error_updates_editor_invalid_ring_and_clears_without_value_loss(
+    cx: &mut TestAppContext,
+) {
+    struct Form {
+        input: Entity<InputState>,
+        error: Option<bool>,
+    }
+    impl Render for Form {
+        fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+            let field = crate::Field::control("field", Input::new("input", &self.input), cx)
+                .when_some(self.error, |field, show| {
+                    field.error_visible("Invalid email", show)
+                });
+            div().w(px(300.)).child(field)
+        }
+    }
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| Form {
+        input: cx.new(|cx| InputState::new("Email", window, cx)),
+        error: None,
+    });
+    cx.update(|window, cx| {
+        let input = view.read(cx).input.clone();
+        input.update(cx, |state, cx| state.set_value("retained", window, cx));
+        for error in [Some(true), Some(false), None] {
+            view.update(cx, |view, cx| {
+                view.error = error;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            assert_eq!(input.read(cx).presentation.error.is_some(), error.is_some());
+            assert_eq!(
+                input.read(cx).presentation.field_description.as_deref(),
+                (error == Some(true)).then_some("Invalid email")
+            );
+            assert_eq!(input.read(cx).value(cx).as_ref(), "retained");
+            assert_eq!(window.try_find("message").is_some(), error == Some(true));
+            if error.is_some() {
+                assert!(
+                    window
+                        .painted_quads()
+                        .iter()
+                        .any(|quad| quad.border_color == theme(cx).colors.danger)
+                );
+            }
+        }
+    });
+}

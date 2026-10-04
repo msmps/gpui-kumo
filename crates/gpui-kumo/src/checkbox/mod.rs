@@ -131,9 +131,9 @@ impl Checkbox {
         self.control_first = first;
         self
     }
-    /// Explicit false displays “(optional)”; validation remains caller-owned.
-    pub fn required(mut self, required: bool) -> Self {
-        self.optional = !required;
+    /// Show or hide “(optional)”; validation remains caller-owned.
+    pub fn optional_indicator(mut self, optional: bool) -> Self {
+        self.optional = optional;
         self
     }
     /// Decorative rich label; the constructor's string remains its complete

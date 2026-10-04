@@ -170,7 +170,7 @@ impl Render for RichLabels {
             .state(self.state)
             .disabled(self.disabled)
             .control_first(self.first)
-            .required(false)
+            .optional_indicator(true)
             .on_change(move |state, _, _, cx| {
                 let _ = owner.update(cx, |v, cx| {
                     v.state = state;

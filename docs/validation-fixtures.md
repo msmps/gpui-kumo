@@ -65,3 +65,5 @@ Run from the repository root under `dbus-run-session` with DISPLAY and native de
 These are manual acceptance tools. They establish exported metadata and actual input/focus behavior, not screen-reader speech or OS IME acceptance. The one-off Busy, Pagination baseline and readable-label before/after scripts are retired; completed repairs retain their Rust regressions and immutable issue evidence.
 
 The static Loader browser reference is `tools/validation/loader/loader-reference.html`; use it for fresh arc/track/reduced-motion comparisons.
+
+The `public_api` fixture also exercises Field metadata transfer and feedback: F7 toggles an outer Field error, F10 changes retained control availability, and F11 removes the focused endpoint action. The endpoint optional indicator, label tooltip and helper originate on InputGroup and transfer into Field. Verify native names/descriptions plus visible borders/messages; changing accessibility alone is insufficient when presentation is occluded.

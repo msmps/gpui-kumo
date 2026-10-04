@@ -172,7 +172,7 @@ impl Render for ControlledNames {
                     .accessibility_label("Checkbox override")
                     .label("New")
                     .show_label(false)
-                    .required(false),
+                    .optional_indicator(true),
             )
             .child(
                 crate::Switch::new("switch", "Old")
@@ -270,4 +270,104 @@ fn controlled_names_and_hidden_errors_follow_the_shared_contract(cx: &mut TestAp
 #[should_panic(expected = "nonblank accessible name")]
 fn icon_only_buttons_reject_blank_names() {
     let _ = Button::icon("icon", " \t", div());
+}
+
+#[gpui_kit::test]
+fn standalone_form_labels_are_visible_by_default_and_explicitly_hideable(cx: &mut TestAppContext) {
+    struct Forms {
+        names: Names,
+        hide: bool,
+    }
+    impl Render for Forms {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            let input = Input::new("input", &self.names.input);
+            let area = InputArea::new("area", &self.names.area);
+            let secret = SensitiveInput::new("secret", &self.names.secret);
+            let select = Select::new("select", &self.names.select);
+            let group = InputGroup::new("group", &self.names.group);
+            div()
+                .flex()
+                .flex_col()
+                .w(px(350.))
+                .child(if self.hide {
+                    input.show_label(false)
+                } else {
+                    input
+                })
+                .child(if self.hide {
+                    area.show_label(false)
+                } else {
+                    area
+                })
+                .child(if self.hide {
+                    secret.show_label(false)
+                } else {
+                    secret
+                })
+                .child(if self.hide {
+                    select.show_label(false)
+                } else {
+                    select
+                })
+                .child(if self.hide {
+                    group.show_label(false)
+                } else {
+                    group
+                })
+        }
+    }
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|window, cx| Forms {
+        names: Names {
+            input: cx.new(|cx| InputState::new("Input", window, cx)),
+            area: cx.new(|cx| InputAreaState::new("Area", window, cx)),
+            secret: cx.new(|cx| SensitiveInputState::new("Secret", "", window, cx)),
+            select: cx.new(|cx| {
+                SelectState::new(
+                    "Select",
+                    SelectValue::Single(None),
+                    vec![SelectOption::new("one", 1, "One")],
+                    cx,
+                )
+            }),
+            group: cx.new(|cx| InputState::new("Group", window, cx)),
+            override_name: None,
+            show: true,
+        },
+        hide: false,
+    });
+    cx.update(|window, cx| {
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            view.update(cx, |view, cx| {
+                view.hide = false;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            for (id, label) in [
+                ("input", "Input"),
+                ("area", "Area"),
+                ("secret", "Secret"),
+                ("select", "Select"),
+                ("group", "Group"),
+            ] {
+                assert_eq!(window.within(id).find("label").value(), Some(label));
+            }
+            view.update(cx, |view, cx| {
+                view.hide = true;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            for (id, label, control) in [
+                ("input", "Input", "control"),
+                ("area", "Area", "control"),
+                ("secret", "Secret", "control"),
+                ("select", "Select", "trigger"),
+                ("group", "Group", "control"),
+            ] {
+                assert!(window.within(id).try_find("label").is_none());
+                assert_eq!(window.within(id).find(control).label(), Some(label));
+            }
+        }
+    });
 }

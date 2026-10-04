@@ -1178,3 +1178,79 @@ fn confirmation_preserves_owner_selected_outside_focus(cx: &mut TestAppContext) 
         }
     });
 }
+
+#[gpui_kit::test]
+fn standalone_label_focus_and_associated_error_follow_control_semantics(cx: &mut TestAppContext) {
+    use gpui_kit::{Element, accesskit};
+    struct Form {
+        state: Entity<SelectState<usize>>,
+        wrapped: bool,
+        error: Option<bool>,
+    }
+    impl Render for Form {
+        fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+            let select = Select::new("select", &self.state);
+            let control = if self.wrapped {
+                crate::Field::control("field", select, cx)
+                    .when_some(self.error, |field, show| {
+                        field.error_visible("Invalid choice", show)
+                    })
+                    .into_any_element()
+            } else {
+                select.into_any_element()
+            };
+            div().w(px(240.)).child(control)
+        }
+    }
+    cx.update(crate::init);
+    let (view, cx) = cx.add_window_view(|_, cx| Form {
+        state: cx.new(|cx| {
+            SelectState::new(
+                "Choice",
+                SelectValue::Single(Some(1)),
+                vec![SelectOption::new("one", 1, "One")],
+                cx,
+            )
+        }),
+        wrapped: false,
+        error: None,
+    });
+    cx.update(|window, cx| {
+        let state = view.read(cx).state.clone();
+        window.render_frame(cx);
+        assert_eq!(window.find("label").value(), Some("Choice"));
+        window.click("label", cx);
+        assert!(state.read(cx).focus_handle().is_focused(window));
+        window.press("space", cx);
+        window.render_frame(cx);
+        assert!(state.read(cx).is_open());
+        state.update(cx, |state, cx| state.set_open(false, window, cx));
+        state.update(cx, |state, cx| state.set_disabled(true, window, cx));
+        window.render_frame(cx);
+        window.blur(cx);
+        window.click("label", cx);
+        assert!(!state.read(cx).focus_handle().is_focused(window));
+        state.update(cx, |state, cx| state.set_disabled(false, window, cx));
+        for error in [Some(true), Some(false), None] {
+            view.update(cx, |view, cx| {
+                view.wrapped = true;
+                view.error = error;
+                cx.notify();
+            });
+            window.render_frame(cx);
+            let node = state.update(cx, |state, cx| {
+                let element = state.trigger_element(window, cx);
+                let mut node = accesskit::Node::new(Role::ComboBox);
+                element.write_a11y_info(&mut node);
+                node
+            });
+            assert_eq!(node.invalid(), error.map(|_| accesskit::Invalid::True));
+            assert_eq!(
+                node.description(),
+                (error == Some(true)).then_some("Invalid choice")
+            );
+            assert_eq!(node.value(), Some("One"));
+            assert_eq!(window.try_find("message").is_some(), error == Some(true));
+        }
+    });
+}

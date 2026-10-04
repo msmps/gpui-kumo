@@ -126,9 +126,9 @@ impl Switch {
         self.control_first = first;
         self
     }
-    /// Choose the optional indicator: false shows “(optional)”. This does not perform validation.
-    pub fn required(mut self, required: bool) -> Self {
-        self.optional = !required;
+    /// Show or hide “(optional)”. This does not validate or author required state.
+    pub fn optional_indicator(mut self, optional: bool) -> Self {
+        self.optional = optional;
         self
     }
     /// Choose visible label presentation without changing the accessible name.
