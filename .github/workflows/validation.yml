@@ -21,3 +21,24 @@ jobs:
         run: rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
       - name: Workspace and exact adapter gates
         run: bash scripts/check-rust.sh
+  unpatched:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install the repository toolchain
+        run: rustup toolchain install 1.99.0 --profile minimal
+      - name: Check unexpected-failure policy
+        run: python3 scripts/test_unpatched_gate.py
+      - name: Packaged library against published dependencies
+        env:
+          CARGO_TARGET_DIR: ${{ github.workspace }}/target
+        run: python3 scripts/check-unpatched.py
+      - name: Retain unpatched results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: unpatched-results
+          path: target/unpatched-ci/

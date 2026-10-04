@@ -6,6 +6,8 @@ Use [CONTEXT.md](../CONTEXT.md) for terminology. [GitHub issues](https://github.
 
 | Task | Reference |
 | --- | --- |
+| Integrate the RC and build a minimal application | [Installation](../README.md#installation) |
+| Check compatible GPUI types, known limitations and optional root patches | [Dependency guide](dependencies.md) |
 | Check dependency revisions and refresh source references | [Source baseline](gpui-sources.md) |
 | Understand the selective Base dependency boundary | [Base assessment](gpui-base-assessment.md) |
 | Map supported Kumo components and exclusions | [Coverage](component-coverage.md), [Kumo grounding](kumo-grounding.md) |
@@ -18,11 +20,13 @@ Use [CONTEXT.md](../CONTEXT.md) for terminology. [GitHub issues](https://github.
 | Reproduce browser/native comparisons | [Validation fixtures](validation-fixtures.md) |
 | Diagnose development-build lag and frame presentation | [Performance](performance-validation.md) |
 
+The separate macOS unpatched CI job runs `python3 scripts/check-unpatched.py` against an extracted package with registry dependencies. Its named baseline is `scripts/unpatched-known-failures.json`; all tests run, each known result is reported, and new failures, missing baseline tests, ignored tests or build/harness errors block. Known passes prompt baseline review because the host-clock failures can vary. Results and logs are retained as CI artifacts. This gate does not establish Linux adapter acceptance.
+
 Before changing a component, check its contract and the selected dependency source. Retain durable state in entities and keep Base details inside component boundaries. Run formatting, relevant tests and warnings-denied Clippy; `bash scripts/check-rust.sh` runs the full locked workspace and patched-adapter gate.
 
 ## Maintained dependency corrections
 
-These documents specify the correction boundary, downstream root configuration, regression coverage and removal conditions. Upgrade compatible GPUI/Kit/Base revisions together; dependency patches do not propagate from a library to its consumers.
+These documents specify the correction boundary, optional downstream root configuration, regression coverage and removal conditions. The development workspace enables these patches; normal RC installation uses published dependencies and has the [documented consumer limitations](dependencies.md#what-the-unpatched-rc-provides). Upgrade compatible GPUI/Kit/Base revisions together; dependency patches do not propagate from a library to its consumers.
 
 - [Repeated focus registration](gpui-tab-registration-patch.md)
 - [Duration-animation executor clock](gpui-animation-clock-patch.md)

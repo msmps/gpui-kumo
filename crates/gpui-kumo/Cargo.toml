@@ -1,9 +1,13 @@
 [package]
 name = "gpui-kumo"
+description = "A native Kumo design system for GPUI with typed components, themes, and accessibility support."
+repository = "https://github.com/msmps/gpui-kumo"
+readme = "../../README.md"
+license = "MIT"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish.workspace = true
+publish = ["crates-io"]
 
 [dependencies]
 gpui-kit.workspace = true

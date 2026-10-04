@@ -3,6 +3,14 @@
 //! Components own design-system presentation and semantics; GPUI Base stays behind
 //! the library boundary. Applications retain editor and overlay entities across renders.
 //!
+//! The RC targets GPUI Kit 0.7.0 and its GPUI 0.3.7 family. Consume GPUI types
+//! through `gpui_kit`; unrelated GPUI packages/sources are not interchangeable.
+//! Normal installation uses published dependencies, with known reverse-Tab,
+//! Textarea auto-growth and Linux accessibility-state limitations. Development
+//! workspace patches are optional and do not propagate to consumers. See the
+//! [installation guide](https://github.com/msmps/gpui-kumo/blob/work/README.md#installation)
+//! for setup, supported dependency versions and optional corrections.
+//!
 //! Element IDs are stable identities, independent of localised labels. Textual controls
 //! use `label(text)`, `show_label(bool)` and `accessibility_label(text)` where supported.
 //! Explicit accessible names win over default labels in either builder order.

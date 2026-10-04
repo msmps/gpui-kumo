@@ -2352,7 +2352,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-kumo"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 dependencies = [
  "gpui-kit",
 ]
@@ -3577,7 +3577,7 @@ dependencies = [
 
 [[package]]
 name = "kumo-gallery"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 dependencies = [
  "gpui-kit",
  "gpui-kumo",

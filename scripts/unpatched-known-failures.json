@@ -1,0 +1,12 @@
+{
+  "animation_clock_tests::chained_duration_animation_restarts_on_the_executor_clock": "GPUI host animation clock",
+  "dialog::tests::dialog_keyboard_boundary_skips_disabled_and_restores_opener": "GPUI repeated focus registration",
+  "field::tests::contextual_help_is_independent_of_label_focus_and_control_availability": "GPUI repeated focus registration",
+  "input::tests::input_help_preserves_editing_and_excludes_label_from_group_focus": "GPUI repeated focus registration",
+  "input_area::tests::editing_retains_unicode_clipboard_history_and_tab_exit": "GPUI repeated focus registration",
+  "input_area::tests::row_policy_grows_shrinks_rewraps_and_preserves_editor": "Base Textarea growth",
+  "input_group::tests::leading_buttons_preserve_order_native_editing_and_focus_across_partitioning": "GPUI repeated focus registration",
+  "switch::tests::thumb_travel_reversal_and_reduced_motion_are_observable": "GPUI host animation clock",
+  "tabs::tests::edge_opacity_transitions_keep_action_identity_and_hidden_edges_inert": "GPUI host animation clock",
+  "tabs::tests::selected_indicator_moves_resizes_reverses_and_reduced_motion_settles": "GPUI host animation clock"
+}
