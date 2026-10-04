@@ -1,5 +1,7 @@
 # Label and Field contract
 
+Public naming, visibility, typed composition and failure policy follow the [canonical public API contract](design-system-components.md#public-api-contract). Use that contract when changing the APIs described here.
+
 Pinned source: Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, `label/label.tsx`, `field/field.tsx`, Label docs/demos and Input composition. GPUI Base 0.7.0 has no Label/Field primitive. These components use ordinary GPUI presentation and explicit focus association; Input and other wrapped controls retain Base interaction/state ownership.
 
 | Acceptance area | Contract and evidence |

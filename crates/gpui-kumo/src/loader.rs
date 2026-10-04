@@ -67,7 +67,7 @@ impl Loader {
     }
 
     /// Supply a localized accessible name. Empty content remains an unnamed status.
-    pub fn accessible_name(mut self, name: impl Into<SharedString>) -> Self {
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
         self.label = name.into();
         self
     }
@@ -197,6 +197,16 @@ fn paint_arc(
     }
 }
 
+impl std::fmt::Debug for Loader {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Loader");
+        debug.field("id", &self.id);
+        debug.field("size", &self.size);
+        debug.field("label", &self.label);
+        debug.finish_non_exhaustive()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -217,11 +227,11 @@ mod tests {
                     Loader::new("large").size(Size::Large),
                     Loader::new("custom")
                         .size(Size::Custom(px(14.)))
-                        .accessible_name("Chargement"),
+                        .accessibility_label("Chargement"),
                     Loader::new("zero").size(Size::Custom(px(0.))),
                     Loader::new("negative").size(Size::Custom(px(-4.))),
                     Loader::new("nan").size(Size::Custom(px(f32::NAN))),
-                    Loader::new("unnamed").accessible_name(""),
+                    Loader::new("unnamed").accessibility_label(""),
                 ])
         }
     }

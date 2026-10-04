@@ -10,9 +10,13 @@ use gpui_kit::{
 
 /// Notifications from the editing engine; read the current value from the state.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub enum InputAreaEvent {
+    /// The user changed the value.
     Change,
+    /// The retained control received focus.
     Focus,
+    /// The retained control lost focus.
     Blur,
 }
 
@@ -29,6 +33,23 @@ pub struct InputAreaState {
 }
 impl EventEmitter<InputAreaEvent> for InputAreaState {}
 impl InputAreaState {
+    fn label_text(&self) -> SharedString {
+        self.presentation
+            .label_text
+            .clone()
+            .unwrap_or_else(|| self.name.clone())
+    }
+    fn accessible_name(&self) -> SharedString {
+        self.presentation
+            .accessible_name
+            .clone()
+            .unwrap_or_else(|| self.label_text())
+    }
+
+    /// Create a retained named multiline editor with an initially empty value. Retain with `cx.new`.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(name: impl Into<SharedString>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let name = name.into();
         assert!(
@@ -54,12 +75,34 @@ impl InputAreaState {
             _subscriptions: vec![events, observer, theme],
         }
     }
+    /// Read the retained default name; rendered props may explicitly override it.
+    pub fn name(&self) -> &SharedString {
+        &self.name
+    }
+
+    /// Refresh the default label and accessible name while preserving value, focus and lifecycle.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank. Validate external text with [`crate::AccessibleName`].
+    pub fn set_name(&mut self, name: impl Into<SharedString>, cx: &mut Context<Self>) {
+        let name = name.into();
+        assert!(
+            !name.trim().is_empty(),
+            "A control requires a nonblank accessible name"
+        );
+        self.name = name;
+        cx.notify();
+    }
+
+    /// Read the current value from its owner; this does not request a change.
     pub fn value(&self, cx: &App) -> SharedString {
         self.editor.read(cx).value()
     }
+    /// Read the currently selected text without changing selection.
     pub fn selected_value(&self, cx: &App) -> SharedString {
         self.editor.read(cx).selected_value()
     }
+    /// Replace the owner value programmatically; this is not a user activation proposal.
     pub fn set_value(
         &mut self,
         value: impl Into<SharedString>,
@@ -70,6 +113,7 @@ impl InputAreaState {
         self.editor
             .update(cx, |editor, cx| editor.set_value(value, window, cx));
     }
+    /// Update empty-editor guidance without replacing the retained editor.
     pub fn set_placeholder(
         &mut self,
         value: impl Into<SharedString>,
@@ -80,12 +124,15 @@ impl InputAreaState {
         self.editor
             .update(cx, |editor, cx| editor.set_placeholder(value, window, cx));
     }
+    /// Report whether the owner has disabled this control.
     pub fn is_disabled(&self) -> bool {
         self.disabled
     }
+    /// Report whether user editing is blocked while selection and copying remain available.
     pub fn is_read_only(&self) -> bool {
         self.read_only
     }
+    /// Update availability and notify presentation while retaining the value.
     pub fn set_disabled(&mut self, disabled: bool, cx: &mut Context<Self>) {
         if self.disabled == disabled {
             return;
@@ -96,6 +143,7 @@ impl InputAreaState {
         self.focus_handle(cx).tab_stop(!disabled);
         cx.notify();
     }
+    /// Update editing availability while retaining focus, selection and value.
     pub fn set_read_only(&mut self, read_only: bool, cx: &mut Context<Self>) {
         if self.read_only == read_only {
             return;
@@ -116,6 +164,8 @@ struct Presentation {
     rows: usize,
     auto_resize: Option<(usize, Option<usize>)>,
     label: bool,
+    label_text: Option<SharedString>,
+    accessible_name: Option<SharedString>,
     optional: bool,
     description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
@@ -128,6 +178,8 @@ impl Default for Presentation {
             rows: 2,
             auto_resize: None,
             label: false,
+            label_text: None,
+            accessible_name: None,
             optional: false,
             description: None,
             error: None,
@@ -144,6 +196,7 @@ pub struct InputArea {
     presentation: Presentation,
 }
 impl InputArea {
+    /// Present the retained multiline editor under a stable element identity.
     pub fn new(id: impl Into<ElementId>, state: &Entity<InputAreaState>) -> Self {
         Self {
             id: id.into(),
@@ -151,6 +204,7 @@ impl InputArea {
             presentation: Presentation::default(),
         }
     }
+    /// Select the component dimensions and corresponding spacing and typography.
     pub fn size(mut self, size: Size) -> Self {
         self.presentation.size = size;
         self
@@ -167,23 +221,50 @@ impl InputArea {
         self.presentation.auto_resize = Some((min_rows, max_rows.map(|max| max.max(min_rows))));
         self
     }
-    pub fn label(mut self, show: bool) -> Self {
+    /// Set visible text and its default accessible name; visibility is controlled separately.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        let text = crate::name::nonblank(text);
+        self.presentation.label_text = Some(text);
+        self
+    }
+    /// Override the accessible name independently of label visibility and builder order.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.presentation.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Show or hide visible label presentation while retaining its accessible name.
+    pub fn show_label(mut self, show: bool) -> Self {
         self.presentation.label = show;
         self
     }
+    /// Choose the optional indicator: false shows “(optional)”. This does not perform validation.
     pub fn required(mut self, required: bool) -> Self {
         self.presentation.optional = !required;
         self
     }
+    /// Supply supporting text; errors take precedence even when their message is hidden.
     pub fn description(mut self, text: impl Into<SharedString>) -> Self {
         self.presentation.description = Some(text.into());
         self
     }
     /// Error styling applies even when its message is hidden. Owner selects validity.
-    pub fn error(mut self, text: impl Into<SharedString>, show: bool) -> Self {
+    /// Show an application-owned error, suppressing the description.
+    /// Error presentation does not validate or discard the control's value.
+    pub fn error(self, text: impl Into<SharedString>) -> Self {
+        self.error_visible(text, true)
+    }
+    /// Set an error with explicit message visibility; a hidden error still suppresses help.
+    pub fn error_visible(mut self, text: impl Into<SharedString>, show: bool) -> Self {
         self.presentation.error = Some((text.into(), show));
         self
     }
+    /// Compose independently focusable contextual help beside the visible label.
     pub fn label_tooltip(
         mut self,
         state: &Entity<crate::TooltipState>,
@@ -264,7 +345,7 @@ impl Render for InputAreaState {
         let target = focus.clone();
         let control = base::input::InputBase::new("control")
             .role(gpui_kit::Role::MultilineTextInput)
-            .accessibility_label(self.name.clone())
+            .accessibility_label(self.accessible_name())
             .aria_value(self.value(cx))
             .aria_placeholder(self.editor.read(cx).presentation().placeholder().clone())
             .when_some(message, |this, (text, _)| this.aria_description(text))
@@ -347,16 +428,16 @@ impl Render for InputAreaState {
                 .left_0()
                 .size_full(),
             );
-        crate::Field::new("field", self.name.clone(), surface)
+        crate::Field::new("field", self.label_text(), surface)
             .focus_target(&focus)
             .disabled(disabled)
-            .hide_label(!self.presentation.label)
+            .show_label(self.presentation.label)
             .required(!self.presentation.optional)
             .when_some(self.presentation.description.clone(), |field, text| {
                 field.description(text)
             })
             .when_some(self.presentation.error.clone(), |field, (text, show)| {
-                field.error(text, show)
+                field.error_visible(text, show)
             })
             .when_some(self.presentation.tooltip.clone(), |field, (state, text)| {
                 field.label_tooltip(&state, text)
@@ -365,5 +446,36 @@ impl Render for InputAreaState {
 }
 /// Discoverability alias matching Kumo's Textarea export.
 pub type Textarea = InputArea;
+impl crate::field::sealed::Sealed for InputArea {}
+impl crate::field::FieldControl for InputArea {
+    fn into_field_parts(self, cx: &App) -> (SharedString, FocusHandle, gpui_kit::AnyElement) {
+        let label = self
+            .presentation
+            .label_text
+            .clone()
+            .unwrap_or_else(|| self.state.read(cx).name.clone());
+        let focus = self.state.read(cx).focus_handle(cx);
+        (label, focus, self.show_label(false).into_any_element())
+    }
+}
+
+impl std::fmt::Debug for InputAreaState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("InputAreaState");
+        debug.field("name", &self.name);
+        debug.field("disabled", &self.disabled);
+        debug.field("read_only", &self.read_only);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for InputArea {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("InputArea");
+        debug.field("id", &self.id);
+        debug.finish_non_exhaustive()
+    }
+}
+
 #[cfg(test)]
 mod tests;

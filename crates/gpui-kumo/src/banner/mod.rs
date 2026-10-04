@@ -63,7 +63,23 @@ impl Styled for Action {
 }
 
 impl Action {
-    /// Create a named, primary action.
+    /// Set visible text and its default accessible name.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.button = self.button.label(text);
+        self
+    }
+    /// Choose visible text presentation while retaining the action's name.
+    pub fn show_label(mut self, show: bool) -> Self {
+        self.button = self.button.show_label(show);
+        self
+    }
+    /// Create a named primary action; the Banner supplies its size and accent.
+    ///
+    /// # Panics
+    /// Panics when `label` is blank.
     pub fn new(id: impl Into<ElementId>, label: impl Into<SharedString>) -> Self {
         Self {
             button: Button::new(id, label),
@@ -71,6 +87,9 @@ impl Action {
         }
     }
     /// Create an icon-only action with a complete accessible name.
+    ///
+    /// # Panics
+    /// Panics when the required accessible name is blank.
     pub fn icon(
         id: impl Into<ElementId>,
         name: impl Into<SharedString>,
@@ -112,6 +131,9 @@ impl Action {
         self
     }
     /// Override the complete accessible name.
+    ///
+    /// # Panics
+    /// Panics when the name is blank.
     pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
         self.button = self.button.accessibility_label(name);
         self
@@ -472,6 +494,26 @@ impl RenderOnce for Banner {
             );
         }
         root.child(row)
+    }
+}
+
+impl std::fmt::Debug for Action {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Action");
+        debug.field("button", &self.button);
+        debug.field("variant", &self.variant);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Banner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Banner");
+        debug.field("id", &self.id);
+        debug.field("variant", &self.variant);
+        debug.field("size", &self.size);
+        debug.field("actions_count", &self.actions.len());
+        debug.finish_non_exhaustive()
     }
 }
 

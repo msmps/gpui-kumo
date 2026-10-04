@@ -43,12 +43,7 @@ impl Render for Fields {
             .child(Label::new("standalone-label", "Standalone label café 🦀")
                 .optional(true).focus_target(&focus))
             .child(
-                Field::new(
-                    "phone",
-                    "Phone number",
-                    Input::new("phone-control", &self.input),
-                )
-                .focus_target(&focus)
+                Field::control("phone", Input::new("phone-control", &self.input), cx)
                 .required(false)
                 .label_tooltip(
                     &self.tooltip,
@@ -58,10 +53,10 @@ impl Render for Fields {
                     "Used only for account recovery. Click the label to focus the retained input.",
                 ),
             )
-            .child(Input::new("api-key", &self.direct).label(true)
+            .child(Input::new("api-key", &self.direct).show_label(true)
                 .label_tooltip(&self.direct_help, "Find this in your dashboard under Settings > API Keys.")
                 .description("Direct Input label help uses the same retained disclosure."))
-            .child(InputGroup::new("help-endpoint", &self.group).label(true)
+            .child(InputGroup::new("help-endpoint", &self.group).show_label(true)
                 .label_tooltip(&self.group_help, "Choose the API endpoint to call. Clear resets this field.")
                 .start(InputGroupAddon::text("/api/"))
                 .end(InputGroupAddon::button("help-clear", "Clear", move |button, _, _| {

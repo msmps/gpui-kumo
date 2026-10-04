@@ -44,7 +44,7 @@ impl Render for Popovers {
                         .child(div().text_size(theme.typography.popover_description.size)
                             .line_height(theme.typography.popover_description.line_height).text_color(theme.text.subtle)
                             .child("Editing state survives dismissal."))
-                        .child(Input::new("project-name", &name).label(true))
+                        .child(Input::new("project-name", &name).show_label(true))
                         .child(Popover::new("nested-settings", &nested, "More settings").parent(&close).placement(Placement::Right).arrow(true)
                             .content(|close, _, _| div().flex().flex_col().gap(px(12.))
                                 .child("A nested nonmodal panel.")

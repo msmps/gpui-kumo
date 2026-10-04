@@ -17,21 +17,29 @@ mod overflow;
 mod view;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Closed semantic visual treatments supported by this component.
 pub enum Variant {
     #[default]
+    /// Joined segmented tabs.
     Segmented,
+    /// Tabs with an active underline.
     Underline,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Component dimensions, including coordinated spacing and typography.
 pub enum Size {
     #[default]
+    /// Default dimensions or treatment.
     Base,
+    /// Small dimensions.
     Sm,
 }
 /// Localized names for segmented overflow actions.
 #[derive(Clone, Debug)]
 pub struct TabsLabels {
+    /// Complete text for scroll start.
     pub scroll_start: SharedString,
+    /// Complete text for scroll end.
     pub scroll_end: SharedString,
 }
 impl Default for TabsLabels {
@@ -49,10 +57,32 @@ pub struct TabItem<T> {
     id: ElementId,
     value: T,
     label: SharedString,
+    accessible_name: Option<SharedString>,
     disabled: bool,
     content: Option<Content>,
 }
 impl<T> TabItem<T> {
+    /// Set visible text and its default accessible name.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.label = crate::name::nonblank(text);
+        self
+    }
+    /// Override the accessible name independently of visible text and builder ordering.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+
+    /// Create a tab with stable identity, typed application value and readable text.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(id: impl Into<ElementId>, value: T, label: impl Into<SharedString>) -> Self {
         let label = label.into();
         assert!(!label.trim().is_empty(), "Tab requires a readable name");
@@ -60,10 +90,12 @@ impl<T> TabItem<T> {
             id: id.into(),
             value,
             label,
+            accessible_name: None,
             disabled: false,
             content: None,
         }
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
@@ -81,6 +113,7 @@ impl<T> TabItem<T> {
 /// User selection proposal. Owner updates and repeated selection are silent.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TabsEvent<T> {
+    /// Value.
     pub value: T,
 }
 struct Item<T> {
@@ -112,6 +145,10 @@ pub struct TabsState<T: Clone + Eq + 'static> {
 }
 impl<T: Clone + Eq + 'static> EventEmitter<TabsEvent<T>> for TabsState<T> {}
 impl<T: Clone + Eq + 'static> TabsState<T> {
+    /// Create a retained tab collection with stable per-item focus handles. Retain with `cx.new`.
+    ///
+    /// # Panics
+    /// Panics when tab IDs or application values are duplicated.
     pub fn new(items: Vec<TabItem<T>>, selected: Option<T>, cx: &mut Context<Self>) -> Self {
         Self::validate(&items);
         let selected = selected.or_else(|| items.first().map(|item| item.value.clone()));
@@ -153,23 +190,28 @@ impl<T: Clone + Eq + 'static> TabsState<T> {
             );
         }
     }
+    /// Choose whether proposals wait for owner reconciliation.
     pub fn controlled(mut self, controlled: bool) -> Self {
         self.controlled = controlled;
         self
     }
+    /// Choose whether keyboard focus also proposes selection.
     pub fn activate_on_focus(mut self, activate: bool) -> Self {
         self.activate_on_focus = activate;
         self
     }
+    /// Read or configure the selected value.
     pub fn selected(&self) -> Option<&T> {
         self.selected.as_ref()
     }
+    /// Update selected and refresh the retained component.
     pub fn set_selected(&mut self, value: Option<T>, cx: &mut Context<Self>) {
         if self.selected != value {
             self.selected = value;
             cx.notify();
         }
     }
+    /// Update availability and notify presentation while retaining the value.
     pub fn set_disabled(&mut self, disabled: bool, cx: &mut Context<Self>) {
         self.disabled = disabled;
         if disabled {
@@ -181,6 +223,9 @@ impl<T: Clone + Eq + 'static> TabsState<T> {
     /// Preserve focus by stable ID through reorder. Removed/unavailable focused tabs
     /// transfer focus to the selected enabled tab, then the first enabled tab.
     /// If none remain, leave the compound with native forward traversal.
+    ///
+    /// # Panics
+    /// Panics when tab IDs or application values are duplicated.
     pub fn set_items(
         &mut self,
         items: Vec<TabItem<T>>,
@@ -321,6 +366,10 @@ pub struct Tabs<T: Clone + Eq + 'static> {
     fade_surface: Option<gpui_kit::Hsla>,
 }
 impl<T: Clone + Eq + 'static> Tabs<T> {
+    /// Present a named tab collection over its retained state.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(
         id: impl Into<ElementId>,
         name: impl Into<SharedString>,
@@ -345,6 +394,10 @@ impl<T: Clone + Eq + 'static> Tabs<T> {
         self.fade_surface = Some(color);
         self
     }
+    /// Supply complete names for the component’s secondary actions.
+    ///
+    /// # Panics
+    /// Panics when an overflow action name is blank.
     pub fn labels(mut self, labels: TabsLabels) -> Self {
         assert!(
             !labels.scroll_start.trim().is_empty() && !labels.scroll_end.trim().is_empty(),
@@ -353,10 +406,12 @@ impl<T: Clone + Eq + 'static> Tabs<T> {
         self.labels = labels;
         self
     }
+    /// Select the semantic visual treatment; interaction and value state remain independent.
     pub fn variant(mut self, variant: Variant) -> Self {
         self.variant = variant;
         self
     }
+    /// Select the component dimensions and corresponding spacing and typography.
     pub fn size(mut self, size: Size) -> Self {
         self.size = size;
         self
@@ -385,5 +440,41 @@ impl<T: Clone + Eq + 'static> RenderOnce for Tabs<T> {
             .child(self.state)
     }
 }
+impl<T> std::fmt::Debug for TabItem<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("TabItem");
+        debug.field("id", &self.id);
+        debug.field("label", &self.label);
+        debug.field("disabled", &self.disabled);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl<T: Clone + Eq + 'static> std::fmt::Debug for TabsState<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("TabsState");
+        debug.field("items_count", &self.items.len());
+        debug.field("controlled", &self.controlled);
+        debug.field("activate_on_focus", &self.activate_on_focus);
+        debug.field("disabled", &self.disabled);
+        debug.field("variant", &self.variant);
+        debug.field("size", &self.size);
+        debug.field("name", &self.name);
+        debug.field("scroll_generation", &self.scroll_generation);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl<T: Clone + Eq + 'static> std::fmt::Debug for Tabs<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Tabs");
+        debug.field("id", &self.id);
+        debug.field("name", &self.name);
+        debug.field("variant", &self.variant);
+        debug.field("size", &self.size);
+        debug.finish_non_exhaustive()
+    }
+}
+
 #[cfg(test)]
 mod tests;

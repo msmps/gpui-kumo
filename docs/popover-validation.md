@@ -1,5 +1,7 @@
 # Popover validation · 2026-10-01
 
+Public naming, visibility, typed composition and failure policy follow the [canonical public API contract](design-system-components.md#public-api-contract). Use that contract when changing the APIs described here.
+
 The native Popover now flips at window edges, offers Kumo's optional arrow, and fades in over 150ms with reduced-motion support. Its lifecycle, rendering and accessibility were checked against the pinned browser reference and the native Linux application.
 
 ## Reference and measurements

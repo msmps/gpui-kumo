@@ -125,7 +125,7 @@ impl Render for EdgeHarness {
             )
             .child(
                 CheckboxGroup::new("second", "Second", &[])
-                    .hide_legend(true)
+                    .show_label(false)
                     .select_all("Empty selection", &[])
                     .item(CheckboxItem::new("select-all", "Second item"))
                     .on_change(move |_, _, cx| {
@@ -148,7 +148,7 @@ fn repeated_groups_keep_scoped_ids_and_empty_aggregate_is_inert(cx: &mut TestApp
             let mut first = window.within("first");
             assert_eq!(first.find("legend").label(), Some("First"));
             assert_eq!(first.find("error").label(), Some("Error"));
-            assert_eq!(first.find("description").label(), Some("Helper"));
+            assert!(first.try_find("description").is_none());
             let expected = theme(cx).typography.sm.line_height;
             // GPUI snaps text layout to device pixels (15.5px at this test scale);
             // half a logical pixel still rejects Field's 17.875px line height.
@@ -157,9 +157,6 @@ fn repeated_groups_keep_scoped_ids_and_empty_aggregate_is_inert(cx: &mut TestApp
                 "actual {:?}, expected {:?}",
                 first.find("error").bounds().size.height,
                 expected
-            );
-            assert!(
-                f32::from(first.find("description").bounds().size.height - expected).abs() <= 0.5
             );
             first.click("item:select-all", cx);
             assert!(first.find("item:select-all").focused().unwrap());

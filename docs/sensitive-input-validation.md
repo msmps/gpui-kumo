@@ -1,5 +1,7 @@
 # SensitiveInput acceptance
 
+Public naming, visibility, typed composition and failure policy follow the [canonical public API contract](design-system-components.md#public-api-contract). Use that contract when changing the APIs described here.
+
 Baseline: Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`; complete521-line source, matching tests, docs and all demos inspected. GPUI Kit/Base0.7.0 and GPUI snapshot family0.3.7 retained. Tracker: [#28](https://github.com/msmps/gpui-kumo/issues/28), local GitHub #28.
 
 ## Ownership and native adaptation

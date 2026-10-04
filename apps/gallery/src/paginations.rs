@@ -175,7 +175,7 @@ impl Render for Paginations {
                     .items_center()
                     .gap(px(8.))
                     .child(parts.info)
-                    .child(parts.page_size.without_label())
+                    .child(parts.page_size.show_label(false))
                     .child(parts.controls)
                     .into_any_element()
             }),

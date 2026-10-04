@@ -33,7 +33,7 @@ impl Render for Collapsibles {
                 }); })
                 .panel(CollapsiblePanel::new().keep_mounted(true)
                     .child(Text::new("details-description", "Type below, collapse and reopen: native editing state survives."))
-                    .child(Input::new("details-name", &self.input).label(true))
+                    .child(Input::new("details-name", &self.input).show_label(true))
                     .child(Button::new("close-details", "Save and close").on_click(move |_, _, cx| {
                         let _ = closer.update(cx, |v, cx| { v.open=false; cx.notify(); });
                     }))))

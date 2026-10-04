@@ -137,7 +137,12 @@ impl<T: Clone + Eq + 'static> Render for TabsState<T> {
                 .selected(selected)
                 .disabled(disabled)
                 .set_position(index + 1, self.items.len())
-                .accessibility_label(item.tab.label.clone())
+                .accessibility_label(
+                    item.tab
+                        .accessible_name
+                        .clone()
+                        .unwrap_or_else(|| item.tab.label.clone()),
+                )
                 .track_focus(
                     &item
                         .focus

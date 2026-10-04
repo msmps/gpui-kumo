@@ -8,10 +8,15 @@ use gpui_kit::{
 
 type ActionFactory = dyn Fn(Size, &mut Window, &mut App) -> crate::Button;
 pub(crate) struct AddonContext<'a> {
+    /// Theme.
     pub theme: &'a Theme,
+    /// Size.
     pub size: Size,
+    /// Disabled.
     pub disabled: bool,
+    /// Start.
     pub start: bool,
+    /// Focus.
     pub focus: &'a mut AddonFocus,
 }
 
@@ -23,6 +28,7 @@ pub(crate) struct AddonFocus {
     available: Vec<gpui_kit::FocusHandle>,
 }
 impl AddonFocus {
+    /// Configure begin.
     pub fn begin(&mut self, window: &Window) -> Option<gpui_kit::FocusHandle> {
         self.seen.clear();
         self.available.clear();
@@ -31,7 +37,7 @@ impl AddonFocus {
             .find(|h| h.is_focused(window))
             .cloned()
     }
-    fn button(
+    pub(crate) fn button(
         &mut self,
         button: crate::Button,
         start: bool,
@@ -53,9 +59,11 @@ impl AddonFocus {
         }
         button.track_focus(&handle)
     }
+    /// Report whether available applies to this component.
     pub fn is_available(&self, handle: &gpui_kit::FocusHandle) -> bool {
         self.available.contains(handle)
     }
+    /// Configure finish.
     pub fn finish(
         &mut self,
         previous: Option<gpui_kit::FocusHandle>,
@@ -66,16 +74,23 @@ impl AddonFocus {
 }
 
 #[derive(Clone)]
+/// Passive decoration or an independently focusable compact action.
 pub enum InputGroupAddon {
+    /// Passive text addon.
     Text(SharedString),
+    /// Decorative SVG asset path.
     Icon(SharedString),
+    /// Nested addon parts, flattened during rendering.
     Parts(Vec<InputGroupAddon>),
+    /// Requested by an application action.
     Action(std::rc::Rc<ActionFactory>),
 }
 impl InputGroupAddon {
+    /// Create a passive text addon.
     pub fn text(text: impl Into<SharedString>) -> Self {
         Self::Text(text.into())
     }
+    /// Supply a decorative icon; icons do not replace the control’s accessible name.
     pub fn icon(path: impl Into<SharedString>) -> Self {
         Self::Icon(path.into())
     }
@@ -115,6 +130,10 @@ impl InputGroupAddon {
     /// ))
     /// # }
     /// ```
+    ///
+    /// # Panics
+    /// Panics during rendering when the label is blank or action identity repeats
+    /// within the same addon.
     pub fn button(
         id: impl Into<ElementId>,
         label: impl Into<SharedString>,
@@ -133,6 +152,9 @@ impl InputGroupAddon {
         }))
     }
     /// Icon-only action; the factory follows the same weak-capture contract as `button`.
+    ///
+    /// # Panics
+    /// Panics when the required accessible name is blank.
     pub fn icon_button(
         id: impl Into<ElementId>,
         name: impl Into<SharedString>,
@@ -243,12 +265,19 @@ impl InputGroupAddon {
 }
 #[derive(Default)]
 pub(crate) struct Container {
+    /// Start.
     pub start: Option<InputGroupAddon>,
+    /// End.
     pub end: Option<InputGroupAddon>,
+    /// Suffix.
     pub suffix: Option<SharedString>,
+    /// Buttons.
     pub buttons: Vec<std::rc::Rc<ActionFactory>>,
+    /// Leading buttons.
     pub leading_buttons: Vec<std::rc::Rc<ActionFactory>>,
+    /// Editor width.
     pub editor_width: Option<gpui_kit::Pixels>,
+    /// Text align.
     pub text_align: gpui_kit::TextAlign,
 }
 /// Initial shared-container slice. The retained InputState owns editing and availability.
@@ -264,6 +293,7 @@ pub struct InputGroup {
     container: Container,
 }
 impl InputGroup {
+    /// Present one retained editor with optional decorations and compact actions.
     pub fn new(id: impl Into<ElementId>, state: &Entity<InputState>) -> Self {
         Self {
             input: Input::new(id, state),
@@ -274,12 +304,30 @@ impl InputGroup {
         self.input = self.input.toolbar_focus(hooks);
         self
     }
+    /// Select the component dimensions and corresponding spacing and typography.
     pub fn size(mut self, size: Size) -> Self {
         self.input = self.input.size(size);
         self
     }
-    pub fn label(mut self, show: bool) -> Self {
-        self.input = self.input.label(show);
+    /// Set visible text and its default accessible name.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.input = self.input.label(text);
+        self
+    }
+    /// Override the accessible name regardless of builder ordering.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.input = self.input.accessibility_label(name);
+        self
+    }
+    /// Choose visible label presentation without changing the accessible name.
+    pub fn show_label(mut self, show: bool) -> Self {
+        self.input = self.input.show_label(show);
         self
     }
     /// Independent contextual help beside the group's visible label.
@@ -303,14 +351,17 @@ impl InputGroup {
         self.input = self.input.error_visible(text.into(), show);
         self
     }
+    /// Supply supporting text; errors take precedence even when their message is hidden.
     pub fn description(mut self, text: impl Into<SharedString>) -> Self {
         self.input = self.input.description(text);
         self
     }
+    /// Display an application-owned error; values are retained and helper text is suppressed.
     pub fn error(mut self, text: impl Into<SharedString>) -> Self {
         self.input = self.input.error(text);
         self
     }
+    /// Supply leading InputGroup content under the shared addon contract.
     pub fn start(mut self, addon: InputGroupAddon) -> Self {
         self.container.start = Some(addon);
         self
@@ -323,6 +374,10 @@ impl InputGroup {
     /// Append a direct action. Non-ghost variants select joined border zones.
     /// The group controls sizing; use addon buttons for compact ghost actions.
     /// Factories are retained: capture weak handles for the editor or its owner.
+    ///
+    /// # Panics
+    /// Panics during rendering when the label is blank or action identity repeats
+    /// within the same addon.
     pub fn button(
         mut self,
         id: impl Into<ElementId>,
@@ -348,6 +403,9 @@ impl InputGroup {
     /// A direct action before the editor in individual mode. With addons,
     /// Kumo hybrid partitioning puts all direct actions after the editor zone.
     /// Factories are retained; capture editor/owner entities weakly.
+    ///
+    /// # Panics
+    /// Panics during rendering for blank labels or duplicate direct-action IDs.
     pub fn leading_button(
         mut self,
         id: impl Into<ElementId>,
@@ -363,6 +421,9 @@ impl InputGroup {
     }
     /// The complete editor surface width, including its source padding/border.
     /// Suffix sizing and narrow parents can still constrain the editor.
+    ///
+    /// # Panics
+    /// Panics when width is nonfinite or nonpositive.
     pub fn editor_width(mut self, width: gpui_kit::Pixels) -> Self {
         assert!(
             f32::from(width).is_finite() && width > px(0.),
@@ -376,6 +437,7 @@ impl InputGroup {
         self.container.text_align = align;
         self
     }
+    /// Supply trailing InputGroup content under the shared addon contract.
     pub fn end(mut self, addon: InputGroupAddon) -> Self {
         self.container.end = Some(addon);
         self
@@ -386,9 +448,6 @@ impl RenderOnce for InputGroup {
         self.input.group(self.container)
     }
 }
-
-#[cfg(test)]
-mod tests;
 
 // Installed Base 0.7.0 reserves this right-side caret-scroll margin.
 // Glyph/hitbox clipping excludes the overlap; reserve the platform caret width
@@ -426,16 +485,23 @@ pub(crate) fn button_size(size: Size) -> crate::button::Size {
 }
 #[derive(Clone)]
 pub(crate) struct Zone {
+    /// Height.
     pub height: gpui_kit::Pixels,
+    /// Radius.
     pub radius: gpui_kit::Pixels,
+    /// First.
     pub first: bool,
+    /// Last.
     pub last: bool,
+    /// Borders.
     pub borders: crate::button::JoinedRingQueue,
 }
 // Preserve native layout/prepaint/Tab order; paint each inside border and one
 // seam after sibling surfaces. No global deferred paint escapes a popup.
 pub(crate) struct Zoned {
+    /// Body.
     pub body: gpui_kit::AnyElement,
+    /// Borders.
     pub borders: crate::button::JoinedRingQueue,
 }
 impl IntoElement for Zoned {
@@ -513,3 +579,42 @@ impl gpui_kit::Element for Zoned {
         }
     }
 }
+
+impl crate::field::sealed::Sealed for InputGroup {}
+impl crate::field::FieldControl for InputGroup {
+    fn into_field_parts(
+        self,
+        cx: &App,
+    ) -> (SharedString, gpui_kit::FocusHandle, gpui_kit::AnyElement) {
+        let (label, focus) = self.input.field_identity(cx);
+        (label, focus, self.show_label(false).into_any_element())
+    }
+}
+
+impl std::fmt::Debug for InputGroup {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("InputGroup");
+        debug.field("input", &self.input);
+        debug.field("has_start", &self.container.start.is_some());
+        debug.field("has_end", &self.container.end.is_some());
+        debug.field(
+            "actions",
+            &(self.container.buttons.len() + self.container.leading_buttons.len()),
+        );
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for InputGroupAddon {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Text(_) => f.debug_tuple("Text").field(&"<text>").finish(),
+            Self::Icon(path) => f.debug_tuple("Icon").field(path).finish(),
+            Self::Parts(parts) => f.debug_tuple("Parts").field(parts).finish(),
+            Self::Action(_) => f.debug_tuple("Action").field(&"<factory>").finish(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests;

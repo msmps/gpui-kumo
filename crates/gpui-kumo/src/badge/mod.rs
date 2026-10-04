@@ -320,5 +320,29 @@ where
     }
 }
 
+impl std::fmt::Debug for Filled {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Filled");
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Dot {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Dot");
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl<P> std::fmt::Debug for Badge<P> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Badge");
+        debug.field("id", &self.id);
+        debug.field("label", &self.label);
+        debug.field("variant", &self.variant);
+        debug.finish_non_exhaustive()
+    }
+}
+
 #[cfg(test)]
 mod tests;

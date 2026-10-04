@@ -1,5 +1,7 @@
 # Toolbar action/link slice contract
 
+Public naming, visibility, typed composition and failure policy follow the [canonical public API contract](design-system-components.md#public-api-contract). Use that contract when changing the APIs described here.
+
 Pinned Kumo3fd5b648 Toolbar source, browser tests, documentation and Base0.7.0 Toolbar/Button/Link were inspected. Supported Kumo parts are Root, Button, Link, Input and InputGroup; Root wraps explicit controls. Size customization is deprecated and omitted. Kumo exports neither ToolbarGroup nor Separator; grouping is the joined card and per-item border. Base UI default loopFocus=true and enableHomeAndEndKeys=false are verified in the installed comparison baseline.
 
 This slice implements Button/Link in a retained typed collection. The editor continuation below implements Input/InputGroup. Select/Combobox trigger replacement and richer render composition remain next slices under #35. The caller retains a ToolbarState entity; stable IDs preserve focus through reorder and replacement. Buttons expose quiet base presentation, label/decorative icon, disabled/loading and focusableWhenDisabled (source defaulttrue); unavailable controls reject pointer/key/accessibility activation even when focusable. Links emit application-owned navigation requests with actual modifier/input data; they never launch a browser automatically. Source root disabled propagates to Buttons, while Toolbar.Link's source metadata intentionally ignores group disabled; preserve that distinction.

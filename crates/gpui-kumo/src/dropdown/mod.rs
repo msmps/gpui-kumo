@@ -13,10 +13,12 @@ use std::{
 };
 
 /// Kumo's two supported action-row treatments.
-#[derive(Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
 pub enum DropdownVariant {
     #[default]
+    /// Default semantic treatment.
     Default,
+    /// Danger treatment.
     Danger,
 }
 
@@ -25,6 +27,7 @@ pub enum DropdownVariant {
 pub struct DropdownItem {
     id: SharedString,
     label: SharedString,
+    accessible_name: Option<SharedString>,
     disabled: bool,
     variant: DropdownVariant,
     icon: Option<SharedString>,
@@ -33,10 +36,32 @@ pub struct DropdownItem {
     selected: bool,
 }
 impl DropdownItem {
+    /// Set the visible/typeahead label and its default accessible name.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.label = crate::name::nonblank(text);
+        self
+    }
+    /// Override the accessible name independently of visible text and builder ordering.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+
+    /// Create an action row with a stable routing key and readable label.
+    ///
+    /// # Panics
+    /// Panics when `label` is blank. Action-key validation occurs in DropdownState.
     pub fn new(id: impl Into<SharedString>, label: impl Into<SharedString>) -> Self {
         Self {
             id: id.into(),
-            label: label.into(),
+            label: crate::name::nonblank(label),
+            accessible_name: None,
             disabled: false,
             variant: DropdownVariant::Default,
             icon: None,
@@ -45,18 +70,22 @@ impl DropdownItem {
             selected: false,
         }
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
+    /// Select the semantic visual treatment; interaction and value state remain independent.
     pub fn variant(mut self, variant: DropdownVariant) -> Self {
         self.variant = variant;
         self
     }
+    /// Supply a decorative icon; icons do not replace the control’s accessible name.
     pub fn icon(mut self, path: impl Into<SharedString>) -> Self {
         self.icon = Some(path.into());
         self
     }
+    /// Indent the menu row for alignment with neighbouring icon rows.
     pub fn inset(mut self, inset: bool) -> Self {
         self.inset = inset;
         self
@@ -66,16 +95,21 @@ impl DropdownItem {
         self.shortcut = Some(shortcut.into());
         self
     }
+    /// Read or configure the selected value.
     pub fn selected(mut self, selected: bool) -> Self {
         self.selected = selected;
         self
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
+/// Action row, heading or divider in a menu.
 pub enum DropdownPart {
+    /// An actionable menu row.
     Item(DropdownItem),
+    /// A noninteractive section heading.
     Label(SharedString),
+    /// A noninteractive divider.
     Separator,
 }
 impl From<DropdownItem> for DropdownPart {
@@ -86,8 +120,11 @@ impl From<DropdownItem> for DropdownPart {
 
 /// Notifications. Activation carries identity; the application owns the operation.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum DropdownEvent {
+    /// The open state changed.
     OpenChanged(bool),
+    /// Action routed by its stable domain key.
     Activated(SharedString),
 }
 
@@ -115,6 +152,10 @@ pub struct DropdownState {
 }
 impl EventEmitter<DropdownEvent> for DropdownState {}
 impl DropdownState {
+    /// Create a closed named menu with retained item focus and typeahead. Retain with `cx.new`.
+    ///
+    /// # Panics
+    /// Panics when the name or action keys/labels are blank, or action keys are duplicated.
     pub fn new(
         name: impl Into<SharedString>,
         parts: Vec<DropdownPart>,
@@ -199,12 +240,31 @@ impl DropdownState {
         self.handles.retain(|id, _| ids.contains(id));
         self.parts = parts;
     }
+    /// Read the retained default name; rendered props may explicitly override it.
+    pub fn name(&self) -> &SharedString {
+        &self.name
+    }
+
+    /// Rename an existing menu without resetting its open state, items or focus.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn set_name(&mut self, name: impl Into<SharedString>, cx: &mut Context<Self>) {
+        self.name = crate::name::nonblank(name);
+        cx.notify();
+    }
+    /// Report whether the overlay is currently disclosed.
     pub fn is_open(&self) -> bool {
         self.open
     }
+    /// Return the retained trigger focus target.
     pub fn trigger_focus(&self) -> FocusHandle {
         self.trigger.clone()
     }
+    /// Replace collection content under the component’s identity and focus-recovery contract.
+    ///
+    /// # Panics
+    /// Panics when action keys are blank or duplicated, or item labels are blank.
     pub fn set_parts(
         &mut self,
         parts: Vec<DropdownPart>,
@@ -222,6 +282,7 @@ impl DropdownState {
         }
         cx.notify();
     }
+    /// Update availability and notify presentation while retaining the value.
     pub fn set_disabled(&mut self, disabled: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.disabled = disabled;
         if disabled {
@@ -229,10 +290,12 @@ impl DropdownState {
         }
         cx.notify();
     }
+    /// Update looping and refresh the retained component.
     pub fn set_looping(&mut self, looping: bool, cx: &mut Context<Self>) {
         self.looping = looping;
         cx.notify();
     }
+    /// Request programmatic disclosure according to the component lifecycle and availability policy.
     pub fn set_open(&mut self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
         if open == self.open
             || (open
@@ -399,6 +462,7 @@ impl DropdownState {
 }
 
 #[derive(IntoElement)]
+/// Consumed trigger and retained menu presentation.
 pub struct Dropdown {
     id: ElementId,
     state: Entity<DropdownState>,
@@ -406,6 +470,10 @@ pub struct Dropdown {
     width: f32,
 }
 impl Dropdown {
+    /// Present a retained named menu with separately named trigger text.
+    ///
+    /// # Panics
+    /// Panics when the trigger label is blank.
     pub fn new(
         id: impl Into<ElementId>,
         state: &Entity<DropdownState>,
@@ -414,11 +482,14 @@ impl Dropdown {
         Self {
             id: id.into(),
             state: state.clone(),
-            label: label.into(),
+            label: crate::name::nonblank(label),
             width: 220.,
         }
     }
     /// Native content width, clamped to the viewport; Kumo minimum is 144px.
+    ///
+    /// # Panics
+    /// Panics when width is nonfinite or smaller than 144 logical pixels.
     pub fn width(mut self, width: gpui_kit::Pixels) -> Self {
         let width = f32::from(width);
         assert!(width.is_finite() && width >= 144.);
@@ -592,7 +663,7 @@ impl Render for DropdownState {
                         .id(item.id.clone())
                         .test_support()
                         .role(Role::MenuItem)
-                        .aria_label(item.label.clone())
+                        .aria_label(item.accessible_name.clone().unwrap_or_else(|| item.label.clone()))
                         .track_focus(handle)
                         .a11y_synthetic_children({
                             let disabled = item.disabled;
@@ -714,6 +785,42 @@ impl Render for DropdownState {
             .child(backdrop)
             .child(root.content(panel))
             .into_any_element()
+    }
+}
+
+impl std::fmt::Debug for DropdownItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("DropdownItem");
+        debug.field("id", &self.id);
+        debug.field("label", &self.label);
+        debug.field("disabled", &self.disabled);
+        debug.field("inset", &self.inset);
+        debug.field("selected", &self.selected);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for DropdownState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("DropdownState");
+        debug.field("name", &self.name);
+        debug.field("parts_count", &self.parts.len());
+        debug.field("open", &self.open);
+        debug.field("disabled", &self.disabled);
+        debug.field("looping", &self.looping);
+        debug.field("label", &self.label);
+        debug.field("width", &self.width);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Dropdown {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Dropdown");
+        debug.field("id", &self.id);
+        debug.field("label", &self.label);
+        debug.field("width", &self.width);
+        debug.finish_non_exhaustive()
     }
 }
 

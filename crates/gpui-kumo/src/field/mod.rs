@@ -17,6 +17,18 @@ pub enum Layout {
     ControlFirst,
 }
 
+pub(crate) mod sealed {
+    /// Sealed under the Layout composition contract.
+    pub trait Sealed {}
+}
+
+/// A supported retained form control whose label and focus target can be associated safely.
+/// Implementations are sealed; arbitrary content uses [`Field::new`] and owns its semantics.
+pub trait FieldControl: sealed::Sealed + Sized {
+    /// Consume the control with its built-in visible label hidden, retaining its semantic name.
+    fn into_field_parts(self, cx: &App) -> (SharedString, FocusHandle, AnyElement);
+}
+
 /// A stateless field. Controls retain their own Base behavior and accessible name.
 /// Validation lives in the application; no browser ValidityState is inferred.
 #[derive(IntoElement)]
@@ -35,7 +47,23 @@ pub struct Field {
     error: Option<(SharedString, bool)>,
 }
 impl Field {
-    /// Compose a named label and a caller-owned control.
+    /// Compose a supported control using its label once, with automatic focus association.
+    /// Accessible-name overrides remain authoritative. Name changes are read on each owner render.
+    ///
+    /// ```no_run
+    /// use gpui_kumo::{Field, Input, InputState};
+    /// use gpui_kit::{App, Entity};
+    /// fn field(input: &Entity<InputState>, cx: &App) -> Field {
+    ///     Field::control("project-field", Input::new("project", input), cx)
+    /// }
+    /// ```
+    pub fn control(id: impl Into<ElementId>, control: impl FieldControl, cx: &App) -> Self {
+        let (label, focus, control) = control.into_field_parts(cx);
+        Self::new(id, label, control).focus_target(&focus)
+    }
+    /// Compose a named label and arbitrary caller-owned content.
+    /// This path cannot infer or update a child's accessible name. Set its semantics explicitly,
+    /// and use `focus_target` for pointer association; prefer [`Self::control`] for supported forms.
     pub fn new(
         id: impl Into<ElementId>,
         label: impl Into<SharedString>,
@@ -71,9 +99,9 @@ impl Field {
         self.disabled = disabled;
         self
     }
-    /// Skip the label when the child owns its own label composition.
-    pub fn hide_label(mut self, hide: bool) -> Self {
-        self.hide_label = hide;
+    /// Show or hide the label without changing control semantics or its focus target.
+    pub fn show_label(mut self, show: bool) -> Self {
+        self.hide_label = !show;
         self
     }
     /// Select stacked or explicit horizontal native layout.
@@ -95,9 +123,13 @@ impl Field {
         self.description = Some(description.into());
         self
     }
-    /// Error takes precedence over helper text, even when `show` is false.
-    /// Synchronize the control's invalid state separately through its own API.
-    pub fn error(mut self, error: impl Into<SharedString>, show: bool) -> Self {
+    /// Show an application-owned error, suppressing the description.
+    /// Error presentation does not validate or discard the control's value.
+    pub fn error(self, text: impl Into<SharedString>) -> Self {
+        self.error_visible(text, true)
+    }
+    /// Set an error with explicit message visibility; a hidden error still suppresses help.
+    pub fn error_visible(mut self, error: impl Into<SharedString>, show: bool) -> Self {
         self.error = Some((error.into(), show));
         self
     }
@@ -199,6 +231,19 @@ fn text_message(
                 bold: false,
             }),
         )
+}
+
+impl std::fmt::Debug for Field {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Field");
+        debug.field("id", &self.id);
+        debug.field("label", &self.label);
+        debug.field("disabled", &self.disabled);
+        debug.field("optional", &self.optional);
+        debug.field("hide_label", &self.hide_label);
+        debug.field("layout", &self.layout);
+        debug.finish_non_exhaustive()
+    }
 }
 
 #[cfg(test)]

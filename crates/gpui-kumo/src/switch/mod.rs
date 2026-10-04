@@ -9,10 +9,14 @@ use gpui_kit::{
 use std::{cell::Cell, rc::Rc, time::Duration};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Component dimensions, including coordinated spacing and typography.
 pub enum Size {
+    /// Small dimensions.
     Sm,
     #[default]
+    /// Default dimensions or treatment.
     Base,
+    /// Large dimensions.
     Lg,
 }
 impl Size {
@@ -25,9 +29,12 @@ impl Size {
     }
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Closed semantic visual treatments supported by this component.
 pub enum Variant {
     #[default]
+    /// Default semantic treatment.
     Default,
+    /// Neutral track treatment.
     Neutral,
 }
 type ChangeHandler = Box<dyn Fn(bool, &ClickEvent, &mut Window, &mut App)>;
@@ -38,6 +45,7 @@ type ChangeHandler = Box<dyn Fn(bool, &ClickEvent, &mut Window, &mut App)>;
 pub struct Switch {
     id: ElementId,
     name: SharedString,
+    accessible_name: Option<SharedString>,
     checked: bool,
     disabled: bool,
     size: Size,
@@ -52,12 +60,33 @@ pub struct Switch {
     on_change: Option<ChangeHandler>,
 }
 impl Switch {
+    /// Set visible text and its default accessible name; explicit overrides remain authoritative.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.name = crate::name::nonblank(text);
+        self
+    }
+    /// Override the accessible name independently of visible text and builder order.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Create a named controlled switch, initially unchecked.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(id: impl Into<ElementId>, name: impl Into<SharedString>) -> Self {
         let name = name.into();
         assert!(!name.trim().is_empty(), "Switch requires a readable name");
         Self {
             id: id.into(),
             name,
+            accessible_name: None,
             checked: false,
             disabled: false,
             size: Size::Base,
@@ -72,34 +101,42 @@ impl Switch {
             on_change: None,
         }
     }
+    /// Supply the controlled checked value; the owner commits user proposals.
     pub fn checked(mut self, checked: bool) -> Self {
         self.checked = checked;
         self
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
+    /// Select the component dimensions and corresponding spacing and typography.
     pub fn size(mut self, size: Size) -> Self {
         self.size = size;
         self
     }
+    /// Select the semantic visual treatment; interaction and value state remain independent.
     pub fn variant(mut self, variant: Variant) -> Self {
         self.variant = variant;
         self
     }
+    /// Choose whether controls precede their labels in the native layout.
     pub fn control_first(mut self, first: bool) -> Self {
         self.control_first = first;
         self
     }
+    /// Choose the optional indicator: false shows “(optional)”. This does not perform validation.
     pub fn required(mut self, required: bool) -> Self {
         self.optional = !required;
         self
     }
-    pub fn bare(mut self) -> Self {
-        self.show_label = false;
+    /// Choose visible label presentation without changing the accessible name.
+    pub fn show_label(mut self, show: bool) -> Self {
+        self.show_label = show;
         self
     }
+    /// Supply caller-owned content for this slot; retain durable child entities outside render factories.
     pub fn content(mut self, content: impl IntoElement) -> Self {
         self.content = Some(content.into_any_element());
         self
@@ -109,10 +146,12 @@ impl Switch {
         self.transitioning = transitioning;
         self
     }
+    /// Use the supplied retained focus handle instead of keyed default focus.
     pub fn track_focus(mut self, focus: &FocusHandle) -> Self {
         self.focus = Some(focus.clone());
         self
     }
+    /// Observe a user value-change proposal; the application owns the resulting value.
     pub fn on_change(
         mut self,
         handler: impl Fn(bool, &ClickEvent, &mut Window, &mut App) + 'static,
@@ -196,11 +235,13 @@ impl RenderOnce for Switch {
             .checked(self.checked)
             .disabled(disabled)
             .track_focus(&focus)
-            .accessibility_label(if self.optional && self.show_label {
-                SharedString::from(format!("{} (optional)", self.name))
-            } else {
-                self.name
-            })
+            .accessibility_label(self.accessible_name.unwrap_or_else(|| {
+                if self.optional {
+                    SharedString::from(format!("{} (optional)", self.name))
+                } else {
+                    self.name
+                }
+            }))
             .a11y_synthetic_children(move |builder| {
                 if disabled {
                     builder.parent_node().set_disabled();
@@ -375,15 +416,37 @@ fn ease_out(progress: f32) -> f32 {
 pub struct SwitchGroup {
     id: ElementId,
     name: SharedString,
+    accessible_name: Option<SharedString>,
     items: Vec<Switch>,
     disabled: bool,
     control_first: bool,
     hidden_legend: bool,
     legend: Option<AnyElement>,
     error: Option<SharedString>,
+    show_error: bool,
     description: Option<SharedString>,
 }
 impl SwitchGroup {
+    /// Set visible text and its default accessible name; explicit overrides remain authoritative.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.name = crate::name::nonblank(text);
+        self
+    }
+    /// Override the accessible name independently of visible text and builder order.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Create a named group whose Switch values remain application-owned.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(id: impl Into<ElementId>, name: impl Into<SharedString>) -> Self {
         let name = name.into();
         assert!(
@@ -393,16 +456,21 @@ impl SwitchGroup {
         Self {
             id: id.into(),
             name,
+            accessible_name: None,
             items: Vec::new(),
             disabled: false,
             control_first: true,
             hidden_legend: false,
             legend: None,
             error: None,
+            show_error: true,
             description: None,
         }
     }
     /// A Switch is the idiomatic native Item; per-item callbacks remain intact.
+    ///
+    /// # Panics
+    /// Panics when item IDs are duplicated.
     pub fn item(mut self, item: Switch) -> Self {
         assert!(
             !self.items.iter().any(|i| i.id == item.id),
@@ -411,26 +479,40 @@ impl SwitchGroup {
         self.items.push(item);
         self
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
+    /// Choose whether controls precede their labels in the native layout.
     pub fn control_first(mut self, first: bool) -> Self {
         self.control_first = first;
         self
     }
-    pub fn hide_legend(mut self) -> Self {
-        self.hidden_legend = true;
+    /// Choose visible label presentation without changing the accessible name.
+    pub fn show_label(mut self, show: bool) -> Self {
+        self.hidden_legend = !show;
         self
     }
+    /// Supply decorative group-label content; the textual group name remains authoritative.
     pub fn legend(mut self, legend: impl IntoElement) -> Self {
         self.legend = Some(legend.into_any_element());
         self
     }
-    pub fn error(mut self, error: impl Into<SharedString>) -> Self {
-        self.error = Some(error.into());
+    /// Supply an error while choosing whether its message is visible.
+    /// A hidden error still suppresses helper text; validation remains application-owned.
+    pub fn error_visible(mut self, text: impl Into<SharedString>, show: bool) -> Self {
+        self.error = Some(text.into());
+        self.show_error = show;
         self
     }
+    /// Display an application-owned error; values are retained and helper text is suppressed.
+    pub fn error(mut self, error: impl Into<SharedString>) -> Self {
+        self.error = Some(error.into());
+        self.show_error = true;
+        self
+    }
+    /// Supply supporting text; errors take precedence even when their message is hidden.
     pub fn description(mut self, description: impl Into<SharedString>) -> Self {
         self.description = Some(description.into());
         self
@@ -438,6 +520,7 @@ impl SwitchGroup {
 }
 impl RenderOnce for SwitchGroup {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
+        let description = self.description.filter(|_| self.error.is_none());
         let theme = theme(cx);
         let items = self.items.into_iter().map(|mut item| {
             item.group_item = true;
@@ -449,7 +532,11 @@ impl RenderOnce for SwitchGroup {
             .id(self.id)
             .test_support()
             .role(Role::Group)
-            .aria_label(self.name.clone())
+            .aria_label(
+                self.accessible_name
+                    .clone()
+                    .unwrap_or_else(|| self.name.clone()),
+            )
             .flex()
             .flex_col()
             .min_w_0()
@@ -468,12 +555,12 @@ impl RenderOnce for SwitchGroup {
                     .gap(theme.spacing.eight)
                     .children(items),
             )
-            .when_some(self.error, |this, error| {
+            .when_some(self.error.filter(|_| self.show_error), |this, error| {
                 this.child(crate::field::group_message_element(
                     theme, "error", error, true,
                 ))
             })
-            .when_some(self.description, |this, description| {
+            .when_some(description, |this, description| {
                 this.child(crate::field::group_message_element(
                     theme,
                     "description",
@@ -483,5 +570,37 @@ impl RenderOnce for SwitchGroup {
             })
     }
 }
+impl std::fmt::Debug for Switch {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Switch");
+        debug.field("id", &self.id);
+        debug.field("name", &self.name);
+        debug.field("checked", &self.checked);
+        debug.field("disabled", &self.disabled);
+        debug.field("size", &self.size);
+        debug.field("variant", &self.variant);
+        debug.field("control_first", &self.control_first);
+        debug.field("optional", &self.optional);
+        debug.field("show_label", &self.show_label);
+        debug.field("transitioning", &self.transitioning);
+        debug.field("group_item", &self.group_item);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for SwitchGroup {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("SwitchGroup");
+        debug.field("id", &self.id);
+        debug.field("name", &self.name);
+        debug.field("items_count", &self.items.len());
+        debug.field("disabled", &self.disabled);
+        debug.field("control_first", &self.control_first);
+        debug.field("hidden_legend", &self.hidden_legend);
+        debug.field("show_error", &self.show_error);
+        debug.finish_non_exhaustive()
+    }
+}
+
 #[cfg(test)]
 mod tests;

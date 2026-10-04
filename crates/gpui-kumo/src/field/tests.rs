@@ -18,7 +18,9 @@ impl Render for Harness {
                 .disabled(self.disabled)
                 .layout(self.layout)
                 .description("Account recovery only")
-                .when_some(self.error, |field, show| field.error("Invalid phone", show)),
+                .when_some(self.error, |field, show| {
+                    field.error_visible("Invalid phone", show)
+                }),
         )
     }
 }
@@ -147,7 +149,7 @@ impl Render for HelpHarness {
                     .required(false)
                     .focus_target(&focus)
                     .disabled(self.disabled)
-                    .hide_label(self.hide)
+                    .show_label(!self.hide)
                     .label_tooltip(&self.tooltip, self.content.clone())
                     .description("Keep this number up to date."),
                 )

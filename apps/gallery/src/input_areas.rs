@@ -49,11 +49,11 @@ impl Render for InputAreas {
         crate::panel(theme, "InputArea · multiline editing and wrapped row sizing")
             .child(gpui_kumo::TooltipProvider::new("area-help", [self.help.downgrade()],
                 div().flex().flex_col().gap(px(24.)).children(self.entries.iter().enumerate().map(|(i, state)| {
-                    let area = InputArea::new(("area", i), state).label(true).size(sizes.get(i).copied().unwrap_or(Size::Base));
+                    let area = InputArea::new(("area", i), state).show_label(true).size(sizes.get(i).copied().unwrap_or(Size::Base));
                     if i == 2 {
                         let area = area.rows(4).required(false).label_tooltip(&self.help, "Plain Enter adds a line; Tab leaves the field.").description("Grows from 2 to 4 wrapped rows. Extra content scrolls; switch to fixed 4 rows below.");
                         if self.auto { area.auto_resize(2, Some(4)) } else { area }
-                    } else if i == 6 { area.error("Add more detail", true) } else { area }
+                    } else if i == 6 { area.error_visible("Add more detail", true) } else { area }
                 }))))
             .child(format!("Notes changes {} · {} rows", self.changes, if self.auto { "automatic 2–4" } else { "fixed 4" }))
             .child(div().flex().flex_wrap().gap(theme.spacing.eight)

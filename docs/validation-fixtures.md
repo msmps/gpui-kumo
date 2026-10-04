@@ -24,6 +24,7 @@ Run commands from the listed directory unless the command specifies the reposito
 | --- | --- |
 | `tools/validation/announcement` | `python3 probe.py` |
 | `tools/validation/dialog/browser` | `node build.cjs`; `node probe.cjs` |
+| `tools/validation/public-api/linux` | From repository root: `cargo build -p kumo-gallery --example public_api --locked`; `dbus-run-session -- python3 tools/validation/public-api/linux/probe.py --binary target/debug/examples/public_api --output /tmp/kumo-public-api` |
 | `tools/validation/dialog/linux` | `python3 probe.py` |
 | `tools/validation/dropdown/browser` | `node build.cjs`; `node probe.cjs` |
 | `tools/validation/dropdown/linux` | `python3 probe.py` |

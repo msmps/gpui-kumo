@@ -139,7 +139,7 @@ impl Render for Harness {
                         .align(self.align)
                         .offset(self.gap)
                         .when_some(self.description.clone(), |v, d| v.description(d))
-                        .when_some(self.error.clone(), |v, (e, show)| v.error(e, show)),
+                        .when_some(self.error.clone(), |v, (e, show)| v.error_visible(e, show)),
                 )
                 .child(crate::Button::new("after", "After").track_focus(&self.after)),
         )

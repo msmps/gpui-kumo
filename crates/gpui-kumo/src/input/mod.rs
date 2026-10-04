@@ -13,11 +13,16 @@ use gpui_kit::base::TestSupportExt;
 mod accessibility;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Component dimensions, including coordinated spacing and typography.
 pub enum Size {
+    /// Extra-small dimensions.
     Xs,
+    /// Small dimensions.
     Sm,
     #[default]
+    /// Default dimensions or treatment.
     Base,
+    /// Large dimensions.
     Lg,
 }
 
@@ -56,10 +61,20 @@ pub(crate) fn metrics(
 
 /// Notifications from the editing engine. Read the value from the emitting state.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub enum InputEvent {
+    /// The user changed the value.
     Change,
-    Submit { secondary: bool, shift: bool },
+    /// The user requested submission.
+    Submit {
+        /// The platform's secondary submit modifier was held.
+        secondary: bool,
+        /// Shift was held during submission.
+        shift: bool,
+    },
+    /// The retained control received focus.
     Focus,
+    /// The retained control lost focus.
     Blur,
 }
 
@@ -77,14 +92,30 @@ pub struct InputState {
     group_focus: Option<FocusHandle>,
     group_zone_focus: Option<FocusHandle>,
     group_addon_focus: crate::input_group::AddonFocus,
-    group_button_focus: std::collections::HashMap<ElementId, FocusHandle>,
+    group_direct_focus: crate::input_group::AddonFocus,
     _subscriptions: Vec<Subscription>,
 }
 
 impl EventEmitter<InputEvent> for InputState {}
 
 impl InputState {
+    fn label_text(&self) -> SharedString {
+        self.presentation
+            .label_text
+            .clone()
+            .unwrap_or_else(|| self.name.clone())
+    }
+    fn accessible_name(&self) -> SharedString {
+        self.presentation
+            .accessible_name
+            .clone()
+            .unwrap_or_else(|| self.label_text())
+    }
+
     /// The accessible name must be nonempty; a placeholder is not a label.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(name: impl Into<SharedString>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let name = name.into();
         assert!(!name.trim().is_empty(), "Input requires an accessible name");
@@ -117,25 +148,37 @@ impl InputState {
             group_focus: None,
             group_zone_focus: None,
             group_addon_focus: Default::default(),
-            group_button_focus: std::collections::HashMap::new(),
+            group_direct_focus: Default::default(),
             _subscriptions: vec![events, theme, editor_observer],
         }
     }
+    /// Read the retained default name; rendered props may explicitly override it.
+    pub fn name(&self) -> &SharedString {
+        &self.name
+    }
 
-    pub(crate) fn set_name(&mut self, name: SharedString, cx: &mut Context<Self>) {
+    /// Refresh the default label and accessible name without resetting interaction or value state.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank. Validate external text with [`crate::AccessibleName`].
+    pub fn set_name(&mut self, name: impl Into<SharedString>, cx: &mut Context<Self>) {
+        let name = name.into();
         assert!(!name.trim().is_empty(), "Input requires an accessible name");
         self.name = name;
         cx.notify();
     }
 
+    /// Read the current value from its owner; this does not request a change.
     pub fn value(&self, cx: &App) -> SharedString {
         self.editor.read(cx).value()
     }
 
+    /// Read the currently selected text without changing selection.
     pub fn selected_value(&self, cx: &App) -> SharedString {
         self.editor.read(cx).selected_value()
     }
 
+    /// Replace the owner value programmatically; this is not a user activation proposal.
     pub fn set_value(
         &mut self,
         value: impl Into<SharedString>,
@@ -148,6 +191,7 @@ impl InputState {
         cx.notify();
     }
 
+    /// Update empty-editor guidance without replacing the retained editor.
     pub fn set_placeholder(
         &mut self,
         placeholder: impl Into<SharedString>,
@@ -161,9 +205,11 @@ impl InputState {
         cx.notify();
     }
 
+    /// Report whether the owner has disabled this control.
     pub fn is_disabled(&self) -> bool {
         self.disabled
     }
+    /// Report whether user editing is blocked while selection and copying remain available.
     pub fn is_read_only(&self) -> bool {
         self.read_only
     }
@@ -250,6 +296,8 @@ impl Focusable for InputState {
 struct Presentation {
     size: Size,
     label: bool,
+    label_text: Option<SharedString>,
+    accessible_name: Option<SharedString>,
     tooltip: Option<(Entity<crate::TooltipState>, SharedString)>,
     optional: bool,
     description: Option<SharedString>,
@@ -272,6 +320,16 @@ pub struct Input {
 }
 
 impl Input {
+    pub(crate) fn field_identity(&self, cx: &App) -> (SharedString, FocusHandle) {
+        (
+            self.presentation
+                .label_text
+                .clone()
+                .unwrap_or_else(|| self.state.read(cx).name.clone()),
+            self.state.read(cx).focus_handle(cx),
+        )
+    }
+    /// Present a retained single-line editor under a stable element identity.
     pub fn new(id: impl Into<ElementId>, state: &Entity<InputState>) -> Self {
         Self {
             id: id.into(),
@@ -287,12 +345,31 @@ impl Input {
         self.presentation.group = Some(group);
         self
     }
+    /// Select the component dimensions and corresponding spacing and typography.
     pub fn size(mut self, size: Size) -> Self {
         self.presentation.size = size;
         self
     }
     /// Show the state's accessible name as a clickable field label.
-    pub fn label(mut self, show: bool) -> Self {
+    /// Set visible text and its default accessible name; visibility is controlled separately.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        let text = crate::name::nonblank(text);
+        self.presentation.label_text = Some(text);
+        self
+    }
+    /// Override the accessible name independently of label visibility and builder order.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.presentation.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Show or hide visible label presentation while retaining its accessible name.
+    pub fn show_label(mut self, show: bool) -> Self {
         self.presentation.label = show;
         self
     }
@@ -306,6 +383,7 @@ impl Input {
         self.presentation.tooltip = Some((state.clone(), content.into()));
         self
     }
+    /// Supply supporting text; errors take precedence even when their message is hidden.
     pub fn description(mut self, description: impl Into<SharedString>) -> Self {
         self.presentation.description = Some(description.into());
         self
@@ -315,7 +393,8 @@ impl Input {
         self.presentation.error = Some((error.into(), true));
         self
     }
-    pub(crate) fn required(mut self, required: bool) -> Self {
+    /// Choose the optional indicator: false shows “(optional)”. This does not perform validation.
+    pub fn required(mut self, required: bool) -> Self {
         self.presentation.optional = !required;
         self
     }
@@ -324,8 +403,9 @@ impl Input {
         self.presentation.focus_scope = Some(scope.clone());
         self
     }
-    pub(crate) fn error_visible(mut self, text: SharedString, show: bool) -> Self {
-        self.presentation.error = Some((text, show));
+    /// Supply an application-owned error and choose whether its message is shown.
+    pub fn error_visible(mut self, text: impl Into<SharedString>, show: bool) -> Self {
+        self.presentation.error = Some((text.into(), show));
         self
     }
 }
@@ -402,8 +482,7 @@ impl Render for InputState {
                 "InputGroup direct button IDs must be unique"
             );
         }
-        self.group_button_focus
-            .retain(|id, _| buttons.iter().any(|button| button.id() == id));
+        let previous_direct_action = self.group_direct_focus.begin(window);
         let joined = buttons.iter().any(|button| !button.is_ghost());
         if joined && self.group_zone_focus.is_none() {
             let handle = cx.focus_handle().tab_stop(false);
@@ -436,13 +515,9 @@ impl Render for InputState {
             .into_iter()
             .enumerate()
             .map(|(index, button)| {
-                let focus = button.provided_focus().unwrap_or_else(|| {
-                    self.group_button_focus
-                        .entry(button.id().clone())
-                        .or_insert_with(|| cx.focus_handle())
-                        .clone()
-                });
-                let button = button.track_focus(&focus);
+                let button = self
+                    .group_direct_focus
+                    .button(button, false, self.disabled, cx);
                 let button = if joined {
                     button
                         .size(crate::input_group::button_size(self.presentation.size))
@@ -475,6 +550,7 @@ impl Render for InputState {
             })
             .collect();
 
+        let removed_direct = self.group_direct_focus.finish(previous_direct_action);
         let leading_buttons: Vec<_> = direct_buttons.drain(..leading_count).collect();
 
         if group.is_some() {
@@ -521,14 +597,20 @@ impl Render for InputState {
                     cx,
                 )
             });
-        if let Some(removed) = self.group_addon_focus.finish(previous_action) {
+        if let Some(removed) = self
+            .group_addon_focus
+            .finish(previous_action)
+            .or(removed_direct)
+        {
             let owner = cx.entity().downgrade();
             let recovery = toolbar.map(|hooks| hooks.on_action_removed.clone());
             window.defer(cx, move |window, cx| {
                 if !removed.is_focused(window)
-                    || owner
-                        .upgrade()
-                        .is_none_or(|state| state.read(cx).group_addon_focus.is_available(&removed))
+                    || owner.upgrade().is_none_or(|state| {
+                        let state = state.read(cx);
+                        state.group_addon_focus.is_available(&removed)
+                            || state.group_direct_focus.is_available(&removed)
+                    })
                 {
                     return;
                 }
@@ -672,7 +754,7 @@ impl Render for InputState {
             } else {
                 gpui_kit::Role::TextInput
             })
-            .accessibility_label(self.name.clone())
+            .accessibility_label(self.accessible_name())
             .aria_value(if masked && !value.is_empty() {
                 "••••••••".into()
             } else {
@@ -1033,7 +1115,7 @@ impl Render for InputState {
             .when_some(group_focus, |this, handle| {
                 this.track_focus(&handle)
                     .role(gpui_kit::Role::Group)
-                    .aria_label(self.name.clone())
+                    .aria_label(self.accessible_name())
                     .a11y_synthetic_children(move |builder| {
                         if group_disabled {
                             builder.parent_node().set_disabled();
@@ -1058,7 +1140,7 @@ impl Render for InputState {
             .gap(theme.spacing.eight)
             .when(self.presentation.label, |this| {
                 this.child(
-                    crate::Label::new("label", self.name.clone())
+                    crate::Label::new("label", self.label_text())
                         .optional(self.presentation.optional)
                         .focus_target(&label_focus)
                         .disabled(disabled)
@@ -1072,6 +1154,38 @@ impl Render for InputState {
             .when_some(description, |this, description| {
                 this.child(crate::field::message_element(&theme, description, invalid))
             })
+    }
+}
+
+impl crate::field::sealed::Sealed for Input {}
+impl crate::field::FieldControl for Input {
+    fn into_field_parts(self, cx: &App) -> (SharedString, FocusHandle, gpui_kit::AnyElement) {
+        let label = self
+            .presentation
+            .label_text
+            .clone()
+            .unwrap_or_else(|| self.state.read(cx).name.clone());
+        let focus = self.state.read(cx).focus_handle(cx);
+        (label, focus, self.show_label(false).into_any_element())
+    }
+}
+
+impl std::fmt::Debug for InputState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("InputState");
+        debug.field("name", &self.name);
+        debug.field("disabled", &self.disabled);
+        debug.field("read_only", &self.read_only);
+        debug.field("toolbar_disabled", &self.toolbar_disabled);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Input {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Input");
+        debug.field("id", &self.id);
+        debug.finish_non_exhaustive()
     }
 }
 

@@ -1,5 +1,7 @@
 # Dialog contract and validation
 
+Public naming, visibility, typed composition and failure policy follow the [canonical public API contract](design-system-components.md#public-api-contract). Use that contract when changing the APIs described here.
+
 Status: retained native modal core implemented; full-family acceptance remains open in #19. Pinned Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, Base0.7.0 and GPUI0.3.7 remain authoritative.
 
 Inspected Kumo `dialog.tsx`, its positioning regression and `DialogDemo.tsx`; inspected installed Base `dialog.rs`, `focus_trap.rs` and Root's Tab handling. The gallery connects the document action menu to retained edit and delete dialogs. Toast feedback is the next announcement slice.

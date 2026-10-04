@@ -382,5 +382,35 @@ impl RenderOnce for Breadcrumbs {
         div().flex().min_w_0().child(root.children(extras))
     }
 }
+impl std::fmt::Debug for BreadcrumbCurrent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("BreadcrumbCurrent");
+        debug.field("id", &self.id);
+        debug.field("label", &self.label);
+        debug.field("loading", &self.loading);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for BreadcrumbClipboard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("BreadcrumbClipboard");
+        debug.field("id", &self.id);
+        debug.field("disabled", &self.disabled);
+        debug.field("group_hovered", &self.group_hovered);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Breadcrumbs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Breadcrumbs");
+        debug.field("id", &self.id);
+        debug.field("size", &self.size);
+        debug.field("parts_count", &self.parts.len());
+        debug.finish_non_exhaustive()
+    }
+}
+
 #[cfg(test)]
 mod tests;

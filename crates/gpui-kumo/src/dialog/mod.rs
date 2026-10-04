@@ -9,11 +9,16 @@ use gpui_kit::{
 use std::{cell::RefCell, collections::HashMap, rc::Rc, time::Instant};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Preset modal widths.
 pub enum DialogSize {
+    /// Compact dialog width.
     Small,
     #[default]
+    /// Default dimensions or treatment.
     Base,
+    /// Large dialog width.
     Large,
+    /// Largest preset dialog width.
     ExtraLarge,
 }
 impl DialogSize {
@@ -32,22 +37,36 @@ impl DialogSize {
     }
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Native modal semantic role.
 pub enum DialogRole {
     #[default]
+    /// Standard modal dialog semantics.
     Dialog,
+    /// Urgent modal confirmation semantics.
     AlertDialog,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+/// Origin of a modal close request.
 pub enum DialogCloseReason {
+    /// Requested through Escape.
     Escape,
+    /// Requested by a pointer press on the backdrop.
     Backdrop,
+    /// Requested by the close button.
     CloseButton,
+    /// Requested by an application action.
     Action,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+/// Modal lifecycle notification.
 pub enum DialogEvent {
+    /// The open state changed.
     OpenChanged(bool),
+    /// The overlay closed with the supplied reason.
     Closed(DialogCloseReason),
+    /// A close request was rejected by the current policy.
     ClosePrevented(DialogCloseReason),
 }
 
@@ -115,6 +134,10 @@ pub struct DialogState {
 }
 impl EventEmitter<DialogEvent> for DialogState {}
 impl DialogState {
+    /// Create a closed named modal with retained disclosure and focus state. Retain with `cx.new`.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(name: impl Into<SharedString>, cx: &mut Context<Self>) -> Self {
         let name = name.into();
         assert!(
@@ -158,17 +181,40 @@ impl DialogState {
             focus_out: None,
         }
     }
+    /// Read the retained default name; rendered props may explicitly override it.
+    pub fn name(&self) -> &SharedString {
+        &self.name
+    }
+
+    /// Refresh the default label and accessible name while preserving value, focus and lifecycle.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank. Validate external text with [`crate::AccessibleName`].
+    pub fn set_name(&mut self, name: impl Into<SharedString>, cx: &mut Context<Self>) {
+        let name = name.into();
+        assert!(
+            !name.trim().is_empty(),
+            "A control requires a nonblank accessible name"
+        );
+        self.name = name;
+        cx.notify();
+    }
+
+    /// Report whether the overlay is currently disclosed.
     pub fn is_open(&self) -> bool {
         self.open
     }
+    /// Choose the named overlay role without replacing its retained entity.
     pub fn set_role(&mut self, role: DialogRole, cx: &mut Context<Self>) {
         self.role = role;
         cx.notify();
     }
+    /// Update pointer dismissal and refresh the retained component.
     pub fn set_pointer_dismissal(&mut self, allowed: bool, cx: &mut Context<Self>) {
         self.pointer_dismissal = allowed;
         cx.notify();
     }
+    /// Update escape dismissal and refresh the retained component.
     pub fn set_escape_dismissal(&mut self, allowed: bool, cx: &mut Context<Self>) {
         self.escape_dismissal = allowed;
         cx.notify();
@@ -183,6 +229,7 @@ impl DialogState {
         self.close_guard = Some(Rc::new(guard));
         cx.notify();
     }
+    /// Request programmatic disclosure according to the component lifecycle and availability policy.
     pub fn set_open(&mut self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
         if self.open == open || (open && self.mount.as_ref().is_some_and(|m| m.upgrade().is_none()))
         {
@@ -251,6 +298,7 @@ impl DialogState {
             window.blur(cx);
         }
     }
+    /// Request closure through the current dismissal policy.
     pub fn request_close(
         &mut self,
         reason: DialogCloseReason,
@@ -317,11 +365,13 @@ pub struct DialogClose {
     state: WeakEntity<DialogState>,
 }
 impl DialogClose {
+    /// Request closure under the retained dismissal policy.
     pub fn request(&self, reason: DialogCloseReason, window: &mut Window, cx: &mut App) -> bool {
         self.state
             .update(cx, |state, cx| state.request_close(reason, window, cx))
             .unwrap_or(false)
     }
+    /// Create a close button bound to this modal capability.
     pub fn button(&self, button: Button) -> Button {
         let close = self.clone();
         button.after_click(move |_, window, cx| {
@@ -338,6 +388,7 @@ pub struct DialogTrigger {
     button: Button,
 }
 impl DialogTrigger {
+    /// Compose a Button with the retained modal disclosure lifecycle.
     pub fn new(id: impl Into<ElementId>, state: &Entity<DialogState>, button: Button) -> Self {
         Self {
             id: id.into(),
@@ -392,6 +443,7 @@ pub struct Dialog {
     content: Content,
 }
 impl Dialog {
+    /// Present a retained named modal using an application-owned content factory.
     pub fn new(
         id: impl Into<ElementId>,
         state: &Entity<DialogState>,
@@ -406,14 +458,17 @@ impl Dialog {
             content: Rc::new(content),
         }
     }
+    /// Select the component dimensions and corresponding spacing and typography.
     pub fn size(mut self, size: DialogSize) -> Self {
         self.size = size;
         self
     }
+    /// Supply the native dialog description independently of rich content.
     pub fn description(mut self, description: impl Into<SharedString>) -> Self {
         self.description = Some(description.into());
         self
     }
+    /// Select the initial focus target for disclosure.
     pub fn initial_focus(mut self, focus: &FocusHandle) -> Self {
         self.initial_focus = Some(focus.clone());
         self
@@ -658,6 +713,44 @@ impl Render for DialogState {
         )
         .with_priority(10 + layer)
         .into_any_element()
+    }
+}
+
+impl std::fmt::Debug for DialogState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("DialogState");
+        debug.field("name", &self.name);
+        debug.field("open", &self.open);
+        debug.field("role", &self.role);
+        debug.field("size", &self.size);
+        debug.field("pointer_dismissal", &self.pointer_dismissal);
+        debug.field("escape_dismissal", &self.escape_dismissal);
+        debug.field("initial_pending", &self.initial_pending);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for DialogClose {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("DialogClose");
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for DialogTrigger {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("DialogTrigger");
+        debug.field("id", &self.id);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Dialog {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Dialog");
+        debug.field("id", &self.id);
+        debug.field("size", &self.size);
+        debug.finish_non_exhaustive()
     }
 }
 

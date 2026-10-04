@@ -67,6 +67,7 @@ type ValueText = Box<dyn Fn(&str, MeterValue) -> SharedString>;
 pub struct Meter {
     id: ElementId,
     label: SharedString,
+    accessible_name: Option<SharedString>,
     value: f64,
     range: RangeInclusive<f64>,
     custom_value: Option<SharedString>,
@@ -79,12 +80,33 @@ pub struct Meter {
 }
 impl Meter {
     /// Create a named measurement with a unique stable ID and default0–100 range.
+    /// Set visible text and its default accessible name; explicit overrides remain authoritative.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.label = crate::name::nonblank(text);
+        self
+    }
+    /// Override the accessible name independently of visible text and builder order.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Create a named measurement with an application-owned raw value.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(id: impl Into<ElementId>, label: impl Into<SharedString>, value: f64) -> Self {
         let label = label.into();
         assert!(!label.trim().is_empty(), "Meter requires a nonempty label");
         Self {
             id: id.into(),
             label,
+            accessible_name: None,
             value,
             range: 0.0..=100.0,
             custom_value: None,
@@ -97,6 +119,9 @@ impl Meter {
         }
     }
     /// Set a finite ordered range. Equal endpoints follow the source normalization.
+    ///
+    /// # Panics
+    /// Panics when endpoints are nonfinite or the range is reversed.
     pub fn range(mut self, range: RangeInclusive<f64>) -> Self {
         assert!(
             range.start().is_finite() && range.end().is_finite() && range.start() <= range.end(),
@@ -180,7 +205,11 @@ impl RenderOnce for Meter {
             .id(self.id)
             .test_support()
             .role(Role::Meter)
-            .aria_label(self.label.clone())
+            .aria_label(
+                self.accessible_name
+                    .clone()
+                    .unwrap_or_else(|| self.label.clone()),
+            )
             .aria_min_numeric_value(value.min)
             .aria_max_numeric_value(value.max)
             .aria_numeric_value(value.value)
@@ -268,6 +297,16 @@ impl RenderOnce for Meter {
                             ),
                     ),
             )
+    }
+}
+
+impl std::fmt::Debug for Meter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Meter");
+        debug.field("id", &self.id);
+        debug.field("label", &self.label);
+        debug.field("show_value", &self.show_value);
+        debug.finish_non_exhaustive()
     }
 }
 

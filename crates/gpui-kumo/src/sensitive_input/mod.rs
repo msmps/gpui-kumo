@@ -11,17 +11,27 @@ use gpui_kit::{
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Secret presentation mode; this does not expose the secret value.
 pub enum Mode {
+    /// Present the secret with redacted visible and accessible values.
     Masked,
+    /// Present the retained editable value.
     Revealed,
+    /// Present the empty editor.
     Empty,
 }
 
 #[derive(Clone, Debug)]
+#[non_exhaustive]
+/// Sensitive editor changes and clipboard requests; values remain in state.
 pub enum SensitiveInputEvent {
+    /// The user changed the value.
     Change,
+    /// The user requested submission.
     Submit {
+        /// Secondary.
         secondary: bool,
+        /// Shift.
         shift: bool,
     },
     /// Submitted to GPUI's clipboard API, which offers no delivery result.
@@ -48,6 +58,20 @@ pub struct SensitiveInputState {
 }
 impl EventEmitter<SensitiveInputEvent> for SensitiveInputState {}
 impl SensitiveInputState {
+    fn label_text(&self) -> SharedString {
+        self.presentation
+            .label_text
+            .clone()
+            .unwrap_or_else(|| self.name.clone())
+    }
+    fn accessible_name(&self) -> SharedString {
+        self.presentation
+            .accessible_name
+            .clone()
+            .unwrap_or_else(|| self.label_text())
+    }
+
+    /// Create a retained named sensitive editor from an initial secret value. Retain with `cx.new`.
     pub fn new(
         name: impl Into<SharedString>,
         value: impl Into<SharedString>,
@@ -113,21 +137,48 @@ impl SensitiveInputState {
             _subscriptions: subscriptions,
         }
     }
+    /// Read the retained default name; rendered props may explicitly override it.
+    pub fn name(&self) -> &SharedString {
+        &self.name
+    }
+
+    /// Refresh the default label and accessible name while preserving value, focus and lifecycle.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank. Validate external text with [`crate::AccessibleName`].
+    pub fn set_name(&mut self, name: impl Into<SharedString>, cx: &mut Context<Self>) {
+        let name = name.into();
+        assert!(
+            !name.trim().is_empty(),
+            "A control requires a nonblank accessible name"
+        );
+        self.input
+            .update(cx, |input, cx| input.set_name(name.clone(), cx));
+        self.name = name;
+        cx.notify();
+    }
+
+    /// Read the current value from its owner; this does not request a change.
     pub fn value(&self, cx: &App) -> SharedString {
         self.input.read(cx).value(cx)
     }
+    /// Read the currently selected text without changing selection.
     pub fn selected_value(&self, cx: &App) -> SharedString {
         self.input.read(cx).selected_value(cx)
     }
+    /// Read the current masked or revealed mode.
     pub fn mode(&self) -> Mode {
         self.mode
     }
+    /// Report whether the owner has disabled this control.
     pub fn is_disabled(&self, cx: &App) -> bool {
         self.input.read(cx).is_disabled()
     }
+    /// Report whether user editing is blocked while selection and copying remain available.
     pub fn is_read_only(&self, cx: &App) -> bool {
         self.input.read(cx).is_read_only()
     }
+    /// Replace the owner value programmatically; this is not a user activation proposal.
     pub fn set_value(
         &mut self,
         value: impl Into<SharedString>,
@@ -158,6 +209,7 @@ impl SensitiveInputState {
         }
         cx.notify();
     }
+    /// Update empty-editor guidance without replacing the retained editor.
     pub fn set_placeholder(
         &mut self,
         value: impl Into<SharedString>,
@@ -167,6 +219,7 @@ impl SensitiveInputState {
         self.input
             .update(cx, |input, cx| input.set_placeholder(value, window, cx));
     }
+    /// Update availability and notify presentation while retaining the value.
     pub fn set_disabled(&mut self, disabled: bool, cx: &mut Context<Self>) {
         if disabled {
             self.copy_hovered = false;
@@ -178,6 +231,7 @@ impl SensitiveInputState {
         self.eye_focus.clone().tab_stop(!disabled);
         cx.notify();
     }
+    /// Update editing availability while retaining focus, selection and value.
     pub fn set_read_only(&mut self, read_only: bool, cx: &mut Context<Self>) {
         self.input
             .update(cx, |input, cx| input.set_read_only(read_only, cx));
@@ -242,6 +296,8 @@ impl Focusable for SensitiveInputState {
 struct Presentation {
     size: Size,
     label: bool,
+    label_text: Option<SharedString>,
+    accessible_name: Option<SharedString>,
     optional: bool,
     description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
@@ -249,12 +305,14 @@ struct Presentation {
 }
 #[derive(IntoElement)]
 #[must_use]
+/// Masked or revealed presentation of a retained sensitive editor.
 pub struct SensitiveInput {
     id: ElementId,
     state: Entity<SensitiveInputState>,
     presentation: Presentation,
 }
 impl SensitiveInput {
+    /// Present a retained sensitive editor; names and secret values stay separate.
     pub fn new(id: impl Into<ElementId>, state: &Entity<SensitiveInputState>) -> Self {
         Self {
             id: id.into(),
@@ -262,26 +320,54 @@ impl SensitiveInput {
             presentation: Presentation::default(),
         }
     }
+    /// Select the component dimensions and corresponding spacing and typography.
     pub fn size(mut self, size: Size) -> Self {
         self.presentation.size = size;
         self
     }
-    pub fn label(mut self, show: bool) -> Self {
+    /// Set visible text and its default accessible name; visibility is controlled separately.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        let text = crate::name::nonblank(text);
+        self.presentation.label_text = Some(text);
+        self
+    }
+    /// Override the accessible name independently of label visibility and builder order.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.presentation.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Show or hide visible label presentation while retaining its accessible name.
+    pub fn show_label(mut self, show: bool) -> Self {
         self.presentation.label = show;
         self
     }
+    /// Choose the optional indicator: false shows “(optional)”. This does not perform validation.
     pub fn required(mut self, required: bool) -> Self {
         self.presentation.optional = !required;
         self
     }
+    /// Supply supporting text; errors take precedence even when their message is hidden.
     pub fn description(mut self, text: impl Into<SharedString>) -> Self {
         self.presentation.description = Some(text.into());
         self
     }
-    pub fn error(mut self, text: impl Into<SharedString>, show: bool) -> Self {
+    /// Show an application-owned error, suppressing the description.
+    /// Error presentation does not validate or discard the control's value.
+    pub fn error(self, text: impl Into<SharedString>) -> Self {
+        self.error_visible(text, true)
+    }
+    /// Set an error with explicit message visibility; a hidden error still suppresses help.
+    pub fn error_visible(mut self, text: impl Into<SharedString>, show: bool) -> Self {
         self.presentation.error = Some((text.into(), show));
         self
     }
+    /// Compose independently focusable contextual help beside the visible label.
     pub fn label_tooltip(
         mut self,
         state: &Entity<TooltipState>,
@@ -341,7 +427,7 @@ impl Render for SensitiveInputState {
         let instruction = !disabled && (self.hovered || focused);
         let content = if masked {
             base::Button::new("masked")
-                .accessibility_label(format!("{}, masked.", self.name))
+                .accessibility_label(format!("{}, masked.", self.accessible_name()))
                 .aria_description("Click or press Enter to reveal.")
                 .track_focus(&self.masked_focus)
                 .disabled(disabled)
@@ -401,6 +487,7 @@ impl Render for SensitiveInputState {
                 .into_any_element()
         } else {
             Input::new("editor", &self.input)
+                .accessibility_label(self.accessible_name())
                 .size(size)
                 .sensitive(
                     px(match size {
@@ -537,16 +624,16 @@ impl Render for SensitiveInputState {
                         .child(if self.copied { "Copied" } else { "Copy" }),
                 )
             });
-        Field::new("sensitive-field", self.name.clone(), body)
+        Field::new("sensitive-field", self.label_text(), body)
             .focus_target(&self.focus_handle(cx))
             .disabled(disabled)
-            .hide_label(!self.presentation.label)
+            .show_label(self.presentation.label)
             .required(!self.presentation.optional)
             .when_some(self.presentation.description.clone(), |field, text| {
                 field.description(text)
             })
             .when_some(self.presentation.error.clone(), |field, (text, show)| {
-                field.error(text, show)
+                field.error_visible(text, show)
             })
             .when_some(self.presentation.tooltip.clone(), |field, (state, text)| {
                 field.label_tooltip(&state, text)
@@ -574,6 +661,40 @@ fn focus_ring(focused: bool, color: gpui_kit::Hsla, radius: gpui_kit::Pixels) ->
     .top_0()
     .left_0()
     .size_full()
+}
+
+impl crate::field::sealed::Sealed for SensitiveInput {}
+impl crate::field::FieldControl for SensitiveInput {
+    fn into_field_parts(self, cx: &App) -> (SharedString, FocusHandle, gpui_kit::AnyElement) {
+        let label = self
+            .presentation
+            .label_text
+            .clone()
+            .unwrap_or_else(|| self.state.read(cx).name.clone());
+        let focus = self.state.read(cx).focus_handle(cx);
+        (label, focus, self.show_label(false).into_any_element())
+    }
+}
+
+impl std::fmt::Debug for SensitiveInputState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("SensitiveInputState");
+        debug.field("name", &self.name);
+        debug.field("mode", &self.mode);
+        debug.field("hovered", &self.hovered);
+        debug.field("copy_hovered", &self.copy_hovered);
+        debug.field("eye_hovered", &self.eye_hovered);
+        debug.field("copied", &self.copied);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for SensitiveInput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("SensitiveInput");
+        debug.field("id", &self.id);
+        debug.finish_non_exhaustive()
+    }
 }
 
 #[cfg(test)]

@@ -51,6 +51,7 @@ const BADGE_GROUP: &str = "kumo-link";
 pub struct Link {
     id: ElementId,
     label: SharedString,
+    accessible_name: Option<SharedString>,
     href: SharedString,
     variant: Variant,
     content: Option<AnyElement>,
@@ -66,6 +67,26 @@ pub struct Link {
 impl Link {
     /// Create an inline link. Supply a nonempty accessible label; destinations
     /// can be native routes or URLs interpreted by the application strategy.
+    /// Set visible text and its default accessible name; explicit overrides remain authoritative.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.label = crate::name::nonblank(text);
+        self
+    }
+    /// Override the accessible name independently of visible text and builder order.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Create a named navigation link; the owner supplies routing callbacks.
+    ///
+    /// # Panics
+    /// Panics when the supplied name or label is blank.
     pub fn new(
         id: impl Into<ElementId>,
         label: impl Into<SharedString>,
@@ -73,7 +94,8 @@ impl Link {
     ) -> Self {
         Self {
             id: id.into(),
-            label: label.into(),
+            label: crate::name::nonblank(label),
+            accessible_name: None,
             href: href.into(),
             variant: Variant::default(),
             content: None,
@@ -191,7 +213,9 @@ impl RenderOnce for Link {
         let disabled = self.disabled;
         let mut link = control::root(
             self.id,
-            self.label.clone(),
+            self.accessible_name
+                .clone()
+                .unwrap_or_else(|| self.label.clone()),
             self.href.clone(),
             &focus,
             disabled,
@@ -334,7 +358,28 @@ impl RenderOnce for ExternalIcon {
     }
 }
 
+pub(crate) mod control;
+
+impl std::fmt::Debug for Link {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Link");
+        debug.field("id", &self.id);
+        debug.field("label", &self.label);
+        debug.field("variant", &self.variant);
+        debug.field("badge_content", &self.badge_content);
+        debug.field("breadcrumb", &self.breadcrumb);
+        debug.field("external_icon", &self.external_icon);
+        debug.field("disabled", &self.disabled);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for ExternalIcon {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("ExternalIcon");
+        debug.finish_non_exhaustive()
+    }
+}
+
 #[cfg(test)]
 mod tests;
-
-pub(crate) mod control;

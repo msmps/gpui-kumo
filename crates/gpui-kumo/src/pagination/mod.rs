@@ -13,34 +13,50 @@ use gpui_kit::{
 use std::{cell::Cell, rc::Rc};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Known item count or application-owned next-page availability.
 pub enum PaginationTotal {
+    /// A known total number of items.
     Known(usize),
     /// The application owns cursor/token storage; this is only its next-page signal.
     Unknown {
+        /// Has next page.
         has_next_page: bool,
     },
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Navigation button set.
 pub enum Controls {
     #[default]
+    /// Include first, previous, next and last controls.
     Full,
+    /// Include previous and next controls.
     Simple,
 }
 /// The source dropdown enumerates every page; use Input for large datasets.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum PageSelector {
     #[default]
+    /// An editable page-number draft.
     Input,
+    /// An enumerated page selector.
     Dropdown,
 }
 #[derive(Clone, Debug)]
+/// Localisable names for pagination and its controls.
 pub struct PaginationLabels {
+    /// Complete text for navigation.
     pub navigation: SharedString,
+    /// Complete text for first page.
     pub first_page: SharedString,
+    /// Complete text for previous page.
     pub previous_page: SharedString,
+    /// Complete text for next page.
     pub next_page: SharedString,
+    /// Complete text for last page.
     pub last_page: SharedString,
+    /// Complete text for page number.
     pub page_number: SharedString,
+    /// Complete text for page size.
     pub page_size: SharedString,
 }
 impl Default for PaginationLabels {
@@ -57,31 +73,43 @@ impl Default for PaginationLabels {
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+/// Owner-controlled page or page-size proposal.
 pub enum PaginationEvent {
+    /// Proposed one-based page number.
     Page(usize),
     /// Proposed size; only the owner chooses acceptance and reset-to-first policy.
     PageSize(usize),
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Current one-based page and inclusive item range.
 pub struct PaginationInfoValue {
+    /// Page.
     pub page: usize,
+    /// Per page.
     pub per_page: usize,
+    /// Total count.
     pub total_count: Option<usize>,
+    /// First item.
     pub first_item: usize,
+    /// Last item.
     pub last_item: usize,
 }
 impl PaginationInfoValue {
+    /// Format the inclusive first-to-last item range.
     pub fn page_showing_range(&self) -> String {
         format!("{}-{}", self.first_item, self.last_item)
     }
 }
 #[derive(IntoElement)]
+/// Readable pagination summary, optionally replaced by custom content.
 pub struct PaginationInfo {
     value: PaginationInfoValue,
     content: Option<AnyElement>,
     text: Option<SharedString>,
 }
 impl PaginationInfo {
+    /// Read the current value from its owner; this does not request a change.
     pub fn value(&self) -> PaginationInfoValue {
         self.value
     }
@@ -139,6 +167,7 @@ impl RenderOnce for PaginationInfo {
     }
 }
 #[derive(IntoElement, Default)]
+/// Decorative divider between pagination parts.
 pub struct PaginationSeparator;
 impl RenderOnce for PaginationSeparator {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
@@ -153,6 +182,7 @@ impl RenderOnce for PaginationSeparator {
 /// Source PageSize composition. Label presentation does not rename the Select.
 #[derive(IntoElement)]
 pub struct PaginationPageSize {
+    show_label: bool,
     state: Entity<SelectState<usize>>,
     value: usize,
     label: Option<AnyElement>,
@@ -172,9 +202,9 @@ impl PaginationPageSize {
         self.text = None;
         self
     }
-    pub fn without_label(mut self) -> Self {
-        self.label = None;
-        self.text = None;
+    /// Choose visible label presentation without changing the accessible name.
+    pub fn show_label(mut self, show: bool) -> Self {
+        self.show_label = show;
         self
     }
 }
@@ -207,7 +237,7 @@ impl RenderOnce for PaginationPageSize {
             .items_center()
             .gap(t.spacing.eight)
             .min_w_0()
-            .when_some(self.text, |this, text| {
+            .when_some(self.text.filter(|_| self.show_label), |this, text| {
                 this.child(crate::Text::new("pagination-page-size-label", text).style(
                     crate::text::Style::Copy {
                         tone: crate::text::Tone::Secondary,
@@ -216,7 +246,7 @@ impl RenderOnce for PaginationPageSize {
                     },
                 ))
             })
-            .children(self.label)
+            .children(self.label.filter(|_| self.show_label))
             .child(
                 div()
                     .w(width)
@@ -227,9 +257,13 @@ impl RenderOnce for PaginationPageSize {
 }
 /// Fresh parts from the retained root. Reorder/wrap them without retaining UI entities.
 pub struct PaginationParts {
+    /// Info.
     pub info: PaginationInfo,
+    /// Separator.
     pub separator: PaginationSeparator,
+    /// Page size.
     pub page_size: PaginationPageSize,
+    /// Controls.
     pub controls: AnyElement,
 }
 type Content = Rc<dyn Fn(PaginationParts, &mut Window, &mut App) -> AnyElement>;
@@ -260,6 +294,10 @@ pub struct PaginationState {
 }
 impl EventEmitter<PaginationEvent> for PaginationState {}
 impl PaginationState {
+    /// Create retained page navigation with one-based page bounds and an editor draft. Retain with `cx.new`.
+    ///
+    /// # Panics
+    /// Panics when the page size is zero.
     pub fn new(
         page: usize,
         per_page: usize,
@@ -420,21 +458,27 @@ impl PaginationState {
                 });
             })
     }
+    /// Read the current one-based page.
     pub fn page(&self) -> usize {
         self.model.current_page()
     }
+    /// Read the current page size.
     pub fn per_page(&self) -> usize {
         self.per_page
     }
+    /// Read the known count or next-page availability.
     pub fn total(&self) -> PaginationTotal {
         self.total
     }
+    /// Read the last page when the total is known.
     pub fn max_page(&self) -> Option<usize> {
         matches!(self.total, PaginationTotal::Known(_)).then(|| self.model.total_pages())
     }
+    /// Report whether the owner has disabled this control.
     pub fn is_disabled(&self) -> bool {
         self.model.is_disabled()
     }
+    /// Read the current page and inclusive item range.
     pub fn info(&self) -> PaginationInfoValue {
         let total_count = match self.total {
             PaginationTotal::Known(n) => Some(n),
@@ -460,6 +504,7 @@ impl PaginationState {
             last_item,
         }
     }
+    /// Access the retained page-number editor.
     pub fn page_input(&self) -> &Entity<InputState> {
         &self.input
     }
@@ -473,6 +518,7 @@ impl PaginationState {
             self.input.update(cx, |s, cx| s.set_value(text, window, cx));
         }
     }
+    /// Update page and refresh the retained component.
     pub fn set_page(&mut self, page: usize, window: &mut Window, cx: &mut Context<Self>) {
         self.model = Self::model(page, self.per_page, self.total, self.is_disabled(), cx);
         self.reset_draft(window, cx);
@@ -491,6 +537,9 @@ impl PaginationState {
         self.reconcile_hidden_focus(window, cx);
     }
     /// The owner chooses any reset-to-first-page policy explicitly.
+    ///
+    /// # Panics
+    /// Panics when the page size is zero.
     pub fn set_per_page(&mut self, per_page: usize, window: &mut Window, cx: &mut Context<Self>) {
         assert!(per_page > 0, "Pagination page size must be positive");
         self.per_page = per_page;
@@ -499,6 +548,7 @@ impl PaginationState {
         });
         self.set_page(self.page(), window, cx);
     }
+    /// Update availability and notify presentation while retaining the value.
     pub fn set_disabled(&mut self, disabled: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.model = Self::model(self.page(), self.per_page, self.total, disabled, cx);
         self.input.update(cx, |s, cx| s.set_disabled(disabled, cx));
@@ -509,6 +559,10 @@ impl PaginationState {
         self.reset_draft(window, cx);
         cx.notify();
     }
+    /// Update labels and refresh the retained component.
+    ///
+    /// # Panics
+    /// Panics when any supplied control name is blank.
     pub fn set_labels(&mut self, labels: PaginationLabels, cx: &mut Context<Self>) {
         for name in [
             &labels.navigation,
@@ -535,6 +589,9 @@ impl PaginationState {
     }
     /// Replace source options without changing the owner's size or emitting a proposal.
     /// Empty lists are allowed. Positive, unique whole sizes have stable numeric IDs.
+    ///
+    /// # Panics
+    /// Panics when page sizes are zero or duplicated.
     pub fn set_page_size_options(&mut self, options: Vec<usize>, cx: &mut Context<Self>) {
         self.proposal_revision
             .set(self.proposal_revision.get().wrapping_add(1));
@@ -969,12 +1026,14 @@ fn parse_page(text: &str) -> Option<usize> {
 }
 #[derive(IntoElement)]
 #[must_use]
+/// Compound page navigation over a retained owner-controlled state.
 pub struct Pagination {
     id: ElementId,
     state: Entity<PaginationState>,
     presentation: Presentation,
 }
 impl Pagination {
+    /// Present the retained pagination state under a stable element identity.
     pub fn new(id: impl Into<ElementId>, state: &Entity<PaginationState>) -> Self {
         Self {
             id: id.into(),
@@ -982,6 +1041,7 @@ impl Pagination {
             presentation: Presentation::default(),
         }
     }
+    /// Choose the pagination navigation button set.
     pub fn controls(mut self, controls: Controls) -> Self {
         self.presentation.controls = controls;
         self
@@ -1032,6 +1092,7 @@ impl Render for PaginationState {
             },
             separator: PaginationSeparator,
             page_size: PaginationPageSize {
+                show_label: true,
                 state: self.page_size.clone(),
                 value: self.per_page,
                 label: None,
@@ -1061,6 +1122,54 @@ impl Render for PaginationState {
             .min_w_0()
             .font_family(theme(cx).typography.font_family.clone())
             .child(body)
+    }
+}
+
+impl std::fmt::Debug for PaginationInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("PaginationInfo");
+        debug.field("value", &self.value);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for PaginationSeparator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("PaginationSeparator");
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for PaginationPageSize {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("PaginationPageSize");
+        debug.field("show_label", &self.show_label);
+        debug.field("value", &self.value);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for PaginationParts {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("PaginationParts");
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for PaginationState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("PaginationState");
+        debug.field("per_page", &self.per_page);
+        debug.field("draft_dirty", &self.draft_dirty);
+        debug.finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Pagination {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("Pagination");
+        debug.field("id", &self.id);
+        debug.finish_non_exhaustive()
     }
 }
 

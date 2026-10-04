@@ -11,14 +11,19 @@ struct Harness {
 }
 fn items() -> Vec<ToolbarItem> {
     vec![
-        ToolbarItem::button("first", "Refresh"),
-        ToolbarItem::button("paused", "Paused").disabled(true),
+        ToolbarItem::button("first", "Refresh").build(),
+        ToolbarItem::button("paused", "Paused")
+            .disabled(true)
+            .build(),
         ToolbarItem::button("skipped", "Skipped")
             .disabled(true)
-            .focusable_when_disabled(false),
-        ToolbarItem::button("saving", "Saving").loading(true),
-        ToolbarItem::link("docs", "Documentation", "/docs"),
-        ToolbarItem::button("last", "Deploy"),
+            .focusable_when_disabled(false)
+            .build(),
+        ToolbarItem::button("saving", "Saving")
+            .loading(true)
+            .build(),
+        ToolbarItem::link("docs", "Documentation", "/docs").build(),
+        ToolbarItem::button("last", "Deploy").build(),
     ]
 }
 impl Render for Harness {
@@ -140,8 +145,9 @@ fn owner_changes_cancel_stale_activation_and_preserve_or_recover_focus(cx: &mut 
                 vec![
                     ToolbarItem::button("first", "Changed")
                         .disabled(true)
-                        .focusable_when_disabled(false),
-                    ToolbarItem::link("docs", "New destination", "/new"),
+                        .focusable_when_disabled(false)
+                        .build(),
+                    ToolbarItem::link("docs", "New destination", "/new").build(),
                 ],
                 window,
                 cx,
@@ -155,8 +161,8 @@ fn owner_changes_cancel_stale_activation_and_preserve_or_recover_focus(cx: &mut 
         state.update(cx, |s, cx| {
             s.set_items(
                 vec![
-                    ToolbarItem::link("docs", "New destination", "/new"),
-                    ToolbarItem::button("first", "Changed"),
+                    ToolbarItem::link("docs", "New destination", "/new").build(),
+                    ToolbarItem::button("first", "Changed").build(),
                 ],
                 window,
                 cx,
@@ -293,7 +299,7 @@ fn link_uses_current_target_and_retained_focus_with_actual_pointer_modifiers(
         );
         state.update(cx, |s, cx| {
             let mut updated = items();
-            updated[4] = ToolbarItem::link("docs", "Documentation", "/changed");
+            updated[4] = ToolbarItem::link("docs", "Documentation", "/changed").build();
             s.set_items(updated, window, cx)
         });
     });
@@ -361,17 +367,21 @@ struct Editors {
 }
 fn editor_items(inputs: &[Entity<InputState>]) -> Vec<ToolbarItem> {
     vec![
-        ToolbarItem::button("first", "Before"),
-        ToolbarItem::input("query", &inputs[0], px(180.)),
-        ToolbarItem::input("paused", &inputs[1], px(130.)).disabled(true),
+        ToolbarItem::button("first", "Before").build(),
+        ToolbarItem::input("query", &inputs[0], px(180.)).build(),
+        ToolbarItem::input("paused", &inputs[1], px(130.))
+            .disabled(true)
+            .build(),
         ToolbarItem::input("skipped", &inputs[2], px(130.))
             .disabled(true)
-            .focusable_when_disabled(false),
+            .focusable_when_disabled(false)
+            .build(),
         ToolbarItem::input_group("filter", &inputs[3], px(220.))
             .start(InputGroupAddon::text("Filter"))
             .end(InputGroupAddon::text("units"))
-            .suffix("ms"),
-        ToolbarItem::button("last", "After"),
+            .suffix("ms")
+            .build(),
+        ToolbarItem::button("last", "After").build(),
     ]
 }
 impl Render for Editors {
@@ -741,7 +751,7 @@ fn toolbar_disabled_clipboard_guard_reads_current_owner_before_rerender(cx: &mut
 fn addon_items(inputs: &[Entity<InputState>]) -> Vec<ToolbarItem> {
     let target = inputs[3].downgrade();
     vec![
-        ToolbarItem::button("first", "Before"),
+        ToolbarItem::button("first", "Before").build(),
         ToolbarItem::input_group("filter", &inputs[3], px(220.))
             .start(InputGroupAddon::text("Filter"))
             .end(InputGroupAddon::button(
@@ -756,8 +766,9 @@ fn addon_items(inputs: &[Entity<InputState>]) -> Vec<ToolbarItem> {
                         });
                     })
                 },
-            )),
-        ToolbarItem::button("last", "After"),
+            ))
+            .build(),
+        ToolbarItem::button("last", "After").build(),
     ]
 }
 #[gpui_kit::test]
@@ -835,7 +846,11 @@ fn embedded_action_reorder_and_focused_group_removal_recover_then_exit(cx: &mut 
         window.render_frame(cx);
         assert_eq!(window.within("filter").find("clear").focused(), Some(true));
         toolbar.update(cx, |s, cx| {
-            s.set_items(vec![ToolbarItem::button("first", "Before")], window, cx);
+            s.set_items(
+                vec![ToolbarItem::button("first", "Before").build()],
+                window,
+                cx,
+            );
         });
         window.render_frame(cx);
         assert!(toolbar.read(cx).items[0].focus.is_focused(window));
@@ -860,10 +875,11 @@ fn removing_only_focused_addon_preserves_editor_and_recovers_then_tabs_out(
         window.render_frame(cx);
         assert_eq!(inputs[3].read(cx).value(cx).as_ref(), "status!!");
         let items = vec![
-            ToolbarItem::button("first", "Before"),
+            ToolbarItem::button("first", "Before").build(),
             ToolbarItem::input_group("filter", &inputs[3], px(220.))
-                .start(InputGroupAddon::text("Filter")),
-            ToolbarItem::button("last", "After"),
+                .start(InputGroupAddon::text("Filter"))
+                .build(),
+            ToolbarItem::button("last", "After").build(),
         ];
         toolbar.update(cx, |s, cx| s.set_items(items, window, cx));
         window.render_frame(cx);
@@ -898,11 +914,13 @@ fn addon_availability_and_deferred_removal_respect_editor_policy_and_newer_focus
         toolbar.update(cx, |s, cx| {
             s.set_disabled(true, window, cx);
             let items = vec![
-                ToolbarItem::button("first", "Before"),
-                ToolbarItem::input_group("filter", &inputs[3], px(220.)).end(
-                    InputGroupAddon::button("clear", "Clear", |button, _, _| button.disabled(true)),
-                ),
-                ToolbarItem::button("last", "After"),
+                ToolbarItem::button("first", "Before").build(),
+                ToolbarItem::input_group("filter", &inputs[3], px(220.))
+                    .end(InputGroupAddon::button("clear", "Clear", |button, _, _| {
+                        button.disabled(true)
+                    }))
+                    .build(),
+                ToolbarItem::button("last", "After").build(),
             ];
             s.set_items(items, window, cx);
         });
@@ -931,7 +949,7 @@ fn addon_availability_and_deferred_removal_respect_editor_policy_and_newer_focus
         window.within("filter").click("clear", cx);
         toolbar.update(cx, |s, cx| {
             s.set_items(
-                vec![ToolbarItem::input_group("filter", &inputs[3], px(220.))],
+                vec![ToolbarItem::input_group("filter", &inputs[3], px(220.)).build()],
                 window,
                 cx,
             )
@@ -946,6 +964,63 @@ fn addon_availability_and_deferred_removal_respect_editor_policy_and_newer_focus
             window.find("outside-before").focused(),
             Some(true),
             "a queued recovery must not steal newer focus"
+        );
+    });
+}
+
+#[gpui_kit::test]
+fn typed_names_and_visibility_are_independent_of_icon_and_builder_order(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx);
+    cx.update(|window, cx| {
+        let toolbar = view.read(cx).toolbar.clone();
+        toolbar.update(cx, |state, cx| {
+            state.set_items(
+                vec![
+                    ToolbarItem::button("hidden", "Old")
+                        .show_label(false)
+                        .accessibility_label("Hidden action")
+                        .label("New")
+                        .build(),
+                    ToolbarItem::button("visible", "Old")
+                        .label("New")
+                        .accessibility_label("Visible action")
+                        .show_label(false)
+                        .show_label(true)
+                        .build(),
+                    ToolbarItem::link("link", "Old", "/route")
+                        .accessibility_label("Navigate")
+                        .label("New")
+                        .show_label(false)
+                        .build(),
+                ],
+                window,
+                cx,
+            )
+        });
+        for appearance in [crate::Appearance::Light, crate::Appearance::Dark] {
+            crate::set_appearance(appearance, cx);
+            window.render_frame(cx);
+            let mut scope = window.within("primary");
+            for (id, name) in [
+                ("hidden", "Hidden action"),
+                ("visible", "Visible action"),
+                ("link", "Navigate"),
+            ] {
+                assert_eq!(scope.find(id).label(), Some(name));
+            }
+            scope.click("hidden", cx);
+            assert_eq!(scope.find("hidden").focused(), Some(true));
+            scope.press("space", cx);
+        }
+    });
+    cx.read(|cx| {
+        assert_eq!(
+            view.read(cx)
+                .events
+                .iter()
+                .filter(|event| matches!(event, ToolbarEvent::Activate { .. }))
+                .count(),
+            4
         );
     });
 }

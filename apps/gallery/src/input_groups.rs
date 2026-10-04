@@ -63,7 +63,7 @@ impl Render for InputGroups {
         )
         .child(
             InputGroup::new("joined-search", &self.inputs[10])
-                .label(true)
+                .show_label(true)
                 .required(false)
                 .description("Search for packages.")
                 .button(
@@ -141,7 +141,7 @@ impl Render for InputGroups {
         )
         .child(
             InputGroup::new("domain", &self.inputs[5])
-                .label(true)
+                .show_label(true)
                 .suffix(".workers.dev"),
         )
         .child(InputGroup::new("long-domain", &self.inputs[6]).suffix(".workers.dev"))

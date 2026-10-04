@@ -13,20 +13,28 @@ pub struct Toolbars {
 }
 fn items(short: bool) -> Vec<ToolbarItem> {
     let mut items = vec![
-        ToolbarItem::button("refresh", "Refresh"),
-        ToolbarItem::button("paused", "Paused").disabled(true),
+        ToolbarItem::button("refresh", "Refresh").build(),
+        ToolbarItem::button("paused", "Paused")
+            .disabled(true)
+            .build(),
         ToolbarItem::button("skipped", "Skipped")
             .disabled(true)
-            .focusable_when_disabled(false),
-        ToolbarItem::button("saving", "Saving").loading(true),
-        ToolbarItem::link("docs", "Documentation", "/docs"),
-        ToolbarItem::button("settings", "Settings").icon("toolbar-settings.svg", true),
-        ToolbarItem::button("deploy", "Deploy"),
+            .focusable_when_disabled(false)
+            .build(),
+        ToolbarItem::button("saving", "Saving")
+            .loading(true)
+            .build(),
+        ToolbarItem::link("docs", "Documentation", "/docs").build(),
+        ToolbarItem::button("settings", "Settings")
+            .icon("toolbar-settings.svg")
+            .show_label(false)
+            .build(),
+        ToolbarItem::button("deploy", "Deploy").build(),
     ];
     if short {
         items = vec![
-            ToolbarItem::button("refresh", "Refresh"),
-            ToolbarItem::link("docs", "Documentation", "/docs"),
+            ToolbarItem::button("refresh", "Refresh").build(),
+            ToolbarItem::link("docs", "Documentation", "/docs").build(),
         ];
     }
     items
@@ -40,6 +48,7 @@ impl Toolbars {
             match event {
                 ToolbarEvent::Activate { .. } => s.changes += 1,
                 ToolbarEvent::Navigate { .. } => s.routes += 1,
+                _ => {}
             };
             cx.notify();
         });

@@ -48,7 +48,7 @@ impl Render for Harness {
             .child(crate::Button::new("before", "Before").track_focus(&self.before))
             .child(
                 Input::new("input", &self.input)
-                    .label(true)
+                    .show_label(true)
                     .description("A useful hint"),
             )
             .child(crate::Button::new("after", "After").track_focus(&self.after))
@@ -561,7 +561,7 @@ impl Render for HelpHarness {
         };
         let control = if self.group {
             crate::InputGroup::new("with-help", &self.input)
-                .label(self.label)
+                .show_label(self.label)
                 .description("Retained editing")
                 .when(self.attach, |group| {
                     group.label_tooltip(state, self.text.clone())
@@ -574,7 +574,7 @@ impl Render for HelpHarness {
                 .into_any_element()
         } else {
             Input::new("with-help", &self.input)
-                .label(self.label)
+                .show_label(self.label)
                 .description("Retained editing")
                 .when(self.attach, |input| {
                     input.label_tooltip(state, self.text.clone())
@@ -781,8 +781,8 @@ fn toolbar_keeps_marked_composition_and_selection_in_the_existing_native_editor(
         let toolbar = cx.new(|cx| {
             crate::ToolbarState::new(
                 vec![
-                    crate::ToolbarItem::input("query", &input, px(180.)),
-                    crate::ToolbarItem::button("after", "After composition"),
+                    crate::ToolbarItem::input("query", &input, px(180.)).build(),
+                    crate::ToolbarItem::button("after", "After composition").build(),
                 ],
                 cx,
             )
@@ -830,5 +830,26 @@ fn ordinary_input_preserves_caller_tab_policy_across_theme_rerender(cx: &mut Tes
             "ordinary Input rerender must preserve a caller's traversal policy"
         );
         assert!(!input.read(cx).focus_handle(cx).is_focused(window));
+    });
+}
+
+#[gpui_kit::test]
+fn name_update_preserves_focused_selection_and_undo_history(cx: &mut TestAppContext) {
+    let (input, cx) = harness(cx);
+    cx.simulate_input("draft café 🦀");
+    cx.update(|window, cx| {
+        let editor = input.read(cx).editor.clone();
+        editor.update(cx, |editor, cx| editor.select_all(window, cx));
+        input.update(cx, |input, cx| input.set_name("Nom du projet", cx));
+        window.render_frame(cx);
+        assert_eq!(window.find("control").label(), Some("Nom du projet"));
+        assert_eq!(window.find("label").value(), Some("Nom du projet"));
+        assert_eq!(input.read(cx).selected_value(cx).as_ref(), "draft café 🦀");
+        assert!(input.read(cx).focus_handle(cx).is_focused(window));
+        #[cfg(target_os = "macos")]
+        window.press("cmd-z", cx);
+        #[cfg(not(target_os = "macos"))]
+        window.press("ctrl-z", cx);
+        assert_eq!(input.read(cx).value(cx).as_ref(), "");
     });
 }

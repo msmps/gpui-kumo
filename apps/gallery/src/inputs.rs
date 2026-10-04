@@ -48,7 +48,7 @@ impl Render for Inputs {
         let value = email.value(cx);
         let invalid = !value.is_empty() && !value.contains('@');
         super::panel(&theme, "Input · editing and validation")
-            .child(Input::new("email", &self.email).label(true)
+            .child(Input::new("email", &self.email).show_label(true)
                 .description("Type an email address and press Enter. Selection, clipboard and undo use native shortcuts.")
                 .when(invalid, |input| input.error("Include @ in the email address.")))
             .child(div().flex().gap(theme.spacing.eight)
@@ -70,7 +70,7 @@ impl Render for Inputs {
             .child(div().text_color(theme.text.subtle).child(format!("Submissions: {} · Value: {}", self.submitted, value)))
             .child(div().flex().flex_col().gap(px(16.)).children(
                 self.sizes.iter().zip([Size::Xs, Size::Sm, Size::Base, Size::Lg]).enumerate().map(|(index, (state, size))| {
-                    Input::new(("input-size", index), state).size(size).label(true)
+                    Input::new(("input-size", index), state).size(size).show_label(true)
                 }),
             ))
     }

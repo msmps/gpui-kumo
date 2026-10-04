@@ -156,7 +156,7 @@ impl Render for Selects {
         )
         .child(
             Select::new("region", &self.single)
-                .label(true)
+                .show_label(true)
                 .loading(self.loading)
                 .required(false)
                 .description("Disabled options, long labels and scrolling"),
@@ -207,7 +207,7 @@ impl Render for Selects {
                     .child(
                         Select::new("nested-deployment-region", &nested_select)
                             .parent(&parent)
-                            .label(true),
+                            .show_label(true),
                     )
                     .child(
                         Button::new("done-region-settings", "Done")
