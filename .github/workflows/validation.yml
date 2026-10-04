@@ -4,10 +4,11 @@ on:
     branches: [work, main]
   pull_request:
   workflow_dispatch:
+  workflow_call:
 permissions:
   contents: read
 concurrency:
-  group: validation-${{ github.ref }}
+  group: validation-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   rust:

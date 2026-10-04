@@ -1,0 +1,69 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Package version to release (must match Cargo.toml)
+        required: true
+        type: string
+      publish:
+        description: Publish to crates.io after validation (otherwise dry-run only)
+        default: false
+        type: boolean
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Verify release branch and version
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          if os.environ["GITHUB_REF"] != "refs/heads/main":
+              raise SystemExit("Release workflows must run from main")
+          manifest = tomllib.loads(Path("Cargo.toml").read_text())
+          version = manifest["workspace"]["package"]["version"]
+          if os.environ["REQUESTED_VERSION"] != version:
+              raise SystemExit(f"Requested version does not match Cargo.toml: {version}")
+          print(f"Validated release version {version} on main")
+          PY
+  validate:
+    needs: preflight
+    uses: ./.github/workflows/validation.yml
+  publish:
+    needs: validate
+    runs-on: macos-15
+    timeout-minutes: 30
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install the repository toolchain
+        run: rustup toolchain install 1.99.0 --profile minimal
+      - name: Verify publication package
+        run: cargo publish -p gpui-kumo --dry-run --locked
+      - name: Authenticate with crates.io Trusted Publishing
+        if: inputs.publish
+        id: auth
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+      - name: Publish the library
+        if: inputs.publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: cargo publish -p gpui-kumo --locked

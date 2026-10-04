@@ -56,3 +56,13 @@ The `*-validation.md` filenames retain their existing links. Their supported beh
 ## Documentation policy
 
 Keep API contracts, native adaptations, patch ownership/removal rules and reproducible verification instructions here. Put work lists and acceptance outcomes in GitHub issues. Keep authored validation tools in `tools/validation/`; generated artifacts are disposable. Issue-referenced historical images remain under `docs/evidence/`. Historical reports are available through immutable Git links in the relevant issues.
+
+## Publishing subsequent releases
+
+The first RC was published locally. Future releases use `.github/workflows/release.yml`, configured as the Trusted Publisher for `msmps/gpui-kumo` with the `release` environment on crates.io. Create that environment under GitHub repository Settings → Environments; any protection rules apply to the publish job.
+
+Update the package version and relevant documentation, commit/push the release to `main`, then open Actions → Release → Run workflow. Select `main` and enter the exact package version. Leave `publish` unchecked to validate without uploading. For a new version, check `publish` to run preflight, all patched/unpatched/Linux-docs gates, package dry-run and Trusted Publishing. Releasing an already published version is not supported; use a new version. Record the published commit with a version tag and release notes after publication.
+
+A push to `main` runs validation only. Cut a release manually when there is a useful set of consumer changes, the version and release notes describe them, all gates pass, and the remaining known limitations have been reviewed. During the RC phase, meaningful fixes or API changes produce another RC; routine maintenance does not need a release.
+
+Only the publish job has OIDC permission. Authentication uses the pinned official crates.io action, and no permanent Cargo token is stored in GitHub secrets. Validation can also run independently; release and validation concurrency groups are distinct so a called workflow cannot cancel its caller.
