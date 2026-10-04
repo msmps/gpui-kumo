@@ -37,9 +37,13 @@ def classify(output, returncode, known):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=ROOT / "target/unpatched-ci")
+    parser.add_argument("--docs-only", action="store_true", help="Build packaged docs using docs.rs configuration instead of library tests")
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     known = json.loads(BASELINE.read_text())
+    # Extraction leaves the repository toolchain override's directory scope.
+    toolchain = subprocess.check_output(["rustup", "show", "active-toolchain"], cwd=ROOT, text=True).split()[0]
+    package_env = dict(os.environ, RUSTUP_TOOLCHAIN=toolchain)
     subprocess.run(["cargo", "package", "-p", "gpui-kumo", "--no-verify", "--locked", "--allow-dirty"], cwd=ROOT, check=True)
     metadata = json.loads(subprocess.check_output(["cargo", "metadata", "--no-deps", "--format-version", "1"], cwd=ROOT))
     package = next(p for p in metadata["packages"] if p["name"] == "gpui-kumo")
@@ -49,12 +53,23 @@ def main():
             source.extractall(temporary, filter="data")
         extracted = Path(temporary) / f"gpui-kumo-{package['version']}"
         assert "[patch." not in (extracted / "Cargo.toml").read_text(), "Packaged manifest has patches"
-        graph = json.loads(subprocess.check_output(["cargo", "metadata", "--locked", "--format-version", "1"], cwd=extracted))
+        graph = json.loads(subprocess.check_output(["cargo", "metadata", "--locked", "--format-version", "1"], cwd=extracted, env=package_env))
         for name in ("gpui-kit", "gpui-pre", "gpui-base", "accesskit_atspi_common"):
             packages = [p for p in graph["packages"] if p["name"] == name]
             assert len(packages) == 1 and packages[0]["source"].startswith("registry+"), f"Unexpected source for {name}"
         (args.output_dir / "dependency-graph.json").write_text(json.dumps(graph, indent=2))
-        result = subprocess.run(["cargo", "test", "--lib", "--all-features", "--locked", "--", "--color", "never"], cwd=extracted, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        if args.docs_only:
+            target = package["metadata"]["docs"]["rs"]["default-target"]
+            docs_env = dict(package_env, DOCS_RS="1")
+            result = subprocess.run(["cargo", "rustdoc", "--lib", "--locked", "--target", target, "--", "--cfg", "docsrs", "-D", "warnings"], cwd=extracted, env=docs_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            print(result.stdout, end="")
+            (args.output_dir / "docs.log").write_text(result.stdout)
+            summary = f"## Packaged documentation\n\nTarget: `{target}`; toolchain: `{toolchain}`; registry dependencies only.\n\nResult: {'PASS' if result.returncode == 0 else 'BLOCKED'}\n"
+            if os.environ.get("GITHUB_STEP_SUMMARY"):
+                with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as destination:
+                    destination.write(summary)
+            return result.returncode
+        result = subprocess.run(["cargo", "test", "--lib", "--all-features", "--locked", "--", "--color", "never"], cwd=extracted, env=package_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         print(result.stdout, end="")
         (args.output_dir / "tests.log").write_text(result.stdout)
         report = classify(result.stdout, result.returncode, known)

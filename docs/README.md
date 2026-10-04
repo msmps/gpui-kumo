@@ -20,7 +20,9 @@ Use [CONTEXT.md](../CONTEXT.md) for terminology. [GitHub issues](https://github.
 | Reproduce browser/native comparisons | [Validation fixtures](validation-fixtures.md) |
 | Diagnose development-build lag and frame presentation | [Performance](performance-validation.md) |
 
-The separate macOS unpatched CI job runs `python3 scripts/check-unpatched.py` against an extracted package with registry dependencies. Its named baseline is `scripts/unpatched-known-failures.json`; all tests run, each known result is reported, and new failures, missing baseline tests, ignored tests or build/harness errors block. Known passes prompt baseline review because the host-clock failures can vary. Results and logs are retained as CI artifacts. This gate does not establish Linux adapter acceptance.
+The separate macOS unpatched CI job runs `python3 scripts/check-unpatched.py` against an extracted package with registry dependencies. Its named baseline is `scripts/unpatched-known-failures.json`; all tests run, each known result is reported, and new failures, missing baseline tests, ignored tests or build/harness errors block. Known passes prompt baseline review because the host-clock failures can vary. Results and logs are retained as CI artifacts. Extraction preserves the repository-selected Rust toolchain instead of using the host default. This gate does not establish Linux adapter acceptance.
+
+The Linux documentation job runs `python3 scripts/check-unpatched.py --docs-only --output-dir target/docs-ci` with nightly Rust and `DOCS_RS=1` against the extracted, unpatched package. It builds the configured `x86_64-unknown-linux-gnu` docs.rs target with warnings denied. The package limits docs.rs to that target; this CI job checks Linux compilation, not the complete docs.rs sandbox or platform behavior.
 
 Before changing a component, check its contract and the selected dependency source. Retain durable state in entities and keep Base details inside component boundaries. Run formatting, relevant tests and warnings-denied Clippy; `bash scripts/check-rust.sh` runs the full locked workspace and patched-adapter gate.
 

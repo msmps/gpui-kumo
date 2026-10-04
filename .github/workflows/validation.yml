@@ -42,3 +42,27 @@ jobs:
         with:
           name: unpatched-results
           path: target/unpatched-ci/
+  docs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install Linux native development dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libssl-dev libasound2-dev libclang-dev
+      - name: Install the docs.rs compiler family
+        run: rustup toolchain install nightly --profile minimal
+      - name: Packaged Linux documentation against published dependencies
+        env:
+          RUSTUP_TOOLCHAIN: nightly
+          CARGO_TARGET_DIR: ${{ github.workspace }}/target
+        run: python3 scripts/check-unpatched.py --docs-only --output-dir target/docs-ci
+      - name: Retain documentation results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: docs-results
+          path: target/docs-ci/

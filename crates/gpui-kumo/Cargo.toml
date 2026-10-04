@@ -17,3 +17,8 @@ gpui-kit = { workspace = true, default-features = false, features = ["test-suppo
 
 [lints]
 workspace = true
+
+# Document the published Linux dependency graph; avoid unnecessary cross builds.
+[package.metadata.docs.rs]
+default-target = "x86_64-unknown-linux-gnu"
+targets = []
