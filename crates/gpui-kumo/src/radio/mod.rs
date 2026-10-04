@@ -602,18 +602,31 @@ impl<T: Clone + Eq + 'static> RenderOnce for RadioGroup<T> {
     }
 }
 
-debug_struct!([T: Clone + Eq + 'static] RadioItem<T> { id, name, disabled, variant });
+impl<T: Clone + Eq + 'static> std::fmt::Debug for RadioItem<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RadioItem")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("disabled", &self.disabled)
+            .field("variant", &self.variant)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!([T: Clone + Eq + 'static] RadioGroup<T> {
-    id,
-    name,
-    items_count: |this| this.items.len(),
-    disabled,
-    appearance,
-    orientation,
-    hide_legend,
-    show_error,
-});
+impl<T: Clone + Eq + 'static> std::fmt::Debug for RadioGroup<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RadioGroup")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("items_count", &self.items.len())
+            .field("disabled", &self.disabled)
+            .field("appearance", &self.appearance)
+            .field("orientation", &self.orientation)
+            .field("hide_legend", &self.hide_legend)
+            .field("show_error", &self.show_error)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

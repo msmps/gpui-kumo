@@ -497,14 +497,25 @@ impl RenderOnce for Banner {
     }
 }
 
-debug_struct!(Action { button, variant });
+impl std::fmt::Debug for Action {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Action")
+            .field("button", &self.button)
+            .field("variant", &self.variant)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(Banner {
-    id,
-    variant,
-    size,
-    actions_count: |this| this.actions.len()
-});
+impl std::fmt::Debug for Banner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Banner")
+            .field("id", &self.id)
+            .field("variant", &self.variant)
+            .field("size", &self.size)
+            .field("actions_count", &self.actions.len())
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

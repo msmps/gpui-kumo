@@ -297,16 +297,20 @@ impl RenderOnce for Checkbox {
         div().flex().min_w_0().max_w_full().child(root)
     }
 }
-debug_struct!(Checkbox {
-    id,
-    name,
-    variant,
-    disabled,
-    show_label,
-    control_first,
-    optional,
-    group_item
-});
+impl std::fmt::Debug for Checkbox {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Checkbox")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("variant", &self.variant)
+            .field("disabled", &self.disabled)
+            .field("show_label", &self.show_label)
+            .field("control_first", &self.control_first)
+            .field("optional", &self.optional)
+            .field("group_item", &self.group_item)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

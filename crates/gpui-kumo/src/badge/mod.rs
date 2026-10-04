@@ -55,6 +55,7 @@ pub struct Filled {
 }
 
 /// Dot presentation; icon composition is unavailable on this type.
+#[derive(Debug)]
 pub struct Dot;
 
 /// A consumed, read-only label. The owner observes Theme when caching it.
@@ -320,11 +321,21 @@ where
     }
 }
 
-debug_struct!(Filled {});
+impl std::fmt::Debug for Filled {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Filled").finish_non_exhaustive()
+    }
+}
 
-debug_struct!(Dot {});
-
-debug_struct!([P] Badge<P> { id, label, variant });
+impl<P> std::fmt::Debug for Badge<P> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Badge")
+            .field("id", &self.id)
+            .field("label", &self.label)
+            .field("variant", &self.variant)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

@@ -338,7 +338,7 @@ impl RenderOnce for Link {
 
 /// Kumo's decorative, one-em external-navigation indicator. It inherits the
 /// current foreground and uses the theme's light/dark source stroke width.
-#[derive(IntoElement)]
+#[derive(IntoElement, Debug)]
 pub struct ExternalIcon;
 
 impl RenderOnce for ExternalIcon {
@@ -360,17 +360,19 @@ impl RenderOnce for ExternalIcon {
 
 pub(crate) mod control;
 
-debug_struct!(Link {
-    id,
-    label,
-    variant,
-    badge_content,
-    breadcrumb,
-    external_icon,
-    disabled
-});
-
-debug_struct!(ExternalIcon {});
+impl std::fmt::Debug for Link {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Link")
+            .field("id", &self.id)
+            .field("label", &self.label)
+            .field("variant", &self.variant)
+            .field("badge_content", &self.badge_content)
+            .field("breadcrumb", &self.breadcrumb)
+            .field("external_icon", &self.external_icon)
+            .field("disabled", &self.disabled)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

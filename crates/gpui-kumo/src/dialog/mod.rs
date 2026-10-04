@@ -716,21 +716,42 @@ impl Render for DialogState {
     }
 }
 
-debug_struct!(DialogState {
-    name,
-    open,
-    role,
-    size,
-    pointer_dismissal,
-    escape_dismissal,
-    initial_pending
-});
+impl std::fmt::Debug for DialogState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DialogState")
+            .field("name", &self.name)
+            .field("open", &self.open)
+            .field("role", &self.role)
+            .field("size", &self.size)
+            .field("pointer_dismissal", &self.pointer_dismissal)
+            .field("escape_dismissal", &self.escape_dismissal)
+            .field("initial_pending", &self.initial_pending)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(DialogClose {});
+impl std::fmt::Debug for DialogClose {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DialogClose").finish_non_exhaustive()
+    }
+}
 
-debug_struct!(DialogTrigger { id });
+impl std::fmt::Debug for DialogTrigger {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DialogTrigger")
+            .field("id", &self.id)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(Dialog { id, size });
+impl std::fmt::Debug for Dialog {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Dialog")
+            .field("id", &self.id)
+            .field("size", &self.size)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

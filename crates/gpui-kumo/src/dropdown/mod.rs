@@ -788,25 +788,41 @@ impl Render for DropdownState {
     }
 }
 
-debug_struct!(DropdownItem {
-    id,
-    label,
-    disabled,
-    inset,
-    selected
-});
+impl std::fmt::Debug for DropdownItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DropdownItem")
+            .field("id", &self.id)
+            .field("label", &self.label)
+            .field("disabled", &self.disabled)
+            .field("inset", &self.inset)
+            .field("selected", &self.selected)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(DropdownState {
-    name,
-    parts_count: |this| this.parts.len(),
-    open,
-    disabled,
-    looping,
-    label,
-    width
-});
+impl std::fmt::Debug for DropdownState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DropdownState")
+            .field("name", &self.name)
+            .field("parts_count", &self.parts.len())
+            .field("open", &self.open)
+            .field("disabled", &self.disabled)
+            .field("looping", &self.looping)
+            .field("label", &self.label)
+            .field("width", &self.width)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(Dropdown { id, label, width });
+impl std::fmt::Debug for Dropdown {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Dropdown")
+            .field("id", &self.id)
+            .field("label", &self.label)
+            .field("width", &self.width)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

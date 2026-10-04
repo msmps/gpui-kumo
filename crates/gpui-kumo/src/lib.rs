@@ -30,8 +30,6 @@
 
 use gpui_kit::App;
 
-#[macro_use]
-mod debug;
 mod color;
 mod icon;
 mod name;

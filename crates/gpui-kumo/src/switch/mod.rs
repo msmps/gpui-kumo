@@ -570,29 +570,37 @@ impl RenderOnce for SwitchGroup {
             })
     }
 }
-debug_struct!(Switch {
-    id,
-    name,
-    checked,
-    disabled,
-    size,
-    variant,
-    control_first,
-    optional,
-    show_label,
-    transitioning,
-    group_item
-});
+impl std::fmt::Debug for Switch {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Switch")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("checked", &self.checked)
+            .field("disabled", &self.disabled)
+            .field("size", &self.size)
+            .field("variant", &self.variant)
+            .field("control_first", &self.control_first)
+            .field("optional", &self.optional)
+            .field("show_label", &self.show_label)
+            .field("transitioning", &self.transitioning)
+            .field("group_item", &self.group_item)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(SwitchGroup {
-    id,
-    name,
-    items_count: |this| this.items.len(),
-    disabled,
-    control_first,
-    hidden_legend,
-    show_error
-});
+impl std::fmt::Debug for SwitchGroup {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SwitchGroup")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("items_count", &self.items.len())
+            .field("disabled", &self.disabled)
+            .field("control_first", &self.control_first)
+            .field("hidden_legend", &self.hidden_legend)
+            .field("show_error", &self.show_error)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

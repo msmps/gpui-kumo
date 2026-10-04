@@ -880,11 +880,29 @@ impl Render for ToastState {
     }
 }
 
-debug_struct!(Toast { id });
+impl std::fmt::Debug for Toast {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Toast")
+            .field("id", &self.id)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(ToastState { timer_running });
+impl std::fmt::Debug for ToastState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ToastState")
+            .field("timer_running", &self.timer_running)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(ToastViewport { id });
+impl std::fmt::Debug for ToastViewport {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ToastViewport")
+            .field("id", &self.id)
+            .finish_non_exhaustive()
+    }
+}
 
 fn validate_content(content: &ToastContent) {
     assert!(

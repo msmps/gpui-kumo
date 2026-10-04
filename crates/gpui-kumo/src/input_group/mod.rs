@@ -591,12 +591,19 @@ impl crate::field::FieldControl for InputGroup {
     }
 }
 
-debug_struct!(InputGroup {
-    input,
-    has_start: |this| this.container.start.is_some(),
-    has_end: |this| this.container.end.is_some(),
-    actions: |this| this.container.buttons.len() + this.container.leading_buttons.len()
-});
+impl std::fmt::Debug for InputGroup {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("InputGroup")
+            .field("input", &self.input)
+            .field("has_start", &self.container.start.is_some())
+            .field("has_end", &self.container.end.is_some())
+            .field(
+                "actions",
+                &(self.container.buttons.len() + self.container.leading_buttons.len()),
+            )
+            .finish_non_exhaustive()
+    }
+}
 
 impl std::fmt::Debug for InputGroupAddon {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

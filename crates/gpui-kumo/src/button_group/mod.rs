@@ -166,11 +166,15 @@ impl gpui_kit::Element for Joined {
         }
     }
 }
-debug_struct!(ButtonGroup {
-    id,
-    name,
-    items_count: |this| this.items.len()
-});
+impl std::fmt::Debug for ButtonGroup {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ButtonGroup")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("items_count", &self.items.len())
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

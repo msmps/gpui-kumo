@@ -233,14 +233,18 @@ fn text_message(
         )
 }
 
-debug_struct!(Field {
-    id,
-    label,
-    disabled,
-    optional,
-    hide_label,
-    layout
-});
+impl std::fmt::Debug for Field {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Field")
+            .field("id", &self.id)
+            .field("label", &self.label)
+            .field("disabled", &self.disabled)
+            .field("optional", &self.optional)
+            .field("hide_label", &self.hide_label)
+            .field("layout", &self.layout)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

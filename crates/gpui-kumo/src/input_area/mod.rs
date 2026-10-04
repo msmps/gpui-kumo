@@ -459,13 +459,23 @@ impl crate::field::FieldControl for InputArea {
     }
 }
 
-debug_struct!(InputAreaState {
-    name,
-    disabled,
-    read_only
-});
+impl std::fmt::Debug for InputAreaState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("InputAreaState")
+            .field("name", &self.name)
+            .field("disabled", &self.disabled)
+            .field("read_only", &self.read_only)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(InputArea { id });
+impl std::fmt::Debug for InputArea {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("InputArea")
+            .field("id", &self.id)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

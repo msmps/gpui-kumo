@@ -247,7 +247,14 @@ impl RenderOnce for Text {
     }
 }
 
-debug_struct!(Text { id, truncate });
+impl std::fmt::Debug for Text {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Text")
+            .field("id", &self.id)
+            .field("truncate", &self.truncate)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

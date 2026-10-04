@@ -367,17 +367,25 @@ impl RenderOnce for Collapsible {
     }
 }
 
-debug_struct!(CollapsiblePanel {
-    default_style,
-    keep_mounted
-});
+impl std::fmt::Debug for CollapsiblePanel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CollapsiblePanel")
+            .field("default_style", &self.default_style)
+            .field("keep_mounted", &self.keep_mounted)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(Collapsible {
-    id,
-    label,
-    default_open,
-    disabled
-});
+impl std::fmt::Debug for Collapsible {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Collapsible")
+            .field("id", &self.id)
+            .field("label", &self.label)
+            .field("default_open", &self.default_open)
+            .field("disabled", &self.disabled)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

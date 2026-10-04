@@ -197,7 +197,15 @@ fn paint_arc(
     }
 }
 
-debug_struct!(Loader { id, size, label });
+impl std::fmt::Debug for Loader {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Loader")
+            .field("id", &self.id)
+            .field("size", &self.size)
+            .field("label", &self.label)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests {

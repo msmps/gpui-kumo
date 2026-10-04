@@ -1149,29 +1149,41 @@ impl RenderOnce for LinkControl {
         )
     }
 }
-debug_struct!(ToolbarItem {
-    id,
-    name,
-    icon_only,
-    disabled,
-    loading,
-    focusable_when_disabled
-});
+impl std::fmt::Debug for ToolbarItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ToolbarItem")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("icon_only", &self.icon_only)
+            .field("disabled", &self.disabled)
+            .field("loading", &self.loading)
+            .field("focusable_when_disabled", &self.focusable_when_disabled)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(ToolbarState {
-    items_count: |this| this.items.len(),
-    disabled,
-    orientation,
-    loop_focus,
-    name
-});
+impl std::fmt::Debug for ToolbarState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ToolbarState")
+            .field("items_count", &self.items.len())
+            .field("disabled", &self.disabled)
+            .field("orientation", &self.orientation)
+            .field("loop_focus", &self.loop_focus)
+            .field("name", &self.name)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(Toolbar {
-    id,
-    name,
-    orientation,
-    loop_focus
-});
+impl std::fmt::Debug for Toolbar {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Toolbar")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("orientation", &self.orientation)
+            .field("loop_focus", &self.loop_focus)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

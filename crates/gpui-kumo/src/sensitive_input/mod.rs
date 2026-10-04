@@ -676,16 +676,26 @@ impl crate::field::FieldControl for SensitiveInput {
     }
 }
 
-debug_struct!(SensitiveInputState {
-    name,
-    mode,
-    hovered,
-    copy_hovered,
-    eye_hovered,
-    copied
-});
+impl std::fmt::Debug for SensitiveInputState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SensitiveInputState")
+            .field("name", &self.name)
+            .field("mode", &self.mode)
+            .field("hovered", &self.hovered)
+            .field("copy_hovered", &self.copy_hovered)
+            .field("eye_hovered", &self.eye_hovered)
+            .field("copied", &self.copied)
+            .finish_non_exhaustive()
+    }
+}
 
-debug_struct!(SensitiveInput { id });
+impl std::fmt::Debug for SensitiveInput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SensitiveInput")
+            .field("id", &self.id)
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;
