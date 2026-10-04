@@ -15,30 +15,46 @@ pub(crate) type JoinedRingQueue =
     Rc<RefCell<Vec<(bool, gpui_kit::PaintQuad, gpui_kit::ContentMask<Pixels>)>>>;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Closed semantic visual treatments supported by this component.
 pub enum Variant {
+    /// Primary emphasis.
     Primary,
     #[default]
+    /// Secondary emphasis.
     Secondary,
+    /// Transparent action treatment.
     Ghost,
+    /// Primary destructive action treatment.
     Destructive,
+    /// Secondary destructive action treatment.
     SecondaryDestructive,
+    /// Bordered action treatment.
     Outline,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Component dimensions, including coordinated spacing and typography.
 pub enum Size {
+    /// Extra-small dimensions.
     Xs,
+    /// Small dimensions.
     Sm,
     #[default]
+    /// Default dimensions or treatment.
     Base,
+    /// Large dimensions.
     Lg,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Closed surface shape choices.
 pub enum Shape {
     #[default]
+    /// Width follows text and slots.
     Standard,
+    /// Equal width and height with rounded corners.
     Square,
+    /// Equal width and height with fully rounded corners.
     Circle,
 }
 
@@ -53,7 +69,9 @@ type ActivationHandler = Box<dyn Fn(&ClickEvent, &mut Window, &mut App)>;
 pub struct Button {
     id: ElementId,
     name: SharedString,
+    accessible_name: Option<SharedString>,
     label: Option<SharedString>,
+    show_label: bool,
     leading: Option<AnyElement>,
     trailing: Option<AnyElement>,
     variant: Variant,
@@ -76,12 +94,32 @@ pub struct Button {
 }
 
 impl Button {
+    /// Show or hide visible text while retaining its accessible name.
+    pub fn show_label(mut self, show: bool) -> Self {
+        self.show_label = show;
+        self
+    }
+    /// Set visible text and its default accessible name; an explicit name override takes precedence.
+    ///
+    /// # Panics
+    /// Panics when the supplied name or label is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.name = crate::name::nonblank(text);
+        self.label = Some(self.name.clone());
+        self
+    }
+    /// Create a text button with stable identity and a default accessible name.
+    ///
+    /// # Panics
+    /// Panics when the supplied name or label is blank.
     pub fn new(id: impl Into<ElementId>, label: impl Into<SharedString>) -> Self {
-        let label = label.into();
+        let label = crate::name::nonblank(label);
         Self {
             id: id.into(),
             name: label.clone(),
+            accessible_name: None,
             label: Some(label),
+            show_label: true,
             leading: None,
             trailing: None,
             variant: Variant::default(),
@@ -105,6 +143,9 @@ impl Button {
     }
 
     /// Construct an icon-only square button with a required accessible name.
+    ///
+    /// # Panics
+    /// Panics when the required accessible name is blank.
     pub fn icon(
         id: impl Into<ElementId>,
         name: impl Into<SharedString>,
@@ -176,6 +217,7 @@ impl Button {
         &self.id
     }
 
+    /// Select the semantic visual treatment; interaction and value state remain independent.
     pub fn variant(mut self, variant: Variant) -> Self {
         self.variant = variant;
         self
@@ -185,14 +227,17 @@ impl Button {
         self.accent = Some(Box::new(recipe));
         self
     }
+    /// Select the component dimensions and corresponding spacing and typography.
     pub fn size(mut self, size: Size) -> Self {
         self.size = size;
         self
     }
+    /// Select the surface shape and aspect ratio.
     pub fn shape(mut self, shape: Shape) -> Self {
         self.shape = shape;
         self
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
@@ -264,21 +309,28 @@ impl Button {
         self
     }
 
+    /// Supply a decorative leading icon, inheriting the component’s presentation.
     pub fn leading_icon(mut self, icon: impl IntoElement) -> Self {
         self.leading = Some(icon.into_any_element());
         self
     }
 
+    /// Supply a decorative trailing icon, inheriting the component’s presentation.
     pub fn trailing_icon(mut self, icon: impl IntoElement) -> Self {
         self.trailing = Some(icon.into_any_element());
         self
     }
 
+    /// Override the accessible name independently of visible text and builder order.
+    ///
+    /// # Panics
+    /// Panics when the supplied name or label is blank.
     pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
-        self.name = name.into();
+        self.accessible_name = Some(crate::name::nonblank(name));
         self
     }
 
+    /// Use the supplied retained focus handle instead of keyed default focus.
     pub fn track_focus(mut self, handle: &FocusHandle) -> Self {
         self.focus_handle = Some(handle.clone());
         self
@@ -376,11 +428,17 @@ struct Paint {
 
 /// Presentation-only seam for compound controls that reuse Button behavior.
 pub(crate) struct AccentRecipe {
+    /// Emphasis.
     pub emphasis: Option<crate::theme::Emphasis>,
+    /// Semantic colour for foreground.
     pub foreground: Hsla,
+    /// Semantic colour for unavailable foreground.
     pub unavailable_foreground: Hsla,
+    /// Semantic colour for icon foreground.
     pub icon_foreground: Hsla,
+    /// Ring.
     pub ring: Option<Hsla>,
+    /// Semantic colour for hover background.
     pub hover_background: Hsla,
 }
 
@@ -565,7 +623,7 @@ impl RenderOnce for Button {
             1.
         };
         let mut button = base::Button::new(self.id)
-            .accessibility_label(self.name)
+            .accessibility_label(self.accessible_name.unwrap_or(self.name))
             .track_focus(&focus_handle)
             .disabled(
                 unavailable
@@ -849,11 +907,27 @@ impl RenderOnce for Button {
                         geometry.gap
                     })
                     .children(leading)
-                    .children(self.label)
+                    .children(self.label.filter(|_| self.show_label))
                     .children(trailing),
             )
             .child(ring);
         div().flex().flex_shrink_0().child(surface)
+    }
+}
+
+impl std::fmt::Debug for Button {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Button")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("variant", &self.variant)
+            .field("size", &self.size)
+            .field("disabled", &self.disabled)
+            .field("loading", &self.loading)
+            .field("input_group_action", &self.input_group_action)
+            .field("open", &self.open)
+            .field("menu_trigger", &self.menu_trigger)
+            .finish_non_exhaustive()
     }
 }
 

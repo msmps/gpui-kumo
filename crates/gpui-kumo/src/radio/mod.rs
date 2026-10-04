@@ -8,40 +8,57 @@ use gpui_kit::{
 };
 use std::rc::Rc;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Closed semantic visual treatments supported by this component.
 pub enum Variant {
     #[default]
+    /// Default semantic treatment.
     Default,
+    /// Error treatment.
     Error,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Radio-row visual treatment.
 pub enum Appearance {
     #[default]
+    /// Default semantic treatment.
     Default,
+    /// Card-style radio row.
     Card,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Layout and directional navigation axis.
 pub enum Orientation {
     #[default]
+    /// Arrange controls along the vertical axis.
     Vertical,
+    /// Arrange controls along the horizontal axis.
     Horizontal,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Placement of the radio indicator within a row.
 pub enum ControlPosition {
+    /// Align with the leading edge.
     Start,
+    /// Align with the trailing edge.
     End,
 }
 /// Native details for the actual activation or composed navigation event.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub enum ChangeEvent {
+    /// Value proposed by activation.
     Activation(ClickEvent),
+    /// Value proposed while navigating the group.
     Navigation(KeyDownEvent),
 }
 type Handler<T> = Rc<dyn Fn(T, &ChangeEvent, &mut Window, &mut App)>;
 #[must_use]
+/// One controlled radio value with stable identity and readable text.
 pub struct RadioItem<T: Clone + Eq + 'static> {
     id: ElementId,
     value: T,
     name: SharedString,
+    accessible_name: Option<SharedString>,
     content: Option<AnyElement>,
     description: Option<SharedString>,
     disabled: bool,
@@ -49,6 +66,26 @@ pub struct RadioItem<T: Clone + Eq + 'static> {
     appearance: Option<Appearance>,
 }
 impl<T: Clone + Eq + 'static> RadioItem<T> {
+    /// Set visible text and its default accessible name; explicit overrides remain authoritative.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.name = crate::name::nonblank(text);
+        self
+    }
+    /// Override the accessible name independently of visible text and builder order.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Create a radio row with stable identity, typed value and readable text.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(id: impl Into<ElementId>, value: T, name: impl Into<SharedString>) -> Self {
         let name = name.into();
         assert!(!name.trim().is_empty(), "Radio requires a readable name");
@@ -56,6 +93,7 @@ impl<T: Clone + Eq + 'static> RadioItem<T> {
             id: id.into(),
             value,
             name,
+            accessible_name: None,
             content: None,
             description: None,
             disabled: false,
@@ -68,18 +106,22 @@ impl<T: Clone + Eq + 'static> RadioItem<T> {
         self.content = Some(content.into_any_element());
         self
     }
+    /// Supply supporting row description text.
     pub fn description(mut self, description: impl Into<SharedString>) -> Self {
         self.description = Some(description.into());
         self
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
+    /// Select the semantic visual treatment; interaction and value state remain independent.
     pub fn variant(mut self, variant: Variant) -> Self {
         self.variant = variant;
         self
     }
+    /// Choose the radio-row visual treatment.
     pub fn appearance(mut self, appearance: Appearance) -> Self {
         self.appearance = Some(appearance);
         self
@@ -104,6 +146,7 @@ impl<T: Clone + Eq + 'static> RadioItem<T> {
 pub struct RadioGroup<T: Clone + Eq + 'static> {
     id: ElementId,
     name: SharedString,
+    accessible_name: Option<SharedString>,
     selected: Option<T>,
     items: Vec<RadioItem<T>>,
     disabled: bool,
@@ -114,9 +157,30 @@ pub struct RadioGroup<T: Clone + Eq + 'static> {
     hide_legend: bool,
     description: Option<SharedString>,
     error: Option<SharedString>,
+    show_error: bool,
     on_change: Option<Handler<T>>,
 }
 impl<T: Clone + Eq + 'static> RadioGroup<T> {
+    /// Set visible text and its default accessible name; explicit overrides remain authoritative.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.name = crate::name::nonblank(text);
+        self
+    }
+    /// Override the accessible name independently of visible text and builder order.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Create a named radio group with the current owner-controlled value.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(
         id: impl Into<ElementId>,
         name: impl Into<SharedString>,
@@ -130,6 +194,7 @@ impl<T: Clone + Eq + 'static> RadioGroup<T> {
         Self {
             id: id.into(),
             name,
+            accessible_name: None,
             selected,
             items: Vec::new(),
             disabled: false,
@@ -140,9 +205,14 @@ impl<T: Clone + Eq + 'static> RadioGroup<T> {
             hide_legend: false,
             description: None,
             error: None,
+            show_error: true,
             on_change: None,
         }
     }
+    /// Append a typed item; its stable identity and value remain independent of visible text.
+    ///
+    /// # Panics
+    /// Panics when item IDs or values are duplicated.
     pub fn item(mut self, item: RadioItem<T>) -> Self {
         assert!(
             !self
@@ -154,38 +224,55 @@ impl<T: Clone + Eq + 'static> RadioGroup<T> {
         self.items.push(item);
         self
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
+    /// Choose the radio-row visual treatment.
     pub fn appearance(mut self, appearance: Appearance) -> Self {
         self.appearance = appearance;
         self
     }
+    /// Choose the layout and navigation axis.
     pub fn orientation(mut self, orientation: Orientation) -> Self {
         self.orientation = orientation;
         self
     }
+    /// Place the radio indicator before or after the row content.
     pub fn control_position(mut self, position: ControlPosition) -> Self {
         self.position = Some(position);
         self
     }
+    /// Supply decorative group-label content; the textual group name remains authoritative.
     pub fn legend(mut self, content: impl IntoElement) -> Self {
         self.legend = Some(content.into_any_element());
         self
     }
-    pub fn hide_legend(mut self, hide: bool) -> Self {
-        self.hide_legend = hide;
+    /// Choose visible label presentation without changing the accessible name.
+    pub fn show_label(mut self, show: bool) -> Self {
+        self.hide_legend = !show;
         self
     }
+    /// Supply supporting text; errors take precedence even when their message is hidden.
     pub fn description(mut self, description: impl Into<SharedString>) -> Self {
         self.description = Some(description.into());
         self
     }
-    pub fn error(mut self, error: impl Into<SharedString>) -> Self {
-        self.error = Some(error.into());
+    /// Supply an error while choosing whether its message is visible.
+    /// A hidden error still suppresses helper text; validation remains application-owned.
+    pub fn error_visible(mut self, text: impl Into<SharedString>, show: bool) -> Self {
+        self.error = Some(text.into());
+        self.show_error = show;
         self
     }
+    /// Display an application-owned error; values are retained and helper text is suppressed.
+    pub fn error(mut self, error: impl Into<SharedString>) -> Self {
+        self.error = Some(error.into());
+        self.show_error = true;
+        self
+    }
+    /// Observe a user value-change proposal; the application owns the resulting value.
     pub fn on_change(
         mut self,
         handler: impl Fn(T, &ChangeEvent, &mut Window, &mut App) + 'static,
@@ -196,6 +283,7 @@ impl<T: Clone + Eq + 'static> RadioGroup<T> {
 }
 impl<T: Clone + Eq + 'static> RenderOnce for RadioGroup<T> {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let description = self.description.filter(|_| self.error.is_none());
         let theme = theme(cx).clone();
         let handles: Vec<FocusHandle> = window.with_id(self.id.clone(), |window| {
             self.items
@@ -232,7 +320,11 @@ impl<T: Clone + Eq + 'static> RenderOnce for RadioGroup<T> {
         let handler = self.on_change.clone();
         let id = self.id.clone();
         let mut group = base::RadioGroup::new(self.id)
-            .aria_label(self.name.clone())
+            .aria_label(
+                self.accessible_name
+                    .clone()
+                    .unwrap_or_else(|| self.name.clone()),
+            )
             .axis(if self.orientation == Orientation::Vertical {
                 Axis::Vertical
             } else {
@@ -429,7 +521,7 @@ impl<T: Clone + Eq + 'static> RenderOnce for RadioGroup<T> {
                 .track_focus(&focus)
                 .tab_stop(entry == Some(index))
                 .set_position(index + 1, total)
-                .accessibility_label(item.name)
+                .accessibility_label(item.accessible_name.unwrap_or(item.name))
                 .when_some(semantic_description, |this, description| {
                     this.aria_description(description)
                 })
@@ -491,12 +583,12 @@ impl<T: Clone + Eq + 'static> RenderOnce for RadioGroup<T> {
             list = list.child(radio);
         }
         group = group.child(list);
-        if let Some(error) = self.error {
+        if let Some(error) = self.error.filter(|_| self.show_error) {
             group = group.child(crate::field::group_message_element(
                 &theme, "error", error, true,
             ));
         }
-        if let Some(description) = self.description {
+        if let Some(description) = description {
             group = group.child(crate::field::group_message_element(
                 &theme,
                 "description",
@@ -507,6 +599,32 @@ impl<T: Clone + Eq + 'static> RenderOnce for RadioGroup<T> {
         // Base RadioGroup has no observation hook in 0.7.0; this identity-only
         // wrapper scopes geometry/input tests without duplicating its role/name.
         div().id(id).test_support().min_w_0().child(group)
+    }
+}
+
+impl<T: Clone + Eq + 'static> std::fmt::Debug for RadioItem<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RadioItem")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("disabled", &self.disabled)
+            .field("variant", &self.variant)
+            .finish_non_exhaustive()
+    }
+}
+
+impl<T: Clone + Eq + 'static> std::fmt::Debug for RadioGroup<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RadioGroup")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("items_count", &self.items.len())
+            .field("disabled", &self.disabled)
+            .field("appearance", &self.appearance)
+            .field("orientation", &self.orientation)
+            .field("hide_legend", &self.hide_legend)
+            .field("show_error", &self.show_error)
+            .finish_non_exhaustive()
     }
 }
 

@@ -60,7 +60,7 @@ impl Render for Cards {
                         )
                         .section(
                             Section::primary("body")
-                                .child(Input::new("card-input", &self.input).label(true))
+                                .child(Input::new("card-input", &self.input).show_label(true))
                                 .child(Text::new(
                                     "card-count",
                                     format!("Saved {} times", self.activations),

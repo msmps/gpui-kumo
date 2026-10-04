@@ -394,3 +394,56 @@ fn toast_window_close_releases_rows_with_application_retaining_state(cx: &mut Te
         assert!(!view.read(cx).toasts.read(cx).timer_running);
     });
 }
+
+#[gpui_kit::test]
+fn rejected_action_update_preserves_rendered_payload_and_focus(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx);
+    cx.update(|window, cx| {
+        frames(window, cx);
+        window.click("producer", cx);
+        frames(window, cx);
+    });
+    cx.executor().advance_clock(Duration::from_secs(1));
+    cx.run_until_parked();
+    cx.update(|window, cx| {
+        frames(window, cx);
+        window.click("undo", cx);
+        frames(window, cx);
+        let toasts = view.read(cx).toasts.clone();
+        assert_eq!(window.find("undo").focused(), Some(true));
+        // Catch inside the lease: GPUI entity updates themselves are not unwind-safe.
+        let result = toasts.update(cx, |state, cx| {
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                state.update(
+                    "saved",
+                    |content| {
+                        content.title = "Discarded proposal".into();
+                        content.actions[0].label = " ".into();
+                    },
+                    window,
+                    cx,
+                );
+            }))
+        });
+        assert!(result.is_err());
+        assert_eq!(
+            toasts.read(cx).content("saved").unwrap().title,
+            "Document saved"
+        );
+        frames(window, cx);
+        assert_eq!(window.find("undo").label(), Some("Undo"));
+        assert_eq!(window.find("undo").focused(), Some(true));
+        window.press("space", cx);
+        frames(window, cx);
+    });
+    cx.read(|cx| {
+        assert_eq!(
+            view.read(cx)
+                .events
+                .iter()
+                .filter(|event| matches!(event, ToastEvent::Action { .. }))
+                .count(),
+            2
+        );
+    });
+}

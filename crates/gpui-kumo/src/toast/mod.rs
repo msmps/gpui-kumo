@@ -14,44 +14,68 @@ use std::{
 };
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Notification semantic treatment.
 pub enum ToastVariant {
     #[default]
+    /// Default semantic treatment.
     Default,
+    /// Success notification treatment.
     Success,
+    /// Error treatment.
     Error,
+    /// Warning notification treatment.
     Warning,
+    /// Informational notification treatment.
     Info,
 }
 #[derive(Clone, Debug)]
+/// Notification action with a stable routing key and readable button label.
 pub struct ToastAction {
+    /// Stable action routing key, independent of localised text.
     pub id: SharedString,
+    /// Complete text for label.
     pub label: SharedString,
+    /// Variant.
     pub variant: crate::button::Variant,
+    /// Disabled.
     pub disabled: bool,
 }
 impl ToastAction {
+    /// Create an action with a stable routing key and complete readable label.
+    ///
+    /// # Panics
+    /// Panics when `id` or `label` is blank.
     pub fn new(id: impl Into<SharedString>, label: impl Into<SharedString>) -> Self {
+        let id = id.into();
+        assert!(!id.trim().is_empty(), "Toast action requires a stable key");
         Self {
-            id: id.into(),
-            label: label.into(),
+            id,
+            label: crate::name::nonblank(label),
             variant: crate::button::Variant::Secondary,
             disabled: false,
         }
     }
+    /// Select the semantic visual treatment; interaction and value state remain independent.
     pub fn variant(mut self, variant: crate::button::Variant) -> Self {
         self.variant = variant;
         self
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
 }
 #[derive(Clone, Debug)]
+/// Notification text and actions, updated independently of its identity.
 pub struct ToastContent {
+    /// Complete text for title.
     pub title: SharedString,
+    /// Description.
     pub description: Option<SharedString>,
+    /// Variant.
     pub variant: ToastVariant,
+    /// Actions.
     pub actions: Vec<ToastAction>,
 }
 /// An add request. Stable IDs deduplicate; use update to change existing content.
@@ -61,6 +85,7 @@ pub struct Toast {
     timeout: Option<Duration>,
 }
 impl Toast {
+    /// Create a notification request with a stable deduplication key and readable title.
     pub fn new(id: impl Into<SharedString>, title: impl Into<SharedString>) -> Self {
         Self {
             id: id.into(),
@@ -73,10 +98,12 @@ impl Toast {
             timeout: Some(Duration::from_secs(5)),
         }
     }
+    /// Supply independently readable notification description text.
     pub fn description(mut self, description: impl Into<SharedString>) -> Self {
         self.content.description = Some(description.into());
         self
     }
+    /// Select the semantic visual treatment; interaction and value state remain independent.
     pub fn variant(mut self, variant: ToastVariant) -> Self {
         self.content.variant = variant;
         self
@@ -86,26 +113,42 @@ impl Toast {
         self.timeout = (!timeout.is_zero()).then_some(timeout);
         self
     }
+    /// Append a notification action.
     pub fn action(mut self, action: ToastAction) -> Self {
         self.content.actions.push(action);
         self
     }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+/// Origin of a notification dismissal.
 pub enum ToastDismissReason {
+    /// Requested by the notification close button.
     Close,
+    /// Requested through Escape.
     Escape,
+    /// The configured duration elapsed.
     Timeout,
+    /// Requested by application code.
     Programmatic,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+/// Notification lifecycle or action routing event.
 pub enum ToastEvent {
+    /// A notification was added.
     Added(SharedString),
+    /// An existing notification payload changed.
     Updated(SharedString),
+    /// A notification began dismissal with the supplied reason.
     Dismissed(SharedString, ToastDismissReason),
+    /// The dismissal transition completed.
     Removed(SharedString),
+    /// Requested by an application action.
     Action {
+        /// Complete text for toast.
         toast: SharedString,
+        /// Complete text for action.
         action: SharedString,
     },
 }
@@ -165,6 +208,7 @@ impl ToastState {
         self.timer_running = false;
         self.last_inside.borrow_mut().take();
     }
+    /// Create an empty retained notification manager. Retain with `cx.new`.
     pub fn new(cx: &mut Context<Self>) -> Self {
         let owner = cx.entity().downgrade();
         Self {
@@ -223,17 +267,25 @@ impl ToastState {
             }),
         }
     }
+    /// Read the number of retained notifications.
     pub fn len(&self) -> usize {
         self.manager.len()
     }
+    /// Return whether the notification manager is empty.
     pub fn is_empty(&self) -> bool {
         self.manager.is_empty()
     }
+    /// Clone the current payload for a notification key, if it exists.
     pub fn content(&self, id: &str) -> Option<ToastContent> {
         self.manager
             .get(&SharedString::from(id.to_owned()))
             .map(|entry| entry.borrow().content.clone())
     }
+    /// Add a notification; an existing stable key deduplicates the request.
+    ///
+    /// # Panics
+    /// Panics for a blank notification key or content, blank action keys/names,
+    /// or duplicate action keys.
     pub fn add(
         &mut self,
         toast: Toast,
@@ -248,15 +300,7 @@ impl ToastState {
         {
             return toast.id;
         }
-        assert!(
-            !toast.content.title.trim().is_empty()
-                || toast
-                    .content
-                    .description
-                    .as_ref()
-                    .is_some_and(|d| !d.trim().is_empty()),
-            "Toast requires readable content"
-        );
+        validate_content(&toast.content);
         if self.manager.get(&toast.id).is_some() {
             return toast.id;
         }
@@ -291,6 +335,11 @@ impl ToastState {
         toast.id
     }
     /// Update the current payload in place. Order, focus identities and remaining timeout are retained.
+    /// Returns false for missing or dismissing notifications.
+    ///
+    /// # Panics
+    /// Panics for blank content, blank action keys/names, or duplicate action keys.
+    /// Invalid proposals leave the previous payload intact.
     pub fn update(
         &mut self,
         id: &str,
@@ -308,7 +357,10 @@ impl ToastState {
         }
         let entry = self.manager.get(&id).unwrap();
         let mut entry = entry.borrow_mut();
-        change(&mut entry.content);
+        let mut content = entry.content.clone();
+        change(&mut content);
+        validate_content(&content);
+        entry.content = content;
         let keys = entry
             .content
             .actions
@@ -331,6 +383,7 @@ impl ToastState {
         cx.notify();
         true
     }
+    /// Dismiss through the overlay’s focus-restoration lifecycle.
     pub fn dismiss(&mut self, id: &str, window: &mut Window, cx: &mut Context<Self>) -> bool {
         self.close(
             &SharedString::from(id.to_owned()),
@@ -455,6 +508,7 @@ pub struct ToastViewport {
     state: Entity<ToastState>,
 }
 impl ToastViewport {
+    /// Present notifications from a retained state under a stable element identity.
     pub fn new(id: impl Into<ElementId>, state: &Entity<ToastState>) -> Self {
         Self {
             id: id.into(),
@@ -823,6 +877,49 @@ impl Render for ToastState {
         )
         .with_priority(200)
         .into_any_element()
+    }
+}
+
+impl std::fmt::Debug for Toast {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Toast")
+            .field("id", &self.id)
+            .finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for ToastState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ToastState")
+            .field("timer_running", &self.timer_running)
+            .finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for ToastViewport {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ToastViewport")
+            .field("id", &self.id)
+            .finish_non_exhaustive()
+    }
+}
+
+fn validate_content(content: &ToastContent) {
+    assert!(
+        !content.title.trim().is_empty()
+            || content
+                .description
+                .as_ref()
+                .is_some_and(|text| !text.trim().is_empty()),
+        "Toast requires readable content"
+    );
+    let mut keys = std::collections::HashSet::new();
+    for action in &content.actions {
+        assert!(
+            !action.id.trim().is_empty() && !action.label.trim().is_empty(),
+            "Toast actions require nonblank keys and names"
+        );
+        assert!(keys.insert(&action.id), "Toast action keys must be unique");
     }
 }
 

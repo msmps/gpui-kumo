@@ -76,6 +76,7 @@ pub struct SkeletonLine {
     block_height: Option<Pixels>,
 }
 impl SkeletonLine {
+    /// Create a decorative loading line with stable animation identity.
     pub fn new(id: impl Into<ElementId>) -> Self {
         Self {
             id: id.into(),
@@ -85,14 +86,21 @@ impl SkeletonLine {
         }
     }
     /// Integer percent width, inclusive; finite source percentage range0–100.
+    ///
+    /// # Panics
+    /// Panics when the width range is reversed or outside 0–100%.
     pub fn width_range(mut self, range: RangeInclusive<u8>) -> Self {
         assert!(
             range.start() <= range.end() && *range.end() <= 100,
-            "SkeletonLine width must be ordered within0–100%"
+            "SkeletonLine width must be ordered within 0–100%"
         );
         self.ranges.width = range;
         self
     }
+    /// Duration range under the SkeletonLine contract.
+    ///
+    /// # Panics
+    /// Panics when the duration range is reversed.
     pub fn duration_range(mut self, range: RangeInclusive<Duration>) -> Self {
         assert!(
             range.start() <= range.end(),
@@ -101,6 +109,10 @@ impl SkeletonLine {
         self.ranges.duration = range;
         self
     }
+    /// Delay range under the SkeletonLine contract.
+    ///
+    /// # Panics
+    /// Panics when the delay range is reversed.
     pub fn delay_range(mut self, range: RangeInclusive<Duration>) -> Self {
         assert!(
             range.start() <= range.end(),
@@ -109,6 +121,7 @@ impl SkeletonLine {
         self.ranges.delay = range;
         self
     }
+    /// Set the skeleton line height.
     pub fn height(mut self, height: Pixels) -> Self {
         self.height = dimension(height);
         self
@@ -257,6 +270,14 @@ fn paint_shimmer(
                 Default::default(),
             ));
         });
+    }
+}
+
+impl std::fmt::Debug for SkeletonLine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SkeletonLine")
+            .field("id", &self.id)
+            .finish_non_exhaustive()
     }
 }
 

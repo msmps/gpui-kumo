@@ -15,7 +15,7 @@ impl Render for Harness {
             .flex()
             .flex_col()
             .w(px(160.))
-            .child(Checkbox::new("before", "Before").bare())
+            .child(Checkbox::new("before", "Before").show_label(false))
             .child(
                 Checkbox::new("target", "Accept terms with a long wrapping label")
                     .state(self.state)
@@ -31,7 +31,7 @@ impl Render for Harness {
                         });
                     }),
             )
-            .child(Checkbox::new("after", "After").bare())
+            .child(Checkbox::new("after", "After").show_label(false))
     }
 }
 #[gpui_kit::test]
@@ -109,7 +109,7 @@ impl Render for Geometry {
             .flex()
             .flex_col()
             .gap(px(12.))
-            .child(Checkbox::new("bare", "Bare").bare())
+            .child(Checkbox::new("bare", "Bare").show_label(false))
             .child(Checkbox::new("short", "Short"))
             .child(
                 div().w(px(100.)).child(

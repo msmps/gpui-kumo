@@ -35,6 +35,7 @@ pub struct CollapsiblePanel {
     keep_mounted: bool,
 }
 impl CollapsiblePanel {
+    /// Create a styled disclosure content container.
     pub fn new() -> Self {
         Self {
             base: div(),
@@ -42,12 +43,15 @@ impl CollapsiblePanel {
             keep_mounted: false,
         }
     }
+    /// Omit the default panel padding and surface recipe.
     pub fn unstyled() -> Self {
         Self {
             default_style: false,
             ..Self::new()
         }
     }
+    /// Keep child layout state while closed. Hidden descendants are excluded from
+    /// painting, input, focus traversal and accessibility.
     pub fn keep_mounted(mut self, keep: bool) -> Self {
         self.keep_mounted = keep;
         self
@@ -102,6 +106,7 @@ impl RenderOnce for CollapsiblePanel {
 pub struct Collapsible {
     id: ElementId,
     label: SharedString,
+    accessible_name: Option<SharedString>,
     label_content: Option<AnyElement>,
     trigger: Option<Button>,
     panel: Option<CollapsiblePanel>,
@@ -111,6 +116,26 @@ pub struct Collapsible {
     on_open_change: Option<OpenHandler>,
 }
 impl Collapsible {
+    /// Set visible text and its default accessible name; explicit overrides remain authoritative.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.label = crate::name::nonblank(text);
+        self
+    }
+    /// Override the accessible name independently of visible text and builder order.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Create a disclosure with a named default trigger.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(id: impl Into<ElementId>, label: impl Into<SharedString>) -> Self {
         let label = label.into();
         assert!(
@@ -120,6 +145,7 @@ impl Collapsible {
         Self {
             id: id.into(),
             label,
+            accessible_name: None,
             label_content: None,
             trigger: None,
             panel: None,
@@ -129,6 +155,7 @@ impl Collapsible {
             on_open_change: None,
         }
     }
+    /// Supply the controlled expanded state.
     pub fn open(mut self, open: bool) -> Self {
         self.open = Some(open);
         self
@@ -138,6 +165,7 @@ impl Collapsible {
         self.default_open = open;
         self
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
@@ -153,6 +181,7 @@ impl Collapsible {
         self.trigger = Some(trigger);
         self
     }
+    /// Supply the collapsible content surface.
     pub fn panel(mut self, panel: CollapsiblePanel) -> Self {
         self.panel = Some(panel);
         self
@@ -233,7 +262,11 @@ impl RenderOnce for Collapsible {
         } else {
             let ring_focus = focus.clone();
             let button = base::Button::new("trigger")
-                .accessibility_label(self.label.clone())
+                .accessibility_label(
+                    self.accessible_name
+                        .clone()
+                        .unwrap_or_else(|| self.label.clone()),
+                )
                 .aria_expanded(open)
                 .disabled(disabled)
                 .track_focus(&focus)
@@ -331,6 +364,26 @@ impl RenderOnce for Collapsible {
             );
         }
         div().id(self.id).min_w_0().w_full().child(root)
+    }
+}
+
+impl std::fmt::Debug for CollapsiblePanel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CollapsiblePanel")
+            .field("default_style", &self.default_style)
+            .field("keep_mounted", &self.keep_mounted)
+            .finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Collapsible {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Collapsible")
+            .field("id", &self.id)
+            .field("label", &self.label)
+            .field("default_open", &self.default_open)
+            .field("disabled", &self.disabled)
+            .finish_non_exhaustive()
     }
 }
 

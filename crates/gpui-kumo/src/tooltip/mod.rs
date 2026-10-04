@@ -8,7 +8,13 @@ use gpui_kit::{
     Subscription, Task, Window, base, canvas, deferred, div, px, quad,
 };
 use std::{cell::Cell, rc::Rc, time::Duration};
-gpui_kit::actions!(kumo_tooltip, [Dismiss]);
+gpui_kit::actions!(
+    kumo_tooltip,
+    [
+        /// Request dismissal of the focused tooltip through its lifecycle policy.
+        Dismiss
+    ]
+);
 pub(crate) fn init(cx: &mut App) {
     cx.bind_keys([gpui_kit::KeyBinding::new(
         "escape",
@@ -17,23 +23,33 @@ pub(crate) fn init(cx: &mut App) {
     )]);
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Cross-axis alignment relative to the anchor.
 pub enum Align {
+    /// Align with the leading edge.
     Start,
     #[default]
+    /// Align with the centre.
     Center,
+    /// Align with the trailing edge.
     End,
 }
 #[derive(Clone, Debug)]
+/// Tooltip disclosure lifecycle notification.
 pub struct TooltipEvent {
+    /// Open.
     pub open: bool,
 }
 type Trigger = dyn Fn(&mut Window, &mut App) -> Button;
 type HoverHook = dyn Fn(&bool, &mut Window, &mut App);
 type WindowHook = dyn Fn(&mut Window, &mut App);
 pub(crate) struct TriggerHooks {
+    /// Bounds.
     pub bounds: Rc<Cell<Bounds<Pixels>>>,
+    /// Hover.
     pub hover: Rc<HoverHook>,
+    /// Press.
     pub press: Rc<WindowHook>,
+    /// Moved.
     pub moved: Rc<WindowHook>,
 }
 struct Presentation {
@@ -62,6 +78,7 @@ pub struct TooltipState {
 }
 impl EventEmitter<TooltipEvent> for TooltipState {}
 impl TooltipState {
+    /// Create a closed tooltip with retained disclosure timers and focus scope. Retain with `cx.new`.
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let scope = cx.focus_handle().tab_stop(false);
         let subscriptions = vec![
@@ -92,9 +109,11 @@ impl TooltipState {
             _subscriptions: subscriptions,
         }
     }
+    /// Report whether the overlay is currently disclosed.
     pub fn is_open(&self) -> bool {
         self.open
     }
+    /// Request programmatic disclosure according to the component lifecycle and availability policy.
     pub fn set_open(&mut self, open: bool, cx: &mut Context<Self>) {
         self.task = None;
         let open = open && !self.disabled;
@@ -165,6 +184,7 @@ pub struct Tooltip {
     presentation: Presentation,
 }
 impl Tooltip {
+    /// Compose readable tooltip content and a Button factory over retained disclosure state.
     pub fn new(
         id: impl Into<ElementId>,
         state: &Entity<TooltipState>,
@@ -184,18 +204,22 @@ impl Tooltip {
             },
         }
     }
+    /// Select the preferred anchor side.
     pub fn side(mut self, side: Side) -> Self {
         self.presentation.side = side;
         self
     }
+    /// Choose alignment along the surface’s cross axis.
     pub fn align(mut self, align: Align) -> Self {
         self.presentation.align = align;
         self
     }
+    /// Set the hover disclosure delay.
     pub fn delay(mut self, delay: Duration) -> Self {
         self.presentation.delay = delay;
         self
     }
+    /// Set the delayed dismissal interval.
     pub fn close_delay(mut self, delay: Duration) -> Self {
         self.presentation.close_delay = delay;
         self
@@ -469,6 +493,7 @@ pub struct TooltipProvider {
     child: gpui_kit::AnyElement,
 }
 impl TooltipProvider {
+    /// Coordinate weakly held tooltip states for the supplied subtree.
     pub fn new(
         id: impl Into<ElementId>,
         states: impl IntoIterator<Item = gpui_kit::WeakEntity<TooltipState>>,
@@ -503,6 +528,35 @@ impl RenderOnce for TooltipProvider {
                 }
             })
             .child(self.child)
+    }
+}
+
+impl std::fmt::Debug for TooltipState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TooltipState")
+            .field("open", &self.open)
+            .field("disabled", &self.disabled)
+            .field("hovered", &self.hovered)
+            .field("keyboard_focus", &self.keyboard_focus)
+            .field("suppressed", &self.suppressed)
+            .finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Tooltip {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Tooltip")
+            .field("id", &self.presentation.id)
+            .field("state", &self.state.entity_id())
+            .finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for TooltipProvider {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TooltipProvider")
+            .field("id", &self.id)
+            .finish_non_exhaustive()
     }
 }
 

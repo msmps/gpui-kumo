@@ -18,9 +18,9 @@ impl Render for Harness {
             .gap(px(24.))
             .child(
                 SensitiveInput::new("secret", &self.secret)
-                    .label(true)
+                    .show_label(true)
                     .size(self.size)
-                    .when(self.error, |input| input.error("Bad key", true)),
+                    .when(self.error, |input| input.error_visible("Bad key", true)),
             )
             .child(crate::Button::new("outside", "Outside"))
     }

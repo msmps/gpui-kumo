@@ -21,7 +21,7 @@ impl Render for Harness {
                 InputArea::new("area", &self.state)
                     .size(self.size)
                     .rows(self.rows)
-                    .label(true)
+                    .show_label(true)
                     .when_some(self.auto, |area, (min, max)| area.auto_resize(min, max)),
             )
             .child(crate::Button::new("after", "After"))

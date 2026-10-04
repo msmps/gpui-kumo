@@ -458,3 +458,29 @@ fn dialog_nested_topmost_owns_escape_tab_and_returns_to_parent(cx: &mut TestAppC
         assert!(!view.read(cx).parent.read(cx).is_open());
     });
 }
+
+#[gpui_kit::test]
+fn rename_open_dialog_preserves_draft_focus_and_lifecycle(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx);
+    cx.update(|window, cx| {
+        window.click("open", cx);
+        window.render_frame(cx);
+        window.render_frame(cx);
+        let input = view.read(cx).input.clone();
+        input.read(cx).focus_handle(cx).focus(window, cx);
+    });
+    cx.simulate_input("retained draft");
+    cx.update(|window, cx| {
+        let input = view.read(cx).input.clone();
+        let dialog = view.read(cx).dialog.clone();
+        dialog.update(cx, |dialog, cx| dialog.set_name("Modifier le dossier", cx));
+        window.render_frame(cx);
+        assert_eq!(window.find("modal").label(), Some("Modifier le dossier"));
+        assert!(dialog.read(cx).is_open());
+        assert_eq!(input.read(cx).value(cx).as_ref(), "retained draft");
+        assert!(input.read(cx).focus_handle(cx).is_focused(window));
+        window.click("cancel", cx);
+        window.render_frame(cx);
+        assert!(!dialog.read(cx).is_open());
+    });
+}

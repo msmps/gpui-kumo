@@ -12,13 +12,20 @@ use std::time::Duration;
 /// Supported non-heading Kumo Text recipes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Style {
+    /// Request to copy the configured payload.
     Copy {
+        /// Tone.
         tone: text::Tone,
+        /// Size.
         size: text::Size,
+        /// Bold.
         bold: bool,
     },
+    /// Monospaced text.
     Mono {
+        /// Tone.
         tone: text::MonoTone,
+        /// Size.
         size: text::MonoSize,
     },
 }
@@ -70,6 +77,7 @@ pub struct InlineCopyText {
     on_copy: Option<CopyHandler>,
 }
 impl InlineCopyText {
+    /// Create readable text with an independently named copy action.
     pub fn new(id: impl Into<ElementId>, text: impl Into<SharedString>) -> Self {
         let text = text.into();
         Self {
@@ -101,18 +109,22 @@ impl InlineCopyText {
             ..Self::new(id, visible_text)
         }
     }
+    /// Read the current value from its owner; this does not request a change.
     pub fn value(mut self, value: impl Into<SharedString>) -> Self {
         self.value = value.into();
         self
     }
+    /// Choose the component’s semantic text or surface treatment.
     pub fn style(mut self, style: Style) -> Self {
         self.style = style;
         self
     }
+    /// Truncate visible text while retaining the full readable value.
     pub fn truncate(mut self, truncate: bool) -> Self {
         self.truncate = truncate;
         self
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
@@ -122,6 +134,10 @@ impl InlineCopyText {
         self.group_active = active;
         self
     }
+    /// Supply complete names for the component’s secondary actions.
+    ///
+    /// # Panics
+    /// Panics when either action name is blank.
     pub fn labels(
         mut self,
         copy: impl Into<SharedString>,
@@ -143,6 +159,7 @@ impl InlineCopyText {
         self.on_click = Some(Box::new(handler));
         self
     }
+    /// Observe copy with application-owned handling.
     pub fn on_copy(mut self, handler: impl Fn(&mut Window, &mut App) + 'static) -> Self {
         self.on_copy = Some(Box::new(handler));
         self
@@ -365,5 +382,16 @@ impl RenderOnce for InlineCopyText {
         div().flex().min_w_0().max_w_full().child(control)
     }
 }
+impl std::fmt::Debug for InlineCopyText {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("InlineCopyText")
+            .field("id", &self.id)
+            .field("truncate", &self.truncate)
+            .field("disabled", &self.disabled)
+            .field("group_active", &self.group_active)
+            .finish_non_exhaustive()
+    }
+}
+
 #[cfg(test)]
 mod tests;

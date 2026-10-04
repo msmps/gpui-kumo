@@ -8,6 +8,7 @@ use gpui_kit::{AssetSource, SharedString};
 ///
 /// Delegate unknown paths from your own `AssetSource` to this source. Components
 /// embed their internal icons directly and do not require this registration.
+#[derive(Debug)]
 pub struct Assets;
 
 impl AssetSource for Assets {

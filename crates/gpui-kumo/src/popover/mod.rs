@@ -13,24 +13,36 @@ use gpui_kit::{
 
 use crate::{Button, Theme, theme};
 
-gpui_kit::actions!(kumo_popover, [Dismiss]);
+gpui_kit::actions!(
+    kumo_popover,
+    [
+        /// Request dismissal of the focused popover through its lifecycle policy.
+        Dismiss
+    ]
+);
 
 pub(crate) fn init(cx: &mut App) {
     cx.bind_keys([KeyBinding::new("escape", Dismiss, Some("KumoPopover"))]);
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Preferred side of an anchored surface.
 pub enum Placement {
+    /// Place above the anchor.
     Top,
     #[default]
+    /// Place below the anchor.
     Bottom,
+    /// Place left of the anchor.
     Left,
+    /// Place right of the anchor.
     Right,
 }
 
 /// Notifications after the retained state changes, rather than change requests.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PopoverEvent {
+    /// Open.
     pub open: bool,
 }
 
@@ -41,6 +53,7 @@ pub struct PopoverClose {
 }
 
 impl PopoverClose {
+    /// Dismiss through the overlay’s focus-restoration lifecycle.
     pub fn dismiss(&self, window: &mut Window, cx: &mut App) {
         let _ = self.state.update(cx, |state, cx| state.dismiss(window, cx));
     }
@@ -78,7 +91,9 @@ type DismissOverlay = dyn Fn(&mut Window, &mut App);
 /// Concrete boundary/lifecycle capability for non-Popover child surfaces.
 /// The owner retains this capability; parent registrations retain only Weak.
 pub(crate) struct ChildOverlay {
+    /// Contains.
     pub contains: Box<ContainsOverlay>,
+    /// Dismiss.
     pub dismiss: Box<DismissOverlay>,
 }
 
@@ -134,6 +149,9 @@ impl EventEmitter<PopoverEvent> for PopoverState {}
 
 impl PopoverState {
     /// `name` names the nonmodal dialog and must be nonempty.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(name: impl Into<SharedString>, cx: &mut Context<Self>) -> Self {
         let name = name.into();
         assert!(
@@ -158,13 +176,34 @@ impl PopoverState {
             _theme_subscription: cx.observe_global::<Theme>(|_, cx| cx.notify()),
         }
     }
+    /// Read the retained default name; rendered props may explicitly override it.
+    pub fn name(&self) -> &SharedString {
+        &self.name
+    }
 
+    /// Refresh the default label and accessible name while preserving value, focus and lifecycle.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank. Validate external text with [`crate::AccessibleName`].
+    pub fn set_name(&mut self, name: impl Into<SharedString>, cx: &mut Context<Self>) {
+        let name = name.into();
+        assert!(
+            !name.trim().is_empty(),
+            "A control requires a nonblank accessible name"
+        );
+        self.name = name;
+        cx.notify();
+    }
+
+    /// Report whether the overlay is currently disclosed.
     pub fn is_open(&self) -> bool {
         self.open
     }
+    /// Report whether the owner has disabled this control.
     pub fn is_disabled(&self) -> bool {
         self.disabled
     }
+    /// Return the retained trigger focus target.
     pub fn trigger_focus(&self) -> FocusHandle {
         self.trigger_focus.clone()
     }
@@ -235,6 +274,7 @@ impl PopoverState {
                 })
     }
 
+    /// Dismiss through the overlay’s focus-restoration lifecycle.
     pub fn dismiss(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.set_open(false, window, cx);
     }
@@ -263,6 +303,10 @@ pub struct Popover {
 }
 
 impl Popover {
+    /// Construct a trigger over a retained named surface.
+    ///
+    /// # Panics
+    /// Panics when the trigger label is blank.
     pub fn new(
         id: impl Into<gpui_kit::ElementId>,
         state: &Entity<PopoverState>,
@@ -272,16 +316,20 @@ impl Popover {
             id: id.into(),
             state: state.clone(),
             presentation: Presentation {
-                trigger_label: trigger_label.into(),
+                trigger_label: crate::name::nonblank(trigger_label),
                 ..Default::default()
             },
         }
     }
+    /// Choose the preferred side; positioning still follows the documented collision policy.
     pub fn placement(mut self, placement: Placement) -> Self {
         self.presentation.placement = placement;
         self
     }
     /// Gap between trigger and popup; must be finite and nonnegative.
+    ///
+    /// # Panics
+    /// Panics when the offset is nonfinite or negative.
     pub fn offset(mut self, offset: Pixels) -> Self {
         assert!(
             f32::from(offset).is_finite() && offset >= px(0.),
@@ -291,6 +339,9 @@ impl Popover {
         self
     }
     /// Explicit native width, constrained by the window. Must be finite and positive.
+    ///
+    /// # Panics
+    /// Panics when width is nonfinite or nonpositive.
     pub fn width(mut self, width: Pixels) -> Self {
         assert!(
             f32::from(width).is_finite() && width > px(0.),
@@ -304,6 +355,7 @@ impl Popover {
         self.presentation.arrow = arrow;
         self
     }
+    /// Select the initial focus target for disclosure.
     pub fn initial_focus(mut self, focus: &FocusHandle) -> Self {
         self.presentation.initial_focus = Some(focus.clone());
         self
@@ -311,12 +363,15 @@ impl Popover {
     /// Associate a nested popup with its parent's weak close capability.
     /// Closing the parent also closes registered descendants.
     /// Reassigning or omitting this association removes the old registration.
-    /// Panics if the association would create an ancestry cycle.
+    ///
+    /// # Panics
+    /// Panics during rendering if the association would create an ancestry cycle.
     pub fn parent(mut self, parent: &PopoverClose) -> Self {
         self.presentation.parent = Some(parent.state.clone());
         self
     }
 
+    /// Supply caller-owned content for this slot; retain durable child entities outside render factories.
     pub fn content<E: IntoElement>(
         mut self,
         builder: impl Fn(PopoverClose, &mut Window, &mut App) -> E + 'static,
@@ -553,6 +608,31 @@ impl Render for PopoverState {
 }
 
 pub(crate) mod arrow;
+
+impl std::fmt::Debug for PopoverClose {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PopoverClose").finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for PopoverState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PopoverState")
+            .field("name", &self.name)
+            .field("open", &self.open)
+            .field("disabled", &self.disabled)
+            .finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Popover {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Popover")
+            .field("id", &self.id)
+            .field("state", &self.state.entity_id())
+            .finish_non_exhaustive()
+    }
+}
 
 #[cfg(test)]
 mod tests;

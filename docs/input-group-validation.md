@@ -1,5 +1,9 @@
 # InputGroup parity and continuation
 
+Public naming, visibility, typed composition and failure policy follow the [canonical public API contract](design-system-components.md#public-api-contract). Use that contract when changing the APIs described here.
+
+Direct actions (joined or floating) and addon actions share retained keyed focus registration and deferred removal recovery. Test both slot kinds with caller-supplied focus replacement, Unicode selection retention and subsequent Tab exit. Recovery must yield to newer focus or a reinstated available handle.
+
 Pinned Kumo source/docs, all part files, context spacing recipes, demos and tests inspected; installed Base InputBase/Input source verified. No Base InputGroup exists. Reuse the existing retained InputState and its Base editor, selection/clipboard/IME and accessibility bridge. No editing entities or subscriptions are recreated during addon rendering. One retained non-tab-stop focus scope and its subscriptions are initialized for the group.
 
 | Area | Shared-container acceptance / status |

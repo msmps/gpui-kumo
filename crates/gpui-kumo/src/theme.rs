@@ -11,13 +11,17 @@ use gpui_kit::{
 use crate::color::Oklch;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// The global light or dark semantic palette.
 pub enum Appearance {
     #[default]
+    /// Light appearance.
     Light,
+    /// Dark appearance.
     Dark,
 }
 
 impl Appearance {
+    /// Return the other appearance.
     pub fn opposite(self) -> Self {
         match self {
             Self::Light => Self::Dark,
@@ -27,102 +31,168 @@ impl Appearance {
 }
 
 #[derive(Clone, Debug)]
+/// Semantic foreground colours.
 pub struct TextColors {
     /// White text on Kumo's brand-filled copy/action surfaces in both themes.
     pub on_brand: Hsla,
+    /// Semantic colour for default.
     pub default: Hsla,
+    /// Semantic colour for strong.
     pub strong: Hsla,
+    /// Semantic colour for subtle.
     pub subtle: Hsla,
+    /// Semantic colour for inactive.
     pub inactive: Hsla,
+    /// Semantic colour for placeholder.
     pub placeholder: Hsla,
+    /// Semantic colour for inverse.
     pub inverse: Hsla,
+    /// Semantic colour for brand.
     pub brand: Hsla,
     /// Kumo's link tone, also used by its success Text variant.
     pub link: Hsla,
+    /// Semantic colour for danger.
     pub danger: Hsla,
+    /// Semantic colour for success.
     pub success: Hsla,
+    /// Semantic colour for warning.
     pub warning: Hsla,
     /// Information-message foreground, distinct from the general icon accent.
     pub info: Hsla,
 }
 
 #[derive(Clone, Debug)]
+/// Semantic canvas and surface colours.
 pub struct Colors {
+    /// Semantic colour for canvas.
     pub canvas: Hsla,
+    /// Semantic colour for base.
     pub base: Hsla,
+    /// Semantic colour for elevated.
     pub elevated: Hsla,
+    /// Semantic colour for recessed.
     pub recessed: Hsla,
+    /// Semantic colour for tint.
     pub tint: Hsla,
+    /// Semantic colour for contrast.
     pub contrast: Hsla,
+    /// Semantic colour for overlay.
     pub overlay: Hsla,
+    /// Semantic colour for control.
     pub control: Hsla,
+    /// Semantic colour for interact.
     pub interact: Hsla,
+    /// Semantic colour for fill.
     pub fill: Hsla,
+    /// Semantic colour for fill hover.
     pub fill_hover: Hsla,
+    /// Semantic colour for brand.
     pub brand: Hsla,
+    /// Semantic colour for brand hover.
     pub brand_hover: Hsla,
+    /// Semantic colour for danger.
     pub danger: Hsla,
+    /// Semantic colour for danger tint.
     pub danger_tint: Hsla,
+    /// Semantic colour for success.
     pub success: Hsla,
+    /// Semantic colour for success tint.
     pub success_tint: Hsla,
+    /// Semantic colour for warning.
     pub warning: Hsla,
+    /// Semantic colour for warning tint.
     pub warning_tint: Hsla,
     /// General information accent for icon fills and Banner actions.
     pub info: Hsla,
+    /// Semantic colour for info tint.
     pub info_tint: Hsla,
+    /// Semantic colour for line.
     pub line: Hsla,
+    /// Semantic colour for hairline.
     pub hairline: Hsla,
+    /// Semantic colour for focus.
     pub focus: Hsla,
+    /// Semantic colour for shadow edge.
     pub shadow_edge: Hsla,
+    /// Semantic colour for shadow drop.
     pub shadow_drop: Hsla,
+    /// Semantic colour for arrow edge.
     pub arrow_edge: Hsla,
+    /// Semantic colour for arrow stroke.
     pub arrow_stroke: Hsla,
 }
 
 /// Semantic badge color roles from the pinned Kumo theme.
 #[derive(Clone, Debug)]
 pub struct BadgeColors {
+    /// Semantic colour for inverted.
     pub inverted: Hsla,
+    /// Semantic colour for inverted foreground.
     pub inverted_foreground: Hsla,
+    /// Semantic colour for neutral subtle foreground.
     pub neutral_subtle_foreground: Hsla,
+    /// Semantic colour for teal subtle foreground.
     pub teal_subtle_foreground: Hsla,
+    /// Semantic colour for red.
     pub red: Hsla,
+    /// Semantic colour for green.
     pub green: Hsla,
+    /// Semantic colour for neutral.
     pub neutral: Hsla,
+    /// Semantic colour for orange.
     pub orange: Hsla,
+    /// Semantic colour for purple.
     pub purple: Hsla,
+    /// Semantic colour for teal.
     pub teal: Hsla,
+    /// Semantic colour for blue.
     pub blue: Hsla,
+    /// Semantic colour for solid foreground.
     pub solid_foreground: Hsla,
+    /// Semantic colour for orange foreground.
     pub orange_foreground: Hsla,
 }
 
 /// Appearance-specific colors for Kumo Switch tracks and thumbs.
 #[derive(Clone, Debug)]
 pub struct SwitchColors {
+    /// Semantic colour for off track.
     pub off_track: Hsla,
+    /// Semantic colour for off ring.
     pub off_ring: Hsla,
+    /// Semantic colour for on track.
     pub on_track: Hsla,
+    /// Semantic colour for on ring.
     pub on_ring: Hsla,
+    /// Semantic colour for off thumb.
     pub off_thumb: Hsla,
+    /// Semantic colour for on thumb.
     pub on_thumb: Hsla,
+    /// Semantic colour for neutral off track.
     pub neutral_off_track: Hsla,
+    /// Semantic colour for neutral on track.
     pub neutral_on_track: Hsla,
+    /// Semantic colour for neutral on ring.
     pub neutral_on_ring: Hsla,
+    /// Semantic colour for neutral on thumb.
     pub neutral_on_thumb: Hsla,
 }
 
 /// Pinned SkeletonLine CSS colors, distinct from neutral semantic surfaces.
 #[derive(Clone, Debug)]
 pub struct SkeletonColors {
+    /// Semantic colour for base.
     pub base: Hsla,
+    /// Semantic colour for shimmer.
     pub shimmer: Hsla,
 }
 
 /// Native policies filling gaps in the web recipes, kept distinct from upstream.
 #[derive(Clone, Debug)]
 pub struct NativeColors {
+    /// Semantic colour for disabled input foreground.
     pub disabled_input_foreground: Hsla,
+    /// Semantic colour for selection.
     pub selection: Hsla,
 }
 
@@ -138,9 +208,13 @@ pub struct BannerAccents {
 }
 
 #[derive(Clone, Copy, Debug)]
+/// Font size, line height and weight for one typography scale.
 pub struct TextStyle {
+    /// Logical-pixel size.
     pub size: Pixels,
+    /// Logical-pixel line height.
     pub line_height: Pixels,
+    /// Weight.
     pub weight: FontWeight,
 }
 
@@ -163,62 +237,99 @@ impl TextStyle {
 }
 
 #[derive(Clone, Debug)]
+/// Font family and coordinated text scales.
 pub struct Typography {
+    /// Complete text for font family.
     pub font_family: SharedString,
     /// Native monospace counterpart of Kumo's consumer-provided mono stack.
     pub mono_font_family: SharedString,
+    /// Typography for xs.
     pub xs: TextStyle,
+    /// Typography for sm.
     pub sm: TextStyle,
+    /// Typography for base.
     pub base: TextStyle,
+    /// Typography for lg.
     pub lg: TextStyle,
+    /// Typography for heading.
     pub heading: TextStyle,
+    /// Typography for heading lg.
     pub heading_lg: TextStyle,
+    /// Typography for field description.
     pub field_description: TextStyle,
+    /// Typography for popover title.
     pub popover_title: TextStyle,
+    /// Typography for popover description.
     pub popover_description: TextStyle,
 }
 
 #[derive(Clone, Copy, Debug)]
+/// Reusable spacing tokens.
 pub struct Spacing {
+    /// Logical-pixel four.
     pub four: Pixels,
+    /// Logical-pixel six.
     pub six: Pixels,
+    /// Logical-pixel eight.
     pub eight: Pixels,
+    /// Logical-pixel twelve.
     pub twelve: Pixels,
+    /// Logical-pixel sixteen.
     pub sixteen: Pixels,
 }
 
 #[derive(Clone, Copy, Debug)]
+/// Reusable corner radius tokens.
 pub struct Radii {
     /// Tailwind rounded-xs, used by inline copy controls.
     pub xs: Pixels,
+    /// Logical-pixel sm.
     pub sm: Pixels,
+    /// Logical-pixel md.
     pub md: Pixels,
+    /// Logical-pixel lg.
     pub lg: Pixels,
 }
 
 #[derive(Clone, Debug)]
+/// Surface shadow and focus-ring tokens.
 pub struct Effects {
+    /// Logical-pixel control ring width.
     pub control_ring_width: Pixels,
+    /// Logical-pixel input focus ring width.
     pub input_focus_ring_width: Pixels,
+    /// Logical-pixel keyboard focus ring width.
     pub keyboard_focus_ring_width: Pixels,
+    /// Logical-pixel popover outline width.
     pub popover_outline_width: Pixels,
+    /// Logical-pixel popover outline offset.
     pub popover_outline_offset: Pixels,
+    /// Layered shadows for shadow xs.
     pub shadow_xs: Vec<BoxShadow>,
     /// Pinned Tailwind shadow-sm, used by the moving Tabs indicator.
     pub shadow_sm: Vec<BoxShadow>,
+    /// Layered shadows for shadow md.
     pub shadow_md: Vec<BoxShadow>,
     /// Pinned Tailwind shadow-lg used by Kumo selection popups.
     pub shadow_lg: Vec<BoxShadow>,
+    /// Transition.
     pub transition: Duration,
+    /// Popover transition.
     pub popover_transition: Duration,
+    /// Easing.
     pub easing: [f32; 4],
 }
 
 #[derive(Clone, Debug)]
+/// Resolved colours for an emphasis treatment.
 pub struct Emphasis {
+    /// Semantic colour for ring.
     pub ring: Hsla,
+    /// Semantic colour for background.
     pub background: Hsla,
+    /// Semantic colour for gradient start.
     pub gradient_start: Hsla,
+    /// Semantic colour for gradient end.
     pub gradient_end: Hsla,
 }
 
@@ -249,6 +360,7 @@ impl Emphasis {
         .color_space(ColorSpace::Oklab)
     }
 
+    /// Resolve the inset surface highlight.
     pub fn inset_highlight(&self) -> BoxShadow {
         BoxShadow::new(px(0.), px(1.), self.background).inset()
     }
@@ -257,19 +369,33 @@ impl Emphasis {
 /// One application-wide theme. Independent previews may pass snapshots directly.
 #[derive(Clone, Debug)]
 pub struct Theme {
+    /// Appearance.
     pub appearance: Appearance,
+    /// Text.
     pub text: TextColors,
+    /// Colors.
     pub colors: Colors,
+    /// Native.
     pub native: NativeColors,
+    /// Badge.
     pub badge: BadgeColors,
+    /// Switch.
     pub switch: SwitchColors,
+    /// Skeleton.
     pub skeleton: SkeletonColors,
+    /// Banner.
     pub banner: BannerAccents,
+    /// Typography.
     pub typography: Typography,
+    /// Spacing.
     pub spacing: Spacing,
+    /// Radii.
     pub radii: Radii,
+    /// Effects.
     pub effects: Effects,
+    /// Accent recipe for primary.
     pub primary: Emphasis,
+    /// Accent recipe for destructive.
     pub destructive: Emphasis,
 }
 
@@ -278,6 +404,7 @@ impl Global for Theme {}
 impl Theme {
     // The pinned brand L=.5772 happens to approximate Euler's constant.
     #[allow(clippy::approx_constant)]
+    /// Resolve the pinned Kumo token palette for the selected appearance.
     pub fn new(appearance: Appearance) -> Self {
         let dark = appearance == Appearance::Dark;
         let neutral =
@@ -574,6 +701,7 @@ impl Theme {
         }
     }
 
+    /// Select the sans font family for every derived text style.
     pub fn with_font_family(mut self, family: impl Into<SharedString>) -> Self {
         self.typography.font_family = family.into();
         self

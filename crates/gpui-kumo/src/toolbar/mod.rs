@@ -10,9 +10,12 @@ use gpui_kit::{
 use std::{cell::Cell, rc::Rc};
 pub(crate) type FocusHandler = Rc<dyn Fn(&mut Window, &mut App)>;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Layout and directional navigation axis.
 pub enum Orientation {
     #[default]
+    /// Arrange controls along the horizontal axis.
     Horizontal,
+    /// Arrange controls along the vertical axis.
     Vertical,
 }
 #[derive(Clone)]
@@ -33,11 +36,42 @@ struct EditorGroup {
     end: Option<InputGroupAddon>,
     suffix: Option<SharedString>,
 }
+/// A typed action, destination or retained editor, erased only after configuration.
+///
+/// ```
+/// use gpui_kumo::ToolbarItem;
+/// let items = vec![
+///     ToolbarItem::button("save", "Save").loading(false).build(),
+///     ToolbarItem::link("docs", "Docs", "/docs")
+///         .icon("docs.svg").show_label(false).build(),
+/// ];
+/// ```
+/// Unsupported kind operations are rejected before collection erasure.
+/// ```compile_fail,E0599
+/// use gpui_kumo::ToolbarItem;
+/// ToolbarItem::link("docs", "Documentation", "/docs").loading(true);
+/// ```
+/// ```compile_fail,E0599
+/// use gpui_kumo::{ToolbarItem, InputGroupAddon};
+/// ToolbarItem::button("save", "Save").start(InputGroupAddon::text("prefix"));
+/// ```
+/// ```compile_fail,E0599
+/// use gpui_kumo::{InputState, ToolbarItem};
+/// use gpui_kit::{Entity, px};
+/// fn invalid(input: &Entity<InputState>) {
+///     ToolbarItem::input("query", input, px(180.)).icon("search.svg");
+/// }
+/// ```
+/// ```compile_fail,E0599
+/// use gpui_kumo::ToolbarItem;
+/// ToolbarItem::link("docs", "Documentation", "/docs").focusable_when_disabled(true);
+/// ```
 /// A stable action, native destination or retained editor. IDs are unique per list.
 #[derive(Clone)]
 pub struct ToolbarItem {
     id: ElementId,
     name: SharedString,
+    accessible_name: Option<SharedString>,
     kind: Kind,
     icon: Option<SharedString>,
     icon_only: bool,
@@ -46,7 +80,7 @@ pub struct ToolbarItem {
     focusable_when_disabled: bool,
 }
 impl ToolbarItem {
-    pub fn button(id: impl Into<ElementId>, name: impl Into<SharedString>) -> Self {
+    fn button_item(id: impl Into<ElementId>, name: impl Into<SharedString>) -> Self {
         let name = name.into();
         assert!(
             !name.trim().is_empty(),
@@ -55,6 +89,7 @@ impl ToolbarItem {
         Self {
             id: id.into(),
             name,
+            accessible_name: None,
             kind: Kind::Button,
             icon: None,
             icon_only: false,
@@ -64,18 +99,18 @@ impl ToolbarItem {
         }
     }
     /// Navigation is emitted to the owner; destinations never launch a browser automatically.
-    pub fn link(
+    fn link_item(
         id: impl Into<ElementId>,
         name: impl Into<SharedString>,
         href: impl Into<SharedString>,
     ) -> Self {
-        let mut item = Self::button(id, name);
+        let mut item = Self::button_item(id, name);
         item.kind = Kind::Link(href.into());
         item
     }
     /// Mount one application-retained single-line editor. Width is the whole control.
     /// The editor owns its value, selection, history, readable name and notifications.
-    pub fn input(
+    fn input_item(
         id: impl Into<ElementId>,
         state: &Entity<InputState>,
         width: gpui_kit::Pixels,
@@ -84,7 +119,7 @@ impl ToolbarItem {
             f32::from(width).is_finite() && width > px(0.),
             "Toolbar editor width must be finite and positive"
         );
-        let mut item = Self::button(id, "Editor");
+        let mut item = Self::button_item(id, "Editor");
         item.kind = Kind::Input(Editor {
             state: state.clone(),
             width,
@@ -93,12 +128,12 @@ impl ToolbarItem {
         item
     }
     /// A shared editor with passive addons and independently tabbable compact actions.
-    pub fn input_group(
+    fn input_group_item(
         id: impl Into<ElementId>,
         state: &Entity<InputState>,
         width: gpui_kit::Pixels,
     ) -> Self {
-        let mut item = Self::input(id, state, width);
+        let mut item = Self::input_item(id, state, width);
         if let Kind::Input(editor) = &mut item.kind {
             editor.group = Some(EditorGroup::default());
         }
@@ -113,63 +148,220 @@ impl ToolbarItem {
             .as_mut()
             .expect("addons require Toolbar InputGroup")
     }
-    /// Text, icon or compact action addons; nested parts are supported.
-    pub fn start(mut self, addon: InputGroupAddon) -> Self {
-        self.group_mut().start = Some(addon);
+}
+/// Typed toolbar builders are converted to the common collection item with `build`.
+impl ToolbarItem {
+    /// Construct a Button builder. Its loading state gates every activation path.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn button(id: impl Into<ElementId>, name: impl Into<SharedString>) -> ToolbarButton {
+        ToolbarButton(Self::button_item(id, name))
+    }
+    /// Construct a Link builder. Navigation is an owner request.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn link(
+        id: impl Into<ElementId>,
+        name: impl Into<SharedString>,
+        href: impl Into<SharedString>,
+    ) -> ToolbarLink {
+        ToolbarLink(Self::link_item(id, name, href))
+    }
+    /// Mount one retained editor without recreating value or focus state.
+    ///
+    /// # Panics
+    /// Panics when `width` is not finite and positive.
+    pub fn input(
+        id: impl Into<ElementId>,
+        state: &Entity<InputState>,
+        width: gpui_kit::Pixels,
+    ) -> ToolbarInput {
+        ToolbarInput(Self::input_item(id, state, width))
+    }
+    /// Mount a retained editor with typed addon operations.
+    ///
+    /// # Panics
+    /// Panics when `width` is not finite and positive.
+    pub fn input_group(
+        id: impl Into<ElementId>,
+        state: &Entity<InputState>,
+        width: gpui_kit::Pixels,
+    ) -> ToolbarInputGroup {
+        ToolbarInputGroup(Self::input_group_item(id, state, width))
+    }
+}
+/// Kind-specific builder; `build` erases the kind for collection storage.
+#[derive(Clone, Debug)]
+#[must_use]
+pub struct ToolbarButton(ToolbarItem);
+impl ToolbarButton {
+    /// Set visible text and its default accessible name.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.0.name = crate::name::nonblank(text);
         self
     }
-    /// Trailing addons under the same InputGroup contract as `start`.
-    pub fn end(mut self, addon: InputGroupAddon) -> Self {
-        self.group_mut().end = Some(addon);
+    /// Override the name independently of visible text and builder ordering.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.0.accessible_name = Some(crate::name::nonblank(name));
         self
     }
-    /// A suffix follows the displayed editor text using the existing InputGroup recipe.
-    pub fn suffix(mut self, text: impl Into<SharedString>) -> Self {
-        self.group_mut().suffix = Some(text.into());
-        self
+
+    /// Finish configuration for a ToolbarState collection.
+    pub fn build(self) -> ToolbarItem {
+        self.0
     }
-    /// Decorative SVG using the application's AssetSource. Icon-only controls keep `name`.
-    pub fn icon(mut self, path: impl Into<SharedString>, icon_only: bool) -> Self {
-        assert!(
-            !matches!(self.kind, Kind::Input(_)),
-            "use InputGroup addons for editor icons"
-        );
-        self.icon = Some(path.into());
-        self.icon_only = icon_only;
-        self
-    }
+    /// Gate activation or editing according to this kind's availability policy.
     pub fn disabled(mut self, disabled: bool) -> Self {
-        self.disabled = disabled;
+        self.0.disabled = disabled;
         self
     }
+    /// Add a decorative icon without changing text visibility.
+    pub fn icon(mut self, path: impl Into<SharedString>) -> Self {
+        self.0.icon = Some(path.into());
+        self
+    }
+    /// Show or hide visible text while retaining its accessible name.
+    pub fn show_label(mut self, show: bool) -> Self {
+        self.0.icon_only = !show;
+        self
+    }
+    /// Show progress and reject repeat activation.
     /// A Button loading indicator also gates activation. Links do not expose loading.
     pub fn loading(mut self, loading: bool) -> Self {
-        assert!(
-            matches!(self.kind, Kind::Button),
-            "Toolbar links do not load"
-        );
-        self.loading = loading;
+        self.0.loading = loading;
         self
     }
+    /// Choose whether an unavailable control remains in roving focus.
     /// Source Buttons/Inputs default to focusable when unavailable. Disabled native links leave traversal.
     pub fn focusable_when_disabled(mut self, focusable: bool) -> Self {
-        assert!(
-            !matches!(self.kind, Kind::Link(_)),
-            "Toolbar.Link has no focusableWhenDisabled prop"
-        );
-        self.focusable_when_disabled = focusable;
+        self.0.focusable_when_disabled = focusable;
+        self
+    }
+}
+/// Kind-specific builder; `build` erases the kind for collection storage.
+#[derive(Clone, Debug)]
+#[must_use]
+pub struct ToolbarLink(ToolbarItem);
+impl ToolbarLink {
+    /// Set visible text and its default accessible name.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.0.name = crate::name::nonblank(text);
+        self
+    }
+    /// Override the name independently of visible text and builder ordering.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.0.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+
+    /// Finish configuration for a ToolbarState collection.
+    pub fn build(self) -> ToolbarItem {
+        self.0
+    }
+    /// Gate activation or editing according to this kind's availability policy.
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.0.disabled = disabled;
+        self
+    }
+    /// Add a decorative icon without changing text visibility.
+    pub fn icon(mut self, path: impl Into<SharedString>) -> Self {
+        self.0.icon = Some(path.into());
+        self
+    }
+    /// Show or hide visible text while retaining its accessible name.
+    pub fn show_label(mut self, show: bool) -> Self {
+        self.0.icon_only = !show;
+        self
+    }
+}
+/// Kind-specific builder; `build` erases the kind for collection storage.
+#[derive(Clone, Debug)]
+#[must_use]
+pub struct ToolbarInput(ToolbarItem);
+impl ToolbarInput {
+    /// Finish configuration for a ToolbarState collection.
+    pub fn build(self) -> ToolbarItem {
+        self.0
+    }
+    /// Gate activation or editing according to this kind's availability policy.
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.0.disabled = disabled;
+        self
+    }
+    /// Choose whether an unavailable control remains in roving focus.
+    pub fn focusable_when_disabled(mut self, focusable: bool) -> Self {
+        self.0.focusable_when_disabled = focusable;
+        self
+    }
+}
+/// Kind-specific builder; `build` erases the kind for collection storage.
+#[derive(Clone, Debug)]
+#[must_use]
+pub struct ToolbarInputGroup(ToolbarItem);
+impl ToolbarInputGroup {
+    /// Finish configuration for a ToolbarState collection.
+    pub fn build(self) -> ToolbarItem {
+        self.0
+    }
+    /// Gate activation or editing according to this kind's availability policy.
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.0.disabled = disabled;
+        self
+    }
+    /// Choose whether an unavailable control remains in roving focus.
+    pub fn focusable_when_disabled(mut self, focusable: bool) -> Self {
+        self.0.focusable_when_disabled = focusable;
+        self
+    }
+    /// Configure the group's start slot using the shared InputGroup recipe.
+    /// Text, icon or compact action addons; nested parts are supported.
+    pub fn start(mut self, addon: InputGroupAddon) -> Self {
+        self.0.group_mut().start = Some(addon);
+        self
+    }
+    /// Configure the group's end slot using the shared InputGroup recipe.
+    /// Trailing addons under the same InputGroup contract as `start`.
+    pub fn end(mut self, addon: InputGroupAddon) -> Self {
+        self.0.group_mut().end = Some(addon);
+        self
+    }
+    /// Configure the group's suffix slot using the shared InputGroup recipe.
+    /// A suffix follows the displayed editor text using the existing InputGroup recipe.
+    pub fn suffix(mut self, text: impl Into<SharedString>) -> Self {
+        self.0.group_mut().suffix = Some(text.into());
         self
     }
 }
 /// Actual activation data is retained for owner routing and input-dependent behavior.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub enum ToolbarEvent {
+    /// Button activation routed by its stable item ID.
     Activate {
+        /// Id.
         id: ElementId,
+        /// Activation.
         activation: ClickEvent,
     },
+    /// Link navigation proposal including its destination.
     Navigate {
+        /// Id.
         id: ElementId,
+        /// Request.
         request: NavigationRequest,
     },
 }
@@ -191,6 +383,10 @@ pub struct ToolbarState {
 }
 impl EventEmitter<ToolbarEvent> for ToolbarState {}
 impl ToolbarState {
+    /// Create retained roving focus for a typed action/editor collection. Retain with `cx.new`.
+    ///
+    /// # Panics
+    /// Panics when item element IDs or retained editor entities are duplicated.
     pub fn new(items: Vec<ToolbarItem>, cx: &mut Context<Self>) -> Self {
         Self::validate(&items);
         let mut state = Self {
@@ -337,6 +533,9 @@ impl ToolbarState {
         cx.notify();
     }
     /// Preserve focus by ID on reorder; removing a focused item recovers to the next eligible entry.
+    ///
+    /// # Panics
+    /// Panics when item element IDs or retained editor entities are duplicated.
     pub fn set_items(
         &mut self,
         items: Vec<ToolbarItem>,
@@ -550,6 +749,10 @@ pub struct Toolbar {
     loop_focus: bool,
 }
 impl Toolbar {
+    /// Present a named collection of actions and editors over retained roving focus state.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(
         id: impl Into<ElementId>,
         name: impl Into<SharedString>,
@@ -565,10 +768,12 @@ impl Toolbar {
             loop_focus: true,
         }
     }
+    /// Choose the layout and navigation axis.
     pub fn orientation(mut self, orientation: Orientation) -> Self {
         self.orientation = orientation;
         self
     }
+    /// Choose whether directional traversal wraps at the collection edges.
     pub fn loop_focus(mut self, loop_focus: bool) -> Self {
         self.loop_focus = loop_focus;
         self
@@ -585,18 +790,29 @@ impl RenderOnce for Toolbar {
     }
 }
 pub(crate) struct InputFocus {
+    /// On action removed.
     pub on_action_removed: FocusHandler,
+    /// Tab stop.
     pub tab_stop: bool,
+    /// First.
     pub first: bool,
+    /// Last.
     pub last: bool,
+    /// Rings.
     pub rings: crate::button::JoinedRingQueue,
+    /// On focus.
     pub on_focus: FocusHandler,
 }
 pub(crate) struct ButtonFocus {
+    /// Tab stop.
     pub tab_stop: bool,
+    /// Icon width.
     pub icon_width: Option<gpui_kit::Pixels>,
+    /// Focusable when disabled.
     pub focusable_when_disabled: bool,
+    /// Unavailable.
     pub unavailable: bool,
+    /// On focus.
     pub on_focus: FocusHandler,
 }
 impl Render for ToolbarState {
@@ -660,19 +876,18 @@ impl Render for ToolbarState {
             });
             let child = match &control.kind {
                 Kind::Button => {
-                    let button = if control.icon_only {
-                        Button::icon(
-                            id.clone(),
-                            control.name.clone(),
-                            Icon::new(control.icon.clone().expect("icon-only path")).size(px(14.)),
-                        )
-                    } else {
-                        Button::new(id.clone(), control.name.clone())
-                            .when_some(control.icon.clone(), |b, path| {
-                                b.leading_icon(Icon::new(path).size(px(14.)))
-                            })
-                    };
+                    let button = Button::new(id.clone(), control.name.clone())
+                        .show_label(!control.icon_only)
+                        .when(control.icon_only, |button| {
+                            button.shape(crate::button::Shape::Square)
+                        })
+                        .when_some(control.icon.clone(), |button, path| {
+                            button.leading_icon(Icon::new(path).size(px(14.)))
+                        });
                     button
+                        .when_some(control.accessible_name.clone(), |button, name| {
+                            button.accessibility_label(name)
+                        })
                         .disabled(control.disabled)
                         .loading(control.loading)
                         .track_focus(&item.focus)
@@ -855,7 +1070,10 @@ impl RenderOnce for LinkControl {
         let owner = self.owner;
         let mut link = crate::link::control::root(
             id.clone(),
-            self.control.name.clone(),
+            self.control
+                .accessible_name
+                .clone()
+                .unwrap_or_else(|| self.control.name.clone()),
             self.href,
             &self.focus,
             self.disabled,
@@ -931,5 +1149,41 @@ impl RenderOnce for LinkControl {
         )
     }
 }
+impl std::fmt::Debug for ToolbarItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ToolbarItem")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("icon_only", &self.icon_only)
+            .field("disabled", &self.disabled)
+            .field("loading", &self.loading)
+            .field("focusable_when_disabled", &self.focusable_when_disabled)
+            .finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for ToolbarState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ToolbarState")
+            .field("items_count", &self.items.len())
+            .field("disabled", &self.disabled)
+            .field("orientation", &self.orientation)
+            .field("loop_focus", &self.loop_focus)
+            .field("name", &self.name)
+            .finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Toolbar {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Toolbar")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("orientation", &self.orientation)
+            .field("loop_focus", &self.loop_focus)
+            .finish_non_exhaustive()
+    }
+}
+
 #[cfg(test)]
 mod tests;

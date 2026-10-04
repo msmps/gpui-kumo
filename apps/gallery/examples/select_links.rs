@@ -37,9 +37,9 @@ impl Review {
         let toolbar = cx.new(|cx| {
             ToolbarState::new(
                 vec![
-                    ToolbarItem::button("previous", "Previous"),
-                    ToolbarItem::link("documentation", "Documentation", "/docs"),
-                    ToolbarItem::button("next", "Next"),
+                    ToolbarItem::button("previous", "Previous").build(),
+                    ToolbarItem::link("documentation", "Documentation", "/docs").build(),
+                    ToolbarItem::button("next", "Next").build(),
                 ],
                 cx,
             )
@@ -57,6 +57,7 @@ impl Review {
                 this.feedback = match event {
                     ToolbarEvent::Navigate { request, .. } => format!("Navigate {}", request.href),
                     ToolbarEvent::Activate { .. } => "Toolbar action".into(),
+                    _ => "Other toolbar event".into(),
                 };
                 cx.notify();
             }),

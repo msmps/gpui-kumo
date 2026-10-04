@@ -7,12 +7,17 @@ use gpui_kit::{
 };
 #[derive(IntoElement)]
 #[must_use]
+/// Joined buttons under an explicit group name.
 pub struct ButtonGroup {
     id: ElementId,
     name: SharedString,
     items: Vec<Button>,
 }
 impl ButtonGroup {
+    /// Create a named collection of joined independent buttons.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(id: impl Into<ElementId>, name: impl Into<SharedString>) -> Self {
         let name = name.into();
         assert!(
@@ -25,6 +30,10 @@ impl ButtonGroup {
             items: Vec::new(),
         }
     }
+    /// Append a typed item; its stable identity and value remain independent of visible text.
+    ///
+    /// # Panics
+    /// Panics when button IDs are duplicated.
     pub fn item(mut self, item: Button) -> Self {
         assert!(
             !self.items.iter().any(|i| i.id() == item.id()),
@@ -157,5 +166,15 @@ impl gpui_kit::Element for Joined {
         }
     }
 }
+impl std::fmt::Debug for ButtonGroup {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ButtonGroup")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("items_count", &self.items.len())
+            .finish_non_exhaustive()
+    }
+}
+
 #[cfg(test)]
 mod tests;

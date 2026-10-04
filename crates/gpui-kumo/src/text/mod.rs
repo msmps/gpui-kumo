@@ -11,9 +11,6 @@ use gpui_kit::{
 
 use crate::theme;
 
-#[cfg(test)]
-mod tests;
-
 /// Tone of copy text. Success intentionally uses Kumo's link color.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Tone {
@@ -249,3 +246,15 @@ impl RenderOnce for Text {
         )
     }
 }
+
+impl std::fmt::Debug for Text {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Text")
+            .field("id", &self.id)
+            .field("truncate", &self.truncate)
+            .finish_non_exhaustive()
+    }
+}
+
+#[cfg(test)]
+mod tests;

@@ -55,6 +55,7 @@ pub struct Filled {
 }
 
 /// Dot presentation; icon composition is unavailable on this type.
+#[derive(Debug)]
 pub struct Dot;
 
 /// A consumed, read-only label. The owner observes Theme when caching it.
@@ -317,6 +318,22 @@ where
 
     fn into_element(self) -> Self::Element {
         gpui_kit::ViewElement::new(self)
+    }
+}
+
+impl std::fmt::Debug for Filled {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Filled").finish_non_exhaustive()
+    }
+}
+
+impl<P> std::fmt::Debug for Badge<P> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Badge")
+            .field("id", &self.id)
+            .field("label", &self.label)
+            .field("variant", &self.variant)
+            .finish_non_exhaustive()
     }
 }
 

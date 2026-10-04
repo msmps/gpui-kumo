@@ -55,19 +55,22 @@ fn items(
         group = group.suffix("ms");
     }
     let mut items = vec![
-        ToolbarItem::button("before-editor", "Before"),
-        ToolbarItem::input("query", &inputs[0], gpui_kit::px(180.)),
-        ToolbarItem::input("paused-query", &inputs[1], gpui_kit::px(130.)).disabled(true),
+        ToolbarItem::button("before-editor", "Before").build(),
+        ToolbarItem::input("query", &inputs[0], gpui_kit::px(180.)).build(),
+        ToolbarItem::input("paused-query", &inputs[1], gpui_kit::px(130.))
+            .disabled(true)
+            .build(),
         ToolbarItem::input("skipped-query", &inputs[2], gpui_kit::px(130.))
             .disabled(true)
-            .focusable_when_disabled(false),
-        group,
-        ToolbarItem::button("after-editor", "After"),
+            .focusable_when_disabled(false)
+            .build(),
+        group.build(),
+        ToolbarItem::button("after-editor", "After").build(),
     ];
     if short {
         items = vec![
-            ToolbarItem::button("before-editor", "Before"),
-            ToolbarItem::button("after-editor", "After"),
+            ToolbarItem::button("before-editor", "Before").build(),
+            ToolbarItem::button("after-editor", "After").build(),
         ];
     }
     items

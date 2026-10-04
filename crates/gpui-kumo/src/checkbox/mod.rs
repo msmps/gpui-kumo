@@ -7,10 +7,14 @@ use gpui_kit::{
 };
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Three-state checkbox value.
 pub enum State {
     #[default]
+    /// No selection.
     Unchecked,
+    /// Selected.
     Checked,
+    /// Mixed selection.
     Indeterminate,
 }
 impl State {
@@ -30,9 +34,12 @@ impl State {
     }
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+/// Closed semantic visual treatments supported by this component.
 pub enum Variant {
     #[default]
+    /// Default semantic treatment.
     Default,
+    /// Error treatment.
     Error,
 }
 type ChangeHandler = Box<dyn Fn(State, &ClickEvent, &mut Window, &mut App)>;
@@ -43,6 +50,7 @@ type ChangeHandler = Box<dyn Fn(State, &ClickEvent, &mut Window, &mut App)>;
 pub struct Checkbox {
     id: ElementId,
     name: SharedString,
+    accessible_name: Option<SharedString>,
     state: State,
     variant: Variant,
     disabled: bool,
@@ -55,12 +63,33 @@ pub struct Checkbox {
     on_change: Option<ChangeHandler>,
 }
 impl Checkbox {
+    /// Set visible text and its default accessible name; explicit overrides remain authoritative.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.name = crate::name::nonblank(text);
+        self
+    }
+    /// Override the accessible name independently of visible text and builder order.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Create a named controlled checkbox, initially unchecked.
+    ///
+    /// # Panics
+    /// Panics when the required name or label is blank.
     pub fn new(id: impl Into<ElementId>, name: impl Into<SharedString>) -> Self {
         let name = name.into();
         assert!(!name.trim().is_empty(), "Checkbox requires a readable name");
         Self {
             id: id.into(),
             name,
+            accessible_name: None,
             state: State::default(),
             variant: Variant::default(),
             disabled: false,
@@ -77,23 +106,27 @@ impl Checkbox {
         self.group_item = true;
         self
     }
+    /// Supply the controlled value state; the owner commits user proposals.
     pub fn state(mut self, state: State) -> Self {
         self.state = state;
         self
     }
+    /// Select the semantic visual treatment; interaction and value state remain independent.
     pub fn variant(mut self, variant: Variant) -> Self {
         self.variant = variant;
         self
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
     /// Keep the accessible name while omitting visible label presentation.
-    pub fn bare(mut self) -> Self {
-        self.show_label = false;
+    pub fn show_label(mut self, show: bool) -> Self {
+        self.show_label = show;
         self
     }
+    /// Choose whether controls precede their labels in the native layout.
     pub fn control_first(mut self, first: bool) -> Self {
         self.control_first = first;
         self
@@ -109,6 +142,7 @@ impl Checkbox {
         self.content = Some(content.into_any_element());
         self
     }
+    /// Use the supplied retained focus handle instead of keyed default focus.
     pub fn track_focus(mut self, focus: &FocusHandle) -> Self {
         self.focus = Some(focus.clone());
         self
@@ -217,7 +251,7 @@ impl RenderOnce for Checkbox {
                 )
             })
             .child(ring);
-        let name = if self.optional && self.show_label {
+        let name = if self.optional {
             format!("{} (optional)", self.name).into()
         } else {
             self.name.clone()
@@ -226,7 +260,7 @@ impl RenderOnce for Checkbox {
             .state(self.state.base())
             .disabled(disabled)
             .track_focus(&focus)
-            .accessibility_label(name)
+            .accessibility_label(self.accessible_name.unwrap_or(name))
             .a11y_synthetic_children(move |builder| {
                 if disabled {
                     builder.parent_node().set_disabled();
@@ -263,5 +297,20 @@ impl RenderOnce for Checkbox {
         div().flex().min_w_0().max_w_full().child(root)
     }
 }
+impl std::fmt::Debug for Checkbox {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Checkbox")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("variant", &self.variant)
+            .field("disabled", &self.disabled)
+            .field("show_label", &self.show_label)
+            .field("control_first", &self.control_first)
+            .field("optional", &self.optional)
+            .field("group_item", &self.group_item)
+            .finish_non_exhaustive()
+    }
+}
+
 #[cfg(test)]
 mod tests;

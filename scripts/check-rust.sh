@@ -5,6 +5,8 @@ rustc --version --verbose
 cargo --version
 cargo fmt --all -- --check
 cargo test --workspace --all-features --locked
+# Public documentation and normal/compile-fail examples are part of the API gate.
+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps --locked
 cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 cargo build --workspace --all-targets --all-features --locked
 cargo build -p kumo-gallery --locked

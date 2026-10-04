@@ -32,7 +32,7 @@ impl Render for Harness {
             .panel(
                 CollapsiblePanel::new()
                     .keep_mounted(self.keep)
-                    .child(crate::Input::new("input", &self.input).label(true))
+                    .child(crate::Input::new("input", &self.input).show_label(true))
                     .child(crate::InlineCopyText::new("copy", "retained copy feedback"))
                     .child(
                         Button::new("inside", "Save")

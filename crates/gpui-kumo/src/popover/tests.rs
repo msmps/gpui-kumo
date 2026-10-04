@@ -357,7 +357,7 @@ fn first_open_initial_focus_accepts_text_and_reopening_preserves_edits(cx: &mut 
             let input = self.input.clone();
             Popover::new("editor-popup", &self.popup, "Edit")
                 .initial_focus(&input.read(cx).focus_handle(cx))
-                .content(move |_, _, _| crate::Input::new("editor", &input).label(true))
+                .content(move |_, _, _| crate::Input::new("editor", &input).show_label(true))
         }
     }
     cx.update(crate::init);
@@ -1106,5 +1106,27 @@ fn clicking_nested_content_preserves_ancestors(cx: &mut TestAppContext) {
         window.press("escape", cx);
         assert!(view.read(cx).parent.read(cx).is_open());
         assert!(!view.read(cx).child.read(cx).is_open());
+    });
+}
+
+#[gpui_kit::test]
+fn rename_open_popover_preserves_focus_and_disclosure(cx: &mut TestAppContext) {
+    let (view, cx) = harness(cx);
+    cx.update(|window, cx| {
+        window.click("trigger", cx);
+        window.render_frame(cx);
+        window.click("inside", cx);
+        let popup = view.read(cx).popup.clone();
+        popup.update(cx, |popup, cx| popup.set_name("Paramètres du dossier", cx));
+        window.render_frame(cx);
+        assert_eq!(
+            window.find("surface").label(),
+            Some("Paramètres du dossier")
+        );
+        assert!(popup.read(cx).is_open());
+        assert!(view.read(cx).inside.is_focused(window));
+        window.press("escape", cx);
+        window.render_frame(cx);
+        assert!(!popup.read(cx).is_open());
     });
 }

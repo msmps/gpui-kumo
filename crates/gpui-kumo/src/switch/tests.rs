@@ -88,8 +88,13 @@ impl Render for Geometry {
                             .test_support()
                             .flex()
                             .gap(px(16.))
-                            .child(Switch::new(("off", i), "Off").size(size).bare())
-                            .child(Switch::new(("on", i), "On").size(size).checked(true).bare())
+                            .child(Switch::new(("off", i), "Off").size(size).show_label(false))
+                            .child(
+                                Switch::new(("on", i), "On")
+                                    .size(size)
+                                    .checked(true)
+                                    .show_label(false),
+                            )
                     }),
             )
             .child(
@@ -123,7 +128,7 @@ fn source_track_dimensions_alignment_and_group_messages(cx: &mut TestAppContext)
             assert!(window.find("long").bounds().size.width <= px(130.));
             assert!(window.find("long").bounds().size.height > px(21.));
             assert!(window.find("error").bounds().size.height > px(0.));
-            assert!(window.find("description").bounds().size.height > px(0.));
+            assert!(window.try_find("description").is_none());
         }
     });
 }
@@ -251,7 +256,7 @@ impl Render for Groups {
                         },
                     )),
             )
-            .child(SwitchGroup::new("second", "Second").hide_legend().item(
+            .child(SwitchGroup::new("second", "Second").show_label(false).item(
                 Switch::new("same-item", "Shared label").on_change(move |_, _, _, cx| {
                     let _ = second.update(cx, |this, cx| {
                         this.second += 1;

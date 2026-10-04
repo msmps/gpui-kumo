@@ -1,5 +1,7 @@
 # Select acceptance
 
+Public naming, visibility, typed composition and failure policy follow the [canonical public API contract](design-system-components.md#public-api-contract). Use that contract when changing the APIs described here.
+
 Current disclosure, confirmation and trigger focus are [library-owned](library-controls.md); Base still supplies positioning and action types. Historical Base integration results below describe the original implementation.
 
 Tracker [#27](https://github.com/msmps/gpui-kumo/issues/27). Baseline `391113aa25b2f1ae02ab1f40e0c0eb16c0ba013b`:134 tests/nine doctests, clean work branch. Kumo3fd5b648, Kit/Base0.7.0, GPUI0.3.7. Complete759-line component,785-line matching tests,637-line demos and469-line documentation inspected. Styling metadata at the top of source is stale (says16px default); actual button/input recipes and DOM assertions govern the port.

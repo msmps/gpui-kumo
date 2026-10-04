@@ -78,9 +78,9 @@ impl Render for SensitiveInputs {
         crate::panel(theme, "SensitiveInput · retained editing, reveal and copy")
             .child(gpui_kumo::TooltipProvider::new("secret-help", [self.help.downgrade()],
                 div().flex().flex_col().gap(px(24.)).children(self.entries.iter().enumerate().map(|(i, state)| {
-                    let input = SensitiveInput::new(("secret", i), state).label(true).size(sizes.get(i).copied().unwrap_or(Size::Base));
+                    let input = SensitiveInput::new(("secret", i), state).show_label(true).size(sizes.get(i).copied().unwrap_or(Size::Base));
                     if i == 2 { input.label_tooltip(&self.help, "Keep this API key secure.").description("Click or press Enter to reveal. Escape or leaving the field hides it.") }
-                    else if i == 7 { input.error("This API key is invalid", true) }
+                    else if i == 7 { input.error_visible("This API key is invalid", true) }
                     else { input }
                 }))))
             .child(format!("API key: {:?} · changes {} · copies {}", self.entries[2].read(cx).mode(), self.changes, self.copies))

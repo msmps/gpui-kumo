@@ -32,9 +32,6 @@ pub struct LayerCard {
     style: StyleRefinement,
 }
 
-#[cfg(test)]
-mod tests;
-
 impl LayerCard {
     /// Create an empty simple card with scoped identity and no default padding.
     pub fn new(id: impl Into<ElementId>) -> Self {
@@ -265,3 +262,23 @@ impl RenderOnce for Section {
         element.children(self.children)
     }
 }
+
+impl std::fmt::Debug for LayerCard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LayerCard")
+            .field("id", &self.id)
+            .field("layered", &self.layered)
+            .finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for Section {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Section")
+            .field("id", &self.id)
+            .finish_non_exhaustive()
+    }
+}
+
+#[cfg(test)]
+mod tests;

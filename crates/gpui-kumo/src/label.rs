@@ -145,3 +145,14 @@ impl RenderOnce for Label {
             })
     }
 }
+
+impl std::fmt::Debug for Label {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Label")
+            .field("id", &self.id)
+            .field("optional", &self.optional)
+            .field("disabled", &self.disabled)
+            .field("as_content", &self.as_content)
+            .finish_non_exhaustive()
+    }
+}

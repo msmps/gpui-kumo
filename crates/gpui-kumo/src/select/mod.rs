@@ -2,8 +2,6 @@
 #[cfg(test)]
 mod overlay_tests;
 mod semantics;
-#[cfg(test)]
-mod tests;
 use crate::{Theme, theme};
 pub use crate::{input::Size, popover::Placement, tooltip::Align};
 use gpui_kit::base::TestSupportExt;
@@ -39,7 +37,9 @@ pub(crate) fn init(cx: &mut App) {
 /// Single and multiple values have explicit, immutable selection modes.
 #[derive(Clone, Debug, PartialEq)]
 pub enum SelectValue<T> {
+    /// One optional selected value.
     Single(Option<T>),
+    /// A collection of selected values.
     Multiple(Vec<T>),
 }
 type ContentFactory = Rc<dyn Fn(&mut Window, &mut App) -> AnyElement>;
@@ -52,6 +52,10 @@ pub struct SelectValueContent {
     content: AnyElement,
 }
 impl SelectValueContent {
+    /// Pair decorative custom value content with its complete readable value text.
+    ///
+    /// # Panics
+    /// Panics when readable value text is blank.
     pub fn new(value_text: impl Into<SharedString>, content: impl IntoElement) -> Self {
         let value_text = value_text.into();
         assert!(
@@ -72,10 +76,32 @@ pub struct SelectOption<T> {
     id: ElementId,
     value: T,
     label: SharedString,
+    accessible_name: Option<SharedString>,
     disabled: bool,
     content: Option<ContentFactory>,
 }
 impl<T> SelectOption<T> {
+    /// Set the visible/typeahead label and its default accessible name.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.label = crate::name::nonblank(text);
+        self
+    }
+    /// Override the accessible name independently of visible text and builder ordering.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+
+    /// Create an option with stable element identity, typed value and readable label.
+    ///
+    /// # Panics
+    /// Panics when the option label is blank.
     pub fn new(id: impl Into<ElementId>, value: T, label: impl Into<SharedString>) -> Self {
         let label = label.into();
         assert!(!label.trim().is_empty(), "Select option requires a name");
@@ -83,6 +109,7 @@ impl<T> SelectOption<T> {
             id: id.into(),
             value,
             label,
+            accessible_name: None,
             disabled: false,
             content: None,
         }
@@ -101,6 +128,7 @@ impl<T> SelectOption<T> {
         self.content = Some(Rc::new(content));
         self
     }
+    /// Choose whether this control accepts user activation.
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
@@ -114,6 +142,7 @@ pub struct SelectGroup<T> {
     options: Vec<SelectOption<T>>,
 }
 impl<T> SelectGroup<T> {
+    /// Create a stable group of options.
     pub fn new(id: impl Into<ElementId>, options: Vec<SelectOption<T>>) -> Self {
         Self {
             id: id.into(),
@@ -121,6 +150,10 @@ impl<T> SelectGroup<T> {
             options,
         }
     }
+    /// Set the optional readable group heading and its semantic name.
+    ///
+    /// # Panics
+    /// Panics when the group label is blank.
     pub fn label(mut self, label: impl Into<SharedString>) -> Self {
         let label = label.into();
         assert!(
@@ -132,13 +165,24 @@ impl<T> SelectGroup<T> {
     }
 }
 /// Ordered list parts; groups own their options, so there is no second value collection.
+/// Debug reports presentation without requiring or revealing application values:
+/// ```
+/// use gpui_kumo::{SelectOption, SelectPart};
+/// struct ApplicationValue; // Deliberately has no Debug implementation.
+/// let part = SelectPart::Option(SelectOption::new("choice", ApplicationValue, "Choice"));
+/// assert!(format!("{part:?}").contains("Choice"));
+/// ```
 #[derive(Clone)]
 pub enum SelectPart<T> {
+    /// One selectable option.
     Option(SelectOption<T>),
+    /// A labelled collection of options.
     Group(SelectGroup<T>),
+    /// A noninteractive divider.
     Separator(ElementId),
 }
 impl<T> SelectPart<T> {
+    /// Configure separator.
     pub fn separator(id: impl Into<ElementId>) -> Self {
         Self::Separator(id.into())
     }
@@ -163,12 +207,15 @@ impl<T> From<SelectGroup<T>> for SelectPart<T> {
 /// Value proposals emitted after activation; programmatic setters emit nothing.
 #[derive(Clone, Debug)]
 pub struct SelectEvent<T> {
+    /// Value.
     pub value: SelectValue<T>,
 }
 /// One retained owner for selection, collection, highlight and popup lifecycle.
 /// Subscribe to `SelectEvent` to accept controlled proposals with `set_value`.
 pub struct SelectState<T: Clone + PartialEq + 'static> {
     name: SharedString,
+    label_text: Option<SharedString>,
+    accessible_name: Option<SharedString>,
     parts: Vec<SelectPart<T>>,
     value: SelectValue<T>,
     compare: Comparator<T>,
@@ -210,6 +257,19 @@ pub struct SelectState<T: Clone + PartialEq + 'static> {
 }
 impl<T: Clone + PartialEq + 'static> EventEmitter<SelectEvent<T>> for SelectState<T> {}
 impl<T: Clone + PartialEq + 'static> SelectState<T> {
+    fn label_text(&self) -> SharedString {
+        self.label_text.clone().unwrap_or_else(|| self.name.clone())
+    }
+    fn accessible_name(&self) -> SharedString {
+        self.accessible_name
+            .clone()
+            .unwrap_or_else(|| self.label_text())
+    }
+
+    /// Create a retained named selection model with owner-controlled typed values. Retain with `cx.new`.
+    ///
+    /// # Panics
+    /// Panics when the name is blank or option/group/separator IDs are duplicated.
     pub fn new(
         name: impl Into<SharedString>,
         value: SelectValue<T>,
@@ -244,6 +304,8 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         });
         Self {
             name,
+            label_text: None,
+            accessible_name: None,
             parts,
             value,
             compare: Rc::new(|a, b| a == b),
@@ -355,26 +417,42 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         self.value_content = Some(Rc::new(content));
         cx.notify();
     }
+    /// Remove the custom selected-value factory and notify presentation.
     pub fn clear_value_content(&mut self, cx: &mut Context<Self>) {
         self.value_content = None;
         cx.notify();
     }
+    /// Read the current value from its owner; this does not request a change.
     pub fn value(&self) -> &SelectValue<T> {
         &self.value
     }
+    /// Report whether the overlay is currently disclosed.
     pub fn is_open(&self) -> bool {
         self.open
     }
+    /// Report whether the owner has disabled this control.
     pub fn is_disabled(&self) -> bool {
         self.disabled
     }
+    /// Report whether user editing is blocked while selection and copying remain available.
     pub fn is_read_only(&self) -> bool {
         self.read_only
     }
+    /// Return the retained focus target; callers may focus it through the Window.
     pub fn focus_handle(&self) -> FocusHandle {
         self.trigger.clone()
     }
-    pub(crate) fn set_name(&mut self, name: SharedString, cx: &mut Context<Self>) {
+    /// Read the retained default name; rendered props may explicitly override it.
+    pub fn name(&self) -> &SharedString {
+        &self.name
+    }
+
+    /// Refresh the default label and accessible name without resetting interaction or value state.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank. Validate external text with [`crate::AccessibleName`].
+    pub fn set_name(&mut self, name: impl Into<SharedString>, cx: &mut Context<Self>) {
+        let name = name.into();
         assert!(
             !name.trim().is_empty(),
             "Select requires an accessible name"
@@ -382,6 +460,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         self.name = name;
         cx.notify();
     }
+    /// Choose whether activation only proposes values or commits them locally.
     pub fn set_controlled(&mut self, controlled: bool, cx: &mut Context<Self>) {
         self.controlled = controlled;
         cx.notify();
@@ -397,6 +476,10 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
     pub(crate) fn set_joined_middle(&mut self) {
         self.joined_middle = true;
     }
+    /// Replace the owner value programmatically; this is not a user activation proposal.
+    ///
+    /// # Panics
+    /// Panics when the value has a different single/multiple mode than construction.
     pub fn set_value(&mut self, value: SelectValue<T>, cx: &mut Context<Self>) {
         assert!(
             matches!(
@@ -409,11 +492,18 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         self.value = value;
         cx.notify();
     }
+    /// Replace selectable options while preserving identity-based focus and retained value.
+    ///
+    /// # Panics
+    /// Panics when option, group or separator element IDs are duplicated.
     pub fn set_options(&mut self, options: Vec<SelectOption<T>>, cx: &mut Context<Self>) {
         self.set_parts(options.into_iter().map(SelectPart::Option).collect(), cx);
     }
     /// Replace the authoritative list while retaining valid highlighted option identity.
     /// All option, group and separator IDs must be unique across the collection.
+    ///
+    /// # Panics
+    /// Panics when option, group or separator element IDs are duplicated.
     pub fn set_parts(&mut self, parts: Vec<SelectPart<T>>, cx: &mut Context<Self>) {
         Self::check_ids(&parts);
         self.parts = parts;
@@ -427,6 +517,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         self.reveal();
         cx.notify();
     }
+    /// Update availability and notify presentation while retaining the value.
     pub fn set_disabled(&mut self, disabled: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.disabled = disabled;
         self.trigger.clone().tab_stop(!disabled);
@@ -440,6 +531,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
         self.read_only = read_only;
         cx.notify();
     }
+    /// Request programmatic disclosure according to the component lifecycle and availability policy.
     pub fn set_open(&mut self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
         if self.open == open || (open && (self.unavailable() || self.is_unmounted())) {
             return;
@@ -716,6 +808,8 @@ pub struct Select<T: Clone + PartialEq + 'static> {
     invalid: bool,
     loading: bool,
     label: bool,
+    label_text: Option<SharedString>,
+    accessible_name: Option<SharedString>,
     required: bool,
     description: Option<SharedString>,
     error: Option<(SharedString, bool)>,
@@ -723,6 +817,7 @@ pub struct Select<T: Clone + PartialEq + 'static> {
     joined_borders: Option<crate::button::JoinedRingQueue>,
 }
 impl<T: Clone + PartialEq + 'static> Select<T> {
+    /// Present a retained selection model under a stable element identity.
     pub fn new(id: impl Into<ElementId>, state: &Entity<SelectState<T>>) -> Self {
         Self {
             id: id.into(),
@@ -735,6 +830,8 @@ impl<T: Clone + PartialEq + 'static> Select<T> {
             invalid: false,
             loading: false,
             label: false,
+            label_text: None,
+            accessible_name: None,
             required: true,
             description: None,
             error: None,
@@ -742,6 +839,7 @@ impl<T: Clone + PartialEq + 'static> Select<T> {
             joined_borders: None,
         }
     }
+    /// Choose the preferred side; positioning still follows the documented collision policy.
     pub fn placement(mut self, placement: Placement) -> Self {
         self.placement = placement;
         self
@@ -756,11 +854,15 @@ impl<T: Clone + PartialEq + 'static> Select<T> {
         self.parent = Some(parent.clone());
         self
     }
+    /// Choose alignment along the surface’s cross axis.
     pub fn align(mut self, align: Align) -> Self {
         self.align = align;
         self
     }
     /// Main-axis separation from the trigger, including collision fitting.
+    ///
+    /// # Panics
+    /// Panics when the offset is nonfinite or negative.
     pub fn offset(mut self, offset: Pixels) -> Self {
         assert!(
             f32::from(offset).is_finite() && offset >= px(0.),
@@ -769,34 +871,63 @@ impl<T: Clone + PartialEq + 'static> Select<T> {
         self.offset = offset;
         self
     }
+    /// Show progress and reject activation while work is pending.
     pub fn loading(mut self, loading: bool) -> Self {
         self.loading = loading;
         self
     }
-    pub fn label(mut self, label: bool) -> Self {
+    /// Set visible text and its default accessible name.
+    ///
+    /// # Panics
+    /// Panics when `text` is blank.
+    pub fn label(mut self, text: impl Into<SharedString>) -> Self {
+        self.label_text = Some(crate::name::nonblank(text));
+        self
+    }
+    /// Override the accessible name independently of builder ordering.
+    ///
+    /// # Panics
+    /// Panics when `name` is blank.
+    pub fn accessibility_label(mut self, name: impl Into<SharedString>) -> Self {
+        self.accessible_name = Some(crate::name::nonblank(name));
+        self
+    }
+    /// Choose visible label presentation without changing the accessible name.
+    pub fn show_label(mut self, label: bool) -> Self {
         self.label = label;
         self
     }
+    /// Choose the optional indicator: false shows “(optional)”. This does not perform validation.
     pub fn required(mut self, required: bool) -> Self {
         self.required = required;
         self
     }
+    /// Supply supporting text; errors take precedence even when their message is hidden.
     pub fn description(mut self, description: impl Into<SharedString>) -> Self {
         self.description = Some(description.into());
         self
     }
-    pub fn error(mut self, error: impl Into<SharedString>, show: bool) -> Self {
+    /// Show an application-owned error, suppressing the description.
+    /// Error presentation does not validate or discard the control's value.
+    pub fn error(self, text: impl Into<SharedString>) -> Self {
+        self.error_visible(text, true)
+    }
+    /// Set an error with explicit message visibility; a hidden error still suppresses help.
+    pub fn error_visible(mut self, error: impl Into<SharedString>, show: bool) -> Self {
         self.error = Some((error.into(), show));
         self
     }
+    /// Select the component dimensions and corresponding spacing and typography.
     pub fn size(mut self, size: Size) -> Self {
         self.size = size;
         self
     }
+    /// Supply the prompt shown when there is no displayed value.
     pub fn placeholder(mut self, placeholder: impl Into<SharedString>) -> Self {
         self.placeholder = placeholder.into();
         self
     }
+    /// Choose the invalid appearance and authored invalid state.
     pub fn invalid(mut self, invalid: bool) -> Self {
         self.invalid = invalid;
         self
@@ -844,6 +975,8 @@ impl<T: Clone + PartialEq + 'static> RenderOnce for Select<T> {
             });
         }
         self.state.update(cx, |v, cx| {
+            v.label_text = self.label_text;
+            v.accessible_name = self.accessible_name;
             v.joined_borders = self.joined_borders;
             v.size = self.size;
             v.placement = self.placement;
@@ -859,12 +992,12 @@ impl<T: Clone + PartialEq + 'static> RenderOnce for Select<T> {
                 v.set_open(false, window, cx);
             }
         });
-        let name = self.state.read(cx).name.clone();
+        let name = self.state.read(cx).label_text();
         crate::Field::new(self.id, name, self.state)
-            .hide_label(!self.label)
+            .show_label(self.label)
             .required(self.required)
             .when_some(self.description, |v, d| v.description(d))
-            .when_some(self.error, |v, (e, show)| v.error(e, show))
+            .when_some(self.error, |v, (e, show)| v.error_visible(e, show))
     }
 }
 impl<T: Clone + PartialEq + 'static> SelectState<T> {
@@ -920,7 +1053,7 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             .id("trigger")
             .test_support()
             .role(Role::ComboBox)
-            .aria_label(self.name.clone())
+            .aria_label(self.accessible_name())
             .aria_value(readable)
             .aria_expanded(open)
             .when(!disabled, |trigger| {
@@ -1209,7 +1342,7 @@ impl<T: Clone + PartialEq + 'static> Render for SelectState<T> {
             .id("list")
             .test_support()
             .role(Role::ListBox)
-            .aria_label(self.name.clone())
+            .aria_label(self.accessible_name())
             .when(matches!(self.value, SelectValue::Multiple(_)), |v| {
                 v.a11y_synthetic_children(|b| b.parent_node().set_multiselectable())
             })
@@ -1395,7 +1528,12 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             .id(id)
             .test_support()
             .role(Role::ListBoxOption)
-            .aria_label(option.label.clone())
+            .aria_label(
+                option
+                    .accessible_name
+                    .clone()
+                    .unwrap_or_else(|| option.label.clone()),
+            )
             .aria_selected(selected)
             .a11y_synthetic_children(move |builder| {
                 if unavailable {
@@ -1522,3 +1660,89 @@ impl<T: Clone + PartialEq + 'static> SelectState<T> {
             })
     }
 }
+
+impl<T: Clone + PartialEq + 'static> crate::field::sealed::Sealed for Select<T> {}
+impl<T: Clone + PartialEq + 'static> crate::field::FieldControl for Select<T> {
+    fn into_field_parts(self, cx: &App) -> (SharedString, FocusHandle, gpui_kit::AnyElement) {
+        let label = self
+            .label_text
+            .clone()
+            .unwrap_or_else(|| self.state.read(cx).name.clone());
+        let focus = self.state.read(cx).focus_handle();
+        (label, focus, self.show_label(false).into_any_element())
+    }
+}
+
+impl std::fmt::Debug for SelectValueContent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SelectValueContent")
+            .field("value_text", &"<redacted>")
+            .field("content", &"<element>")
+            .finish_non_exhaustive()
+    }
+}
+
+impl<T> std::fmt::Debug for SelectOption<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SelectOption")
+            .field("id", &self.id)
+            .field("label", &self.label)
+            .field("disabled", &self.disabled)
+            .finish_non_exhaustive()
+    }
+}
+
+impl<T> std::fmt::Debug for SelectGroup<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SelectGroup")
+            .field("id", &self.id)
+            .field("label", &self.label)
+            .field("options_count", &self.options.len())
+            .finish_non_exhaustive()
+    }
+}
+
+impl<T: Clone + PartialEq + 'static> std::fmt::Debug for SelectState<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SelectState")
+            .field("name", &self.name)
+            .field("parts_count", &self.parts.len())
+            .field("controlled", &self.controlled)
+            .field("joined_middle", &self.joined_middle)
+            .field("disabled", &self.disabled)
+            .field("read_only", &self.read_only)
+            .field("open", &self.open)
+            .field("size", &self.size)
+            .field("invalid", &self.invalid)
+            .field("loading", &self.loading)
+            .field("hovered", &self.hovered)
+            .field("mounted_once", &self.mounted_once)
+            .finish_non_exhaustive()
+    }
+}
+
+impl<T: Clone + PartialEq + 'static> std::fmt::Debug for Select<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Select")
+            .field("id", &self.id)
+            .field("size", &self.size)
+            .field("invalid", &self.invalid)
+            .field("loading", &self.loading)
+            .field("label", &self.label)
+            .field("required", &self.required)
+            .finish_non_exhaustive()
+    }
+}
+
+impl<T> std::fmt::Debug for SelectPart<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Option(option) => f.debug_tuple("Option").field(option).finish(),
+            Self::Group(group) => f.debug_tuple("Group").field(group).finish(),
+            Self::Separator(id) => f.debug_tuple("Separator").field(id).finish(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests;
