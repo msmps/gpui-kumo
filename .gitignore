@@ -7,3 +7,6 @@
 # Raw build/runtime logs can contain private local paths.
 *.log
 announcement/
+
+# Generated JavaScript dependencies.
+node_modules/

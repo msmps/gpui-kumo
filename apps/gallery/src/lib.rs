@@ -9,6 +9,8 @@ use gpui_kumo::{
     Appearance, Button, Theme, button::Variant, set_appearance, theme as current_theme,
 };
 
+pub mod showcase;
+
 mod badges;
 pub mod banners;
 mod breadcrumbs;

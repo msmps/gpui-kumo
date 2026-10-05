@@ -10,6 +10,10 @@ impl AssetSource for GalleryAssets {
             "toolbar-settings.svg" => Some(Cow::Borrowed(include_bytes!(
                 "../assets/toolbar-settings.svg"
             ))),
+            "sun.svg" => Some(Cow::Borrowed(include_bytes!("../assets/sun.svg"))),
+            "moon.svg" => Some(Cow::Borrowed(include_bytes!("../assets/moon.svg"))),
+            "search.svg" => Some(Cow::Borrowed(include_bytes!("../assets/search.svg"))),
+            "plus.svg" => Some(Cow::Borrowed(include_bytes!("../assets/plus.svg"))),
             "workspace.svg" => Some(Cow::Borrowed(include_bytes!("../assets/workspace.svg"))),
             _ => return gpui_kumo::assets::Assets.load(path),
         })
@@ -18,7 +22,14 @@ impl AssetSource for GalleryAssets {
     fn list(&self, path: &str) -> gpui_kit::Result<Vec<SharedString>> {
         let mut assets = gpui_kumo::assets::Assets.list(path)?;
         if path.is_empty() {
-            assets.extend(["workspace.svg".into(), "toolbar-settings.svg".into()]);
+            assets.extend([
+                "workspace.svg".into(),
+                "toolbar-settings.svg".into(),
+                "plus.svg".into(),
+                "search.svg".into(),
+                "sun.svg".into(),
+                "moon.svg".into(),
+            ]);
         }
         Ok(assets)
     }
@@ -38,6 +49,10 @@ mod tests {
             [
                 "caret-down.svg",
                 "empty-copy.svg",
+                "moon.svg",
+                "plus.svg",
+                "search.svg",
+                "sun.svg",
                 "toolbar-settings.svg",
                 "workspace.svg"
             ]

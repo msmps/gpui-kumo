@@ -62,7 +62,7 @@ Normal installation uses published dependencies and needs no vendor patches. Kno
 ## Workspace
 
 - `crates/gpui-kumo`: typed Kumo theme and native design-system library. See the [component catalog](https://github.com/msmps/gpui-kumo/blob/main/docs/component-coverage.md) for coverage and [Select acceptance/API](https://github.com/msmps/gpui-kumo/blob/main/docs/select-validation.md) for retained single/multiple selection.
-- `apps/gallery`: native component examples and foundation previews with light/dark switching. See the [coverage inventory](https://github.com/msmps/gpui-kumo/blob/main/docs/component-coverage.md) and [GitHub issues](https://github.com/msmps/gpui-kumo/issues) for outstanding work.
+- `apps/gallery`: the default paged showcase, the original full component gallery, and focused examples with light/dark switching. See the [coverage inventory](https://github.com/msmps/gpui-kumo/blob/main/docs/component-coverage.md) and [GitHub issues](https://github.com/msmps/gpui-kumo/issues) for outstanding work.
 
 Component implementations and their tests/helpers live together under `crates/gpui-kumo/src/<component>/`; standalone modules can remain single files. The gallery binary and focused examples share the `kumo_gallery` library target. `GalleryAssets` composes application assets with `gpui_kumo::assets::Assets`, so consumers do not need filesystem paths into the library's source tree.
 
@@ -79,7 +79,15 @@ cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
-Choose Light or Dark, or press Command-L, to switch appearance. Close the window or press Command-Q to quit. Linux headless gallery checks are recorded per component; platform accessibility and macOS checks remain separately tracked.
+`cargo run` opens the primary showcase: a Kumo-inspired grid covering all 33 implemented component families across Controls, Surfaces and Details. Only the active page renders, keeping the demonstration lighter than the full gallery. It starts in dark mode; use the theme icon or run `cargo run -- --light` for light mode. Close the window or press Command-Q to quit.
+
+The original full gallery remains available as a secondary app:
+
+```sh
+cargo run -p kumo-gallery --bin gallery --locked
+```
+
+In the full gallery, choose Light or Dark, or press Command-L, to switch appearance. Linux headless gallery checks are recorded per component; platform accessibility and macOS checks remain separately tracked.
 
 For the announcement workflow, run `cargo run -p kumo-gallery --example announcement --locked`. It composes document actions, editing/confirmation and Toast feedback; [preview evidence](https://github.com/msmps/gpui-kumo/blob/main/docs/validation-fixtures.md) records the Linux rehearsal and remaining platform acceptance.
 
