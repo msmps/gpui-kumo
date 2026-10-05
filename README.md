@@ -1,5 +1,8 @@
 # GPUI Kumo
 
+> [!IMPORTANT]
+> This is an independent personal project. It is not an official Cloudflare release and is not, and will not be, supported by Cloudflare.
+
 A native Kumo design system built on GPUI, with GPUI Base as the initial behavior foundation.
 
 ## Installation
