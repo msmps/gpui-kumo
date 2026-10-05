@@ -60,6 +60,7 @@ pub struct Checkbox {
     content: Option<AnyElement>,
     focus: Option<FocusHandle>,
     group_item: bool,
+    table_padding: Option<gpui_kit::Pixels>,
     on_change: Option<ChangeHandler>,
 }
 impl Checkbox {
@@ -99,11 +100,16 @@ impl Checkbox {
             content: None,
             focus: None,
             group_item: false,
+            table_padding: None,
             on_change: None,
         }
     }
     pub(crate) fn group_item(mut self) -> Self {
         self.group_item = true;
+        self
+    }
+    pub(crate) fn table_cell(mut self, padding: gpui_kit::Pixels) -> Self {
+        self.table_padding = Some(padding);
         self
     }
     /// Supply the controlled value state; the owner commits user proposals.
@@ -277,6 +283,14 @@ impl RenderOnce for Checkbox {
             .min_w_0()
             .max_w_full()
             .self_start()
+            .when_some(self.table_padding, |this, padding| {
+                this.w_full()
+                    .h_full()
+                    .self_stretch()
+                    .items_center()
+                    .px(px(12.))
+                    .py(padding)
+            })
             .when(!self.control_first, |this| this.flex_row_reverse())
             .when(disabled, |this| this.cursor_not_allowed())
             .when(!disabled, |this| this.cursor_pointer())
@@ -294,7 +308,12 @@ impl RenderOnce for Checkbox {
                 handler(State::from_base(state), event, window, cx)
             });
         }
-        div().flex().min_w_0().max_w_full().child(root)
+        div()
+            .flex()
+            .min_w_0()
+            .max_w_full()
+            .when(self.table_padding.is_some(), |this| this.w_full().h_full())
+            .child(root)
     }
 }
 impl std::fmt::Debug for Checkbox {

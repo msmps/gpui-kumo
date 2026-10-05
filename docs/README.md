@@ -47,6 +47,7 @@ The `*-validation.md` filenames retain their existing links. Their supported beh
 
 | Area | Contracts |
 | --- | --- |
+| Data | [Table](table-validation.md) |
 | Content | [Text](text-validation.md), [Badge](badge-validation.md), [Banner](banner-validation.md), [Empty](empty-validation.md), [LayerCard](layer-card-validation.md), [Link](link-validation.md) |
 | Forms | [Checkbox](checkbox-validation.md), [Radio](radio-validation.md), [Switch](switch-validation.md), [Field/Label](field-validation.md), [InputGroup](input-group-validation.md), [InputArea](input-area-validation.md), [SensitiveInput](sensitive-input-validation.md) |
 | Navigation and composition | [Breadcrumbs](breadcrumbs-validation.md), [ButtonGroup](button-group-validation.md), [Pagination](pagination-validation.md), [Select](select-validation.md), [Tabs](tabs-validation.md), [Toolbar](toolbar-validation.md) |

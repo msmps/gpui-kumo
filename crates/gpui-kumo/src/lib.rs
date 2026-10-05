@@ -103,6 +103,8 @@ pub mod sensitive_input;
 pub mod skeleton_line;
 /// Kumo Switch presentation and grouping over Base's controlled binary behavior.
 pub mod switch;
+/// Semantic Kumo tables with typed sections, sizing, selection and sticky cells.
+pub mod table;
 /// Typed horizontal Kumo Tabs over Base Tab/TabList semantics and activation.
 pub mod tabs;
 /// Read-only typography from the pinned Kumo Text recipe.
@@ -156,6 +158,10 @@ pub use select::{
 pub use sensitive_input::{SensitiveInput, SensitiveInputEvent, SensitiveInputState};
 pub use skeleton_line::SkeletonLine;
 pub use switch::{Switch, SwitchGroup};
+pub use table::{
+    Table, TableBody, TableCaption, TableCell, TableCheckCell, TableCheckHead, TableFooter,
+    TableHead, TableHeader, TableResizeHandle, TableRow,
+};
 pub use tabs::{TabItem, Tabs, TabsEvent, TabsLabels, TabsState};
 pub use text::Text;
 pub use theme::{Appearance, Theme, set_appearance, set_theme, theme};
@@ -176,6 +182,7 @@ pub fn init(cx: &mut App) {
     tooltip::init(cx);
     select::init(cx);
     dialog::init(cx);
+    table::resize::init(cx);
     set_theme(Theme::new(Appearance::Light), cx);
 }
 

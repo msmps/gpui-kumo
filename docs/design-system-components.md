@@ -135,6 +135,8 @@ Public Debug should reveal useful identity, configuration, availability and coll
 | InlineCopyText and Toast actions | Visible/copy/value payloads and action names have separate meanings. InlineCopyText labels configures its copy/feedback names; Toast title/description remain content and its IDs are routing keys |
 | Meter and Pagination parts | Formatted value text and navigation/action labels are distinct properties. PageSize show_label hides its label slot reversibly; the retained Select name remains independent of that slot |
 
+| Table and typed parts | Table/section/row/cell are semantic data containers, not labelled controls. Use text(text) for inherited readable cell content or child for explicitly named rich content; accessibility_label names the whole table. Header/body cell kinds remain typed through insertion. Only TableHead has the resize_handle slot. Check parts require names and retain Checkbox controlled proposal semantics; resize values remain owner-owned. Stable scopes derive indices/counts, and column_span is native metadata. TableCaption is a readable native adapter |
+
 ### Author/reviewer checklist
 
 For every new or changed export, account for constructors, identity/domain keys, visible/default/overridden/hidden names, retained state updates, availability, error/required semantics, callbacks, fallibility, Debug and enum evolution. Use an explicit justified exception for unsupported capabilities; do not add generic operations that compile and fail at runtime.

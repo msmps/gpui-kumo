@@ -40,6 +40,7 @@ mod selects;
 mod sensitive_inputs;
 mod skeletons;
 mod switches;
+pub mod tables;
 pub mod tabs;
 pub mod texts;
 pub mod toasts;
@@ -75,6 +76,7 @@ struct Gallery {
     collapsibles: gpui_kit::Entity<collapsibles::Collapsibles>,
     skeletons: gpui_kit::Entity<skeletons::Skeletons>,
     meters: gpui_kit::Entity<meters::Meters>,
+    tables: gpui_kit::Entity<tables::Tables>,
     breadcrumbs: gpui_kit::Entity<breadcrumbs::Trails>,
     selects: gpui_kit::Entity<selects::Selects>,
     paginations: gpui_kit::Entity<paginations::Paginations>,
@@ -204,6 +206,7 @@ impl Render for Gallery {
         .child(self.input_groups.clone())
         .child(self.selects.clone())
         .child(self.breadcrumbs.clone())
+        .child(self.tables.clone())
         .child(self.meters.clone())
         .child(self.skeletons.clone())
         .child(self.collapsibles.clone())
@@ -320,6 +323,7 @@ pub fn run() {
                             skeletons: cx.new(|_| skeletons::Skeletons),
                             collapsibles: cx.new(|cx| collapsibles::Collapsibles::new(window, cx)),
                             meters: cx.new(|_| meters::Meters::default()),
+                            tables: cx.new(|_| tables::Tables::default()),
                             breadcrumbs: cx.new(|_| breadcrumbs::Trails::default()),
                             selects: cx.new(|cx| selects::Selects::new(window, cx)),
                             paginations: cx.new(|cx| paginations::Paginations::new(window, cx)),
