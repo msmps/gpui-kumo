@@ -4,7 +4,7 @@ A native Kumo design system built on GPUI, with GPUI Base as the initial behavio
 
 ## Installation
 
-The current release candidate is [`0.1.0-rc.1`](https://crates.io/crates/gpui-kumo/0.1.0-rc.1). Add these dependencies to your application's `Cargo.toml`:
+The latest published release candidate is [`0.1.0-rc.1`](https://crates.io/crates/gpui-kumo/0.1.0-rc.1). This checkout prepares **`0.1.0-rc.2`**, including Table components; RC2 has not been published. To use the published RC, add these dependencies to your application's `Cargo.toml`:
 
 ```toml
 [dependencies]

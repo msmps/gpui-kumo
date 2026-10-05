@@ -6,7 +6,7 @@ For normal setup and a minimal application, see the [installation guide](../READ
 
 | Package | Selected baseline |
 | --- | --- |
-| `gpui-kumo` | `0.1.0-rc.1` |
+| `gpui-kumo` | `0.1.0-rc.2` (unreleased; published RC: `0.1.0-rc.1`) |
 | `gpui-kit` | Exactly `0.7.0` |
 | `gpui-pre` and the matching GPUI/platform family | Exactly `0.3.7`, selected by Kit |
 | `gpui-base` | Validated with `0.7.0`; Kit's manifest accepts compatible `0.7` versions |
