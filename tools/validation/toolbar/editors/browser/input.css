@@ -1,5 +1,0 @@
-@import "./node_modules/tailwindcss/index.css" source(none);
-@import "/workspace/.kumo-reference/packages/kumo/src/styles/kumo-binding.css";
-@source "/workspace/.kumo-reference/packages/kumo/src/components";
-body {font-family:"DejaVu Sans",sans-serif;font-size:14px;line-height:21px;background:var(--color-kumo-canvas);color:var(--color-kumo-default);}
-main{padding:32px}section{margin:24px 0;padding:24px;background:var(--color-kumo-base);border:1px solid var(--color-kumo-hairline);border-radius:8px;overflow-x:auto;}

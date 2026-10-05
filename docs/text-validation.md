@@ -1,6 +1,6 @@
 # Text contract and validation
 
-Current managed Linux rich-font reproduction (2026-10-03): [Light/Dark1040/520 captures, native shaping assertions and inherited-family comparison](validation-fixtures.md). The historical rich row exactly matches verified Sans pixels/face metrics, resolving the reported discrepancy without a font patch. Other Text/platform acceptance remains separate.
+Historical managed Linux rich-font validation (2026-10-03): [Light/Dark1040/520 captures, native shaping assertions and inherited-family comparison](validation-fixtures.md). The historical rich row exactly matches verified Sans pixels/face metrics, resolving the reported discrepancy without a font patch. Other Text/platform acceptance remains separate.
 
 Baseline: Kumo `3fd5b648df578cb1ba214dedd30f475009f6a668`, GPUI Kit/Base 0.7.0, GPUI 0.3.7. The pinned [Text source](https://github.com/cloudflare/kumo/blob/3fd5b648df578cb1ba214dedd30f475009f6a668/packages/kumo/src/components/text/text.tsx) defines the contract. Deprecated heading variants are excluded under the repository's scope rule.
 

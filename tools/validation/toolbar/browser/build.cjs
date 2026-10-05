@@ -1,1 +1,0 @@
-const path=require('path');require('esbuild').buildSync({entryPoints:[path.join(__dirname,'main.tsx')],outfile:path.join(__dirname,'app.js'),bundle:true,jsx:'automatic',nodePaths:[path.join(__dirname,'node_modules')]});

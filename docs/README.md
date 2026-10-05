@@ -17,7 +17,7 @@ Use [CONTEXT.md](../CONTEXT.md) for terminology. [GitHub issues](https://github.
 | Maintain themes and style precedence | [Styling](gpui-styling.md) |
 | Maintain activation, focus and accessibility | [Interaction](gpui-interaction.md), [Readable labels](readable-label-validation.md) |
 | Verify rendering/input, alignment and layered corners | [Verification](gpui-verification.md), [Ring edges](ring-edge-validation.md) |
-| Reproduce browser/native comparisons | [Validation fixtures](validation-fixtures.md) |
+| Find historical browser/native evidence | [Archived validation fixtures](validation-fixtures.md) |
 | Diagnose development-build lag and frame presentation | [Performance](performance-validation.md) |
 
 The separate macOS unpatched CI job runs `python3 scripts/check-unpatched.py` against an extracted package with registry dependencies. Its named baseline is `scripts/unpatched-known-failures.json`; all tests run, each known result is reported, and new failures, missing baseline tests, ignored tests or build/harness errors block. Known passes prompt baseline review because the host-clock failures can vary. Results and logs are retained as CI artifacts. Extraction preserves the repository-selected Rust toolchain instead of using the host default. This gate does not establish Linux adapter acceptance.
@@ -56,7 +56,7 @@ The `*-validation.md` filenames retain their existing links. Their supported beh
 
 ## Documentation policy
 
-Keep API contracts, native adaptations, patch ownership/removal rules and reproducible verification instructions here. Put work lists and acceptance outcomes in GitHub issues. Keep authored validation tools in `tools/validation/`; generated artifacts are disposable. Issue-referenced historical images remain under `docs/evidence/`. Historical reports are available through immutable Git links in the relevant issues.
+Keep API contracts, native adaptations, patch ownership/removal rules and reproducible verification instructions here. Put work lists and acceptance outcomes in GitHub issues. Keep automated regressions alongside component implementations and use gallery examples for manual verification. Historical manual tools are archived in Git history; generated artifacts are disposable. Issue-referenced historical images remain under `docs/evidence/`. Historical reports are available through immutable Git links in the relevant issues.
 
 ## Publishing subsequent releases
 
