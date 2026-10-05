@@ -54,16 +54,16 @@ Call `gpui_kumo::init` before opening windows; it initializes Kit/Base and Kumo 
 
 This RC targets GPUI Kit **0.7.0**, GPUI Pre **0.3.7** and Base **0.7.0**. Import GPUI APIs through `gpui_kit`; different GPUI packages or Git sources may have incompatible types.
 
-Normal installation uses published dependencies and needs no vendor patches. Known limitations affect reverse-Tab focus, Textarea automatic growth and Linux accessibility state. See [dependency compatibility, limitations and optional fixes](https://github.com/msmps/gpui-kumo/blob/work/docs/dependencies.md) before adopting the RC.
+Normal installation uses published dependencies and needs no vendor patches. Known limitations affect reverse-Tab focus, Textarea automatic growth and Linux accessibility state. See [dependency compatibility, limitations and optional fixes](https://github.com/msmps/gpui-kumo/blob/main/docs/dependencies.md) before adopting the RC.
 
 ## Workspace
 
-- `crates/gpui-kumo`: typed Kumo theme and native design-system library. See the [component catalog](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md) for coverage and [Select acceptance/API](https://github.com/msmps/gpui-kumo/blob/work/docs/select-validation.md) for retained single/multiple selection.
-- `apps/gallery`: native component examples and foundation previews with light/dark switching. See the [coverage inventory](https://github.com/msmps/gpui-kumo/blob/work/docs/component-coverage.md) and [GitHub issues](https://github.com/msmps/gpui-kumo/issues) for outstanding work.
+- `crates/gpui-kumo`: typed Kumo theme and native design-system library. See the [component catalog](https://github.com/msmps/gpui-kumo/blob/main/docs/component-coverage.md) for coverage and [Select acceptance/API](https://github.com/msmps/gpui-kumo/blob/main/docs/select-validation.md) for retained single/multiple selection.
+- `apps/gallery`: native component examples and foundation previews with light/dark switching. See the [coverage inventory](https://github.com/msmps/gpui-kumo/blob/main/docs/component-coverage.md) and [GitHub issues](https://github.com/msmps/gpui-kumo/issues) for outstanding work.
 
 Component implementations and their tests/helpers live together under `crates/gpui-kumo/src/<component>/`; standalone modules can remain single files. The gallery binary and focused examples share the `kumo_gallery` library target. `GalleryAssets` composes application assets with `gpui_kumo::assets::Assets`, so consumers do not need filesystem paths into the library's source tree.
 
-Rust 1.99.0 is pinned in `rust-toolchain.toml`. GPUI Kit 0.7.0 is selected with its default features disabled, excluding the styled Component layer and bundled icons. Commit `Cargo.lock` when changing dependencies. The development workspace uses the [optional dependency corrections](https://github.com/msmps/gpui-kumo/blob/work/docs/dependencies.md#optional-dependency-corrections).
+Rust 1.99.0 is pinned in `rust-toolchain.toml`. GPUI Kit 0.7.0 is selected with its default features disabled, excluding the styled Component layer and bundled icons. Commit `Cargo.lock` when changing dependencies. The development workspace uses the [optional dependency corrections](https://github.com/msmps/gpui-kumo/blob/main/docs/dependencies.md#optional-dependency-corrections).
 
 ## Development
 
@@ -78,10 +78,12 @@ cargo clippy --workspace --all-targets -- -D warnings
 
 Choose Light or Dark, or press Command-L, to switch appearance. Close the window or press Command-Q to quit. Linux headless gallery checks are recorded per component; platform accessibility and macOS checks remain separately tracked.
 
-For the announcement workflow, run `cargo run -p kumo-gallery --example announcement --locked`. It composes document actions, editing/confirmation and Toast feedback; [preview evidence](https://github.com/msmps/gpui-kumo/blob/work/docs/validation-fixtures.md) records the Linux rehearsal and remaining platform acceptance.
+For the announcement workflow, run `cargo run -p kumo-gallery --example announcement --locked`. It composes document actions, editing/confirmation and Toast feedback; [preview evidence](https://github.com/msmps/gpui-kumo/blob/main/docs/validation-fixtures.md) records the Linux rehearsal and remaining platform acceptance.
 
-Read the [maintenance index](https://github.com/msmps/gpui-kumo/blob/work/docs/README.md) before implementing components.
+Read the [maintenance index](https://github.com/msmps/gpui-kumo/blob/main/docs/README.md) before implementing components.
 
 For the full locked workspace and exact AccessKit adapter checks, run `bash scripts/check-rust.sh`. The same commands run in `.github/workflows/validation.yml`; native visual/input/OS acceptance remains separately tracked. Outstanding work and acceptance criteria are tracked in [GitHub issues](https://github.com/msmps/gpui-kumo/issues).
 
-Standalone form controls display their label by default. Prefer `Field::control` for associated layout: it carries label help, optional indicators and feedback into the wrapper and forwards errors to the control. Disable the retained control state once; its Field label follows automatically. Use `optional_indicator(true)` for presentation-only “(optional)” text. See the [public API contract](https://github.com/msmps/gpui-kumo/blob/work/docs/design-system-components.md#public-api-contract) for composition and migration rules.
+Manual browser comparisons and native accessibility probes live in `tools/validation/`. The [fixture inventory and setup instructions](https://github.com/msmps/gpui-kumo/blob/main/docs/validation-fixtures.md) list their entry points and environment requirements. These tools are run separately from CI and are excluded from the published library package.
+
+Standalone form controls display their label by default. Prefer `Field::control` for associated layout: it carries label help, optional indicators and feedback into the wrapper and forwards errors to the control. Disable the retained control state once; its Field label follows automatically. Use `optional_indicator(true)` for presentation-only “(optional)” text. See the [public API contract](https://github.com/msmps/gpui-kumo/blob/main/docs/design-system-components.md#public-api-contract) for composition and migration rules.
